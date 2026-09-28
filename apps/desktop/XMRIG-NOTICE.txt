@@ -1,0 +1,12 @@
+XMRig pool-mining backend
+=========================
+
+ForgeCoin Desktop includes the official XMRig 6.26.0 Windows x64 binary from:
+https://github.com/xmrig/xmrig/releases/tag/v6.26.0
+
+Official release archive SHA-256:
+bba8097cb37d9b458a1cb1137876b27cde6740d17fe4ccbc086ba07d87d9e147
+
+XMRig is licensed under GNU GPL version 3. Its LICENSE and the corresponding
+v6.26.0 source archive are included in the xmrig folder. ForgeCoin Desktop starts
+XMRig only when the user chooses Start Pool.

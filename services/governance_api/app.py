@@ -169,3 +169,43 @@ def practice_vote(election_id: int, request: PracticeBallot,
         raise HTTPException(403,str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(409,str(exc)) from exc
+
+# Development-only, same-origin member registration preview. Never expose on public VM.
+from pathlib import Path
+from ipaddress import ip_address
+from fastapi import Request
+from fastapi.responses import FileResponse
+
+@app.get("/member/registration", include_in_schema=False)
+def member_registration(request: Request):
+    host = request.url.hostname
+    remote = request.client.host if request.client else ""
+    try:
+        if host not in ("localhost", "127.0.0.1") or not ip_address(remote).is_loopback:
+            raise ValueError("not loopback")
+    except ValueError:
+        raise HTTPException(404, "Not available")
+    page = Path(__file__).resolve().parents[2] / "docs" / "member-registration.html"
+    return FileResponse(page, media_type="text/html", headers={
+        "Cache-Control":"no-store",
+        "Content-Security-Policy":"default-src 'none'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+        "X-Frame-Options":"DENY",
+        "Referrer-Policy":"no-referrer",
+    })
+
+def _local_asset(request: Request, filename: str, media: str):
+    try:
+        if request.url.hostname not in ("localhost", "127.0.0.1") or not ip_address(request.client.host).is_loopback:
+            raise ValueError("not local")
+    except (ValueError, AttributeError):
+        raise HTTPException(404, "Not available")
+    return FileResponse(Path(__file__).resolve().parents[2] / "docs" / filename,
+                        media_type=media, headers={"Cache-Control":"no-store"})
+
+@app.get("/member/style.css", include_in_schema=False)
+def member_css(request: Request):
+    return _local_asset(request, "style.css", "text/css")
+
+@app.get("/member/images/forgecoin-logo.png", include_in_schema=False)
+def member_logo(request: Request):
+    return _local_asset(request, "images/forgecoin-logo.png", "image/png")

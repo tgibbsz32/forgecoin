@@ -25,8 +25,15 @@ CREATE INDEX IF NOT EXISTS role_history ON role_decisions(wallet, role, id);
 def db_path():
     return Path(os.environ.get("FORGECOIN_GOVERNANCE_DB", "governance-dev.sqlite3"))
 
+class ClosingConnection(sqlite3.Connection):
+    def __exit__(self, exc_type, exc_value, traceback):
+        try:
+            return super().__exit__(exc_type, exc_value, traceback)
+        finally:
+            self.close()
+
 def connect():
-    conn = sqlite3.connect(db_path(), timeout=10)
+    conn = sqlite3.connect(db_path(), timeout=10, factory=ClosingConnection)
     conn.execute("PRAGMA foreign_keys=ON")
     conn.execute("PRAGMA busy_timeout=10000")
     conn.executescript(SCHEMA)

@@ -21,11 +21,12 @@ class Handler(BaseHTTPRequestHandler):
         body=json.loads(self.rfile.read(count))
         if body.get("method")!="get_block_template" or body["params"].get("reserve_size")!=8:
             self.send_error(400);return
+        header = bytes([16, 16, 1]) + b"p" * 32 + b"\0" * 4
         reply={"jsonrpc":"2.0","id":body["id"],"result":{
             "status":"OK","untrusted":False,
             "height":17,"difficulty":500000,"expected_reward":2384185222,
-            "seed_hash":"a1"*32,"blocktemplate_blob":"01"*128,
-            "blockhashing_blob":"02"*80,"reserved_offset":40}}
+            "seed_hash":"a1"*32,"blocktemplate_blob":(header + b"b" * 89).hex(),
+            "blockhashing_blob":(header + b"r" * 32 + b"\x01").hex(),"reserved_offset":40}}
         data=json.dumps(reply).encode()
         self.send_response(200);self.send_header("Content-Type","application/json")
         self.send_header("Content-Length",str(len(data)));self.end_headers()

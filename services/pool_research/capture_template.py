@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 from urllib.request import Request, ProxyHandler, HTTPRedirectHandler, build_opener
 from .template_adapter import validate_template
+from .mining_work import prepare_work
 
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
@@ -37,10 +38,13 @@ def capture(url, wallet_address, output, timeout=5):
             or response.get("id") != "local-template" or "result" not in response):
         raise ValueError("invalid or mismatched JSON-RPC template reply")
     result=validate_template(response,8)
+    work=prepare_work(result)
     # Capture only non-address public block-template metadata; blobs might encode miner wallet keys.
     summary={"height":result.height,"difficulty":result.difficulty,"expected_reward":result.expected_reward,
              "seed_hash":result.seed_hash.hex(),"blocktemplate_bytes":len(result.blocktemplate_blob),
-             "hashing_bytes":len(result.blockhashing_blob),"reserved_offset":result.reserved_offset}
+             "hashing_bytes":len(result.blockhashing_blob),"reserved_offset":result.reserved_offset,
+             "nonce_offset":work.header.nonce_offset,"transaction_count":work.transaction_count,
+             "major_version":work.header.major,"previous_hash":work.header.previous_hash.hex()}
     Path(output).write_text(json.dumps(summary,indent=2)+"\n",encoding="utf-8")
     return summary
 

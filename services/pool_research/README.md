@@ -102,3 +102,26 @@ Validation: **32 tests passed, none skipped**, including a new fresh-wallet,
 offline candidate capture with the previously recorded binaries. Regression
 cases cover busy/error status, bootstrap/untrusted responses, missing fields,
 wrong response version/ID and preservation of prior evidence on rejection.
+
+### Offline mining-header work, 2026-10-24
+
+`mining_work.py` decodes version/timestamp varints, previous hash and little-endian
+uint32 nonce using the native block_header layout. It rejects overflow,
+noncanonical/truncated encodings, mismatched template/hashing headers, reserve
+regions overlapping the header, missing/zero transaction counts and trailing
+hashing bytes. `with_nonce` returns matching hashing/block blobs without mutating
+the originals or changing any bytes outside the nonce. Capture now invokes this
+structural check and records nonce offset, major version, previous hash and count.
+
+Validation: **36 tests passed, none skipped**, including actual candidate capture;
+a separate capture refreshed candidate-template-evidence.json. Tests cover nonce
+byte order/bounds and malformed inputs. Native layout references:
+`src/cryptonote_basic/cryptonote_basic.h` (block_header) and
+`src/cryptonote_basic/cryptonote_format_utils.cpp` (get_block_hashing_blob).
+
+This is a prerequisite for job construction, not a job server or share verifier.
+Transaction-root correctness/count agreement with the full block, coinbase extra
+nonce handling, RandomX hashing, full-width difficulty and stale-job handling
+remain unimplemented. Do not mutate the coinbase reserve without recomputing the
+transaction root. Unknown major versions are decoded structurally, not certified
+as consensus-compatible. No mining or submission was performed.

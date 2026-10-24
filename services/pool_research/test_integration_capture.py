@@ -22,6 +22,8 @@ class CandidateIntegrationTests(unittest.TestCase):
         self.assertEqual(evidence["daemon_exit_code"], 0)
         self.assertEqual(evidence["template"]["height"], 1)
         self.assertEqual(evidence["template"]["seed_hash"], evidence["genesis_hash"])
+        self.assertEqual(evidence["template"]["previous_hash"], evidence["genesis_hash"])
+        self.assertEqual(evidence["template"]["transaction_count"], 1)
         self.assertGreater(evidence["template"]["difficulty"], 0)
         self.assertGreater(evidence["template"]["expected_reward"], 0)
         self.assertLessEqual(evidence["template"]["reserved_offset"] + 8,

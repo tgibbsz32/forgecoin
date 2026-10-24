@@ -13,7 +13,11 @@
     "seed_hash": "2a91ebe3007fb301072c5b0c8e130c782d1218e4633f6a30e6c2d692b6ac5f05",
     "blocktemplate_bytes": 134,
     "hashing_bytes": 76,
-    "reserved_offset": 124
+    "reserved_offset": 124,
+    "nonce_offset": 39,
+    "transaction_count": 1,
+    "major_version": 19,
+    "previous_hash": "2a91ebe3007fb301072c5b0c8e130c782d1218e4633f6a30e6c2d692b6ac5f05"
   },
   "daemon_exit_code": 0
 }

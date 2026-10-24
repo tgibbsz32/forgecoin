@@ -12,6 +12,8 @@ class IsolatedDaemonTests(unittest.TestCase):
             argv=offline_daemon_args(exe,Path(d)/"fresh")
             self.assertIn("--offline",argv)
             self.assertIn("--no-igd",argv)
+            self.assertIn("--disable-dns-checkpoints",argv)
+            self.assertEqual(argv[argv.index("--check-updates")+1],"disabled")
             for flag in ("--rpc-bind-ip","--p2p-bind-ip","--zmq-rpc-bind-ip"):
                 self.assertEqual(argv[argv.index(flag)+1],"127.0.0.1")
     def test_reject_existing_data_and_duplicate_ports(self):
@@ -27,7 +29,7 @@ class IsolatedDaemonTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             argv=offline_daemon_args(binary,Path(d)/"fresh")
         help_text=subprocess.run([binary,"--help"],capture_output=True,text=True,timeout=20,errors="replace").stdout
-        for flag in argv[1::2]:
+        for flag in argv[1:]:
             if flag.startswith("--"):
                 self.assertIn(flag,help_text)
         for flag in ("--offline","--no-igd"):

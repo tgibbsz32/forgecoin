@@ -5,11 +5,17 @@ Requires an explicitly provided disposable wallet address. Never print address.
 """
 import argparse
 import json
-import ipaddress
 from pathlib import Path
 from urllib.parse import urlsplit
-from urllib.request import Request, urlopen
+from urllib.request import Request, ProxyHandler, HTTPRedirectHandler, build_opener
 from .template_adapter import validate_template
+
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise ValueError("RPC redirects are forbidden")
+
+def local_opener():
+    return build_opener(ProxyHandler({}), NoRedirect())
 
 def capture(url, wallet_address, output, timeout=5):
     parsed=urlsplit(url)
@@ -22,7 +28,7 @@ def capture(url, wallet_address, output, timeout=5):
     body=json.dumps({"jsonrpc":"2.0","id":"local-template","method":"get_block_template",
                      "params":{"wallet_address":wallet_address,"reserve_size":8}}).encode()
     req=Request(url,body,{"Content-Type":"application/json"},method="POST")
-    with urlopen(req,timeout=timeout) as res:
+    with local_opener().open(req,timeout=timeout) as res:
         if res.status != 200:raise ValueError("daemon RPC non-200 response")
         payload=res.read(1024*1024+1)
     if len(payload)>1024*1024:raise ValueError("RPC response too large")

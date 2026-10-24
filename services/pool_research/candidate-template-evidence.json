@@ -1,0 +1,19 @@
+{
+  "kind": "real-candidate-offline-template",
+  "genesis_hash": "2a91ebe3007fb301072c5b0c8e130c782d1218e4633f6a30e6c2d692b6ac5f05",
+  "daemon_sha256": "c51ba96bdb32136cd07c681e09d966790f258ea22b7f6abb280f45a4bef4c463",
+  "wallet_cli_sha256": "ab81cab8842c90f54d57113023d63f0ef0ca363f06c3d090c210a853230e6a98",
+  "offline": true,
+  "incoming_connections": 0,
+  "outgoing_connections": 0,
+  "template": {
+    "height": 1,
+    "difficulty": 500000,
+    "expected_reward": 2384185222,
+    "seed_hash": "2a91ebe3007fb301072c5b0c8e130c782d1218e4633f6a30e6c2d692b6ac5f05",
+    "blocktemplate_bytes": 134,
+    "hashing_bytes": 76,
+    "reserved_offset": 124
+  },
+  "daemon_exit_code": 0
+}

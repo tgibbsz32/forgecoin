@@ -3,12 +3,18 @@ import json
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from services.pool_research.capture_template import capture
+from services.pool_research.capture_template import capture, local_opener
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
+        if self.headers.get("X-Redirect-Test"):
+            self.send_response(302)
+            self.send_header("Location", "http://example.invalid/json_rpc")
+            self.end_headers()
+            return
         if self.path!="/json_rpc":
             self.send_error(404);return
         count=int(self.headers.get("Content-Length","0"))
@@ -26,6 +32,17 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self,*args):pass
 
 class CaptureTests(unittest.TestCase):
+    def test_environment_proxy_is_ignored(self):
+        with patch.dict("os.environ", {"http_proxy": "http://127.0.0.1:1", "no_proxy": ""}):
+            self.test_local_fixture()
+
+    def test_redirect_rejected(self):
+        from urllib.request import Request
+        request = Request(f"http://127.0.0.1:{self.server.server_port}/json_rpc",
+                          b"{}", {"X-Redirect-Test": "yes"})
+        with self.assertRaisesRegex(ValueError, "redirects are forbidden"):
+            local_opener().open(request, timeout=3)
+
     @classmethod
     def setUpClass(cls):
         cls.server=ThreadingHTTPServer(("127.0.0.1",0),Handler)

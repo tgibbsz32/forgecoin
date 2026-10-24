@@ -12,7 +12,8 @@ def offline_daemon_args(executable, data_dir, rpc_port=49581, p2p_port=49580, zm
         raise ValueError("ports must differ")
     if root.exists() and any(root.iterdir()):
         raise ValueError("data directory must be empty and disposable")
-    return [str(exe),"--offline","--no-igd","--data-dir",str(root),
+    return [str(exe),"--offline","--no-igd","--disable-dns-checkpoints",
+            "--check-updates","disabled","--data-dir",str(root),
             "--rpc-bind-ip","127.0.0.1","--rpc-bind-port",str(rpc_port),
             "--p2p-bind-ip","127.0.0.1","--p2p-bind-port",str(p2p_port),
             "--zmq-rpc-bind-ip","127.0.0.1","--zmq-rpc-bind-port",str(zmq_port),

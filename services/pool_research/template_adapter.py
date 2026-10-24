@@ -43,6 +43,10 @@ def validate_template(response, reserve_size=8):
     result=response.get("result",response)
     if not isinstance(result,dict):
         raise TemplateError("invalid RPC result")
+    if result.get("status") != "OK":
+        raise TemplateError("daemon template status is not OK")
+    if result.get("untrusted") is not False:
+        raise TemplateError("trusted local template required")
     height=_nonnegative(result.get("height"),"height")
     difficulty=_nonnegative(result.get("difficulty"),"difficulty")
     if difficulty==0:raise TemplateError("zero difficulty")

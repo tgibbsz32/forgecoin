@@ -87,3 +87,18 @@ Validation: **30 tests passed, none skipped**, with the same archived candidate
 pair and Python 3.13 on Windows, including a new disposable real-daemon capture.
 The ordinary suite without binary opt-in passes 28 tests and skips the two
 candidate-dependent tests. No daemon remained running after validation.
+
+### RPC response validation follow-up, 2026-10-24
+
+Template validation now requires explicit `status: "OK"` and `untrusted: false`,
+as defined by `rpc_response_base` in `src/rpc/core_rpc_server_commands_defs.h`.
+Missing values and non-boolean substitutes are rejected. This tightens the
+adapter contract; callers using older synthetic fixtures must supply those fields.
+Network capture additionally requires JSON-RPC 2.0, the exact request ID, and a
+result object. Invalid replies leave previously saved evidence unchanged.
+These checks validate the response contract, not the honesty of a daemon.
+
+Validation: **32 tests passed, none skipped**, including a new fresh-wallet,
+offline candidate capture with the previously recorded binaries. Regression
+cases cover busy/error status, bootstrap/untrusted responses, missing fields,
+wrong response version/ID and preservation of prior evidence on rejection.

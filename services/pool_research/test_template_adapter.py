@@ -2,11 +2,24 @@ import unittest
 from services.pool_research.template_adapter import validate_template, TemplateError
 
 def fixture():
-    return {"result":{"height":17,"difficulty":500000,"expected_reward":2384185222,
+    return {"result":{"status":"OK","untrusted":False,"height":17,"difficulty":500000,"expected_reward":2384185222,
       "seed_hash":"ab"*32,"blocktemplate_blob":"00"*160,
       "blockhashing_blob":"10"*90,"reserved_offset":95}}
 
 class TemplateTests(unittest.TestCase):
+    def test_reject_unsuccessful_or_untrusted(self):
+        for field, values in (("status", (None, "BUSY", "Failed", "")),
+                              ("untrusted", (None, True, 0, "false"))):
+            for value in values:
+                with self.subTest(field=field, value=value), self.assertRaises(TemplateError):
+                    obj = fixture()
+                    obj["result"][field] = value
+                    validate_template(obj)
+            with self.subTest(missing=field), self.assertRaises(TemplateError):
+                obj = fixture()
+                del obj["result"][field]
+                validate_template(obj)
+
     def test_valid(self):
         t=validate_template(fixture())
         self.assertEqual((t.height,t.reserve_size,t.reserved_offset),(17,8,95))

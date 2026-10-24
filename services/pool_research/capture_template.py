@@ -33,6 +33,9 @@ def capture(url, wallet_address, output, timeout=5):
         payload=res.read(1024*1024+1)
     if len(payload)>1024*1024:raise ValueError("RPC response too large")
     response=json.loads(payload)
+    if (not isinstance(response, dict) or response.get("jsonrpc") != "2.0"
+            or response.get("id") != "local-template" or "result" not in response):
+        raise ValueError("invalid or mismatched JSON-RPC template reply")
     result=validate_template(response,8)
     # Capture only non-address public block-template metadata; blobs might encode miner wallet keys.
     summary={"height":result.height,"difficulty":result.difficulty,"expected_reward":result.expected_reward,

@@ -71,3 +71,19 @@ opt-in test to reproduce it with the actual binaries.
 This establishes candidate RPC/adapter compatibility at fresh genesis only.
 It does not establish RandomX share correctness, block submission, consensus
 acceptance, later-height behavior, final monetary policy or public pool readiness.
+
+### Failure handling follow-up, 2026-10-24
+
+The harness now validates the daemon path and port policy before generating a
+wallet, and rejects a template whose height or seed differs from the fresh
+genesis context before publishing evidence. Shutdown timeout or a broken stdin
+pipe triggers a kill and bounded process wait; an unclean exit cannot publish
+success evidence.
+
+Six failure-injection tests cover invalid daemon paths, template rejection,
+unexpected peers, wrong height/seed, shutdown timeout and broken stdin. They
+verify temporary-state cleanup and preservation of prior evidence on failure.
+Validation: **30 tests passed, none skipped**, with the same archived candidate
+pair and Python 3.13 on Windows, including a new disposable real-daemon capture.
+The ordinary suite without binary opt-in passes 28 tests and skips the two
+candidate-dependent tests. No daemon remained running after validation.

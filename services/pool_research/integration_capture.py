@@ -39,6 +39,8 @@ def run(daemon, wallet, output, ports=(49581, 49580, 49582)):
             sock.bind(("127.0.0.1", port))
     with tempfile.TemporaryDirectory(prefix="forgecoin-pool-") as temporary:
         root = Path(temporary)
+        # Validate executable, fresh directory and port policy before wallet creation.
+        argv = offline_daemon_args(daemon, root / "data", *ports)
         config = root / "empty.conf"
         config.write_text("", encoding="utf-8")
         wallet_path = root / "disposable"
@@ -55,7 +57,6 @@ def run(daemon, wallet, output, ports=(49581, 49580, 49582)):
         if created.returncode:
             raise RuntimeError(f"Disposable wallet creation failed ({created.returncode})")
         address = Path(str(wallet_path) + ".address.txt").read_text().strip()
-        argv = offline_daemon_args(daemon, root / "data", *ports)
         argv += ["--config-file", str(config), "--log-file", str(root / "daemon.log")]
         with (root / "console.log").open("wb") as log:
             process = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=log, stderr=log,
@@ -78,6 +79,8 @@ def run(daemon, wallet, output, ports=(49581, 49580, 49582)):
                     raise RuntimeError("Unexpected peer connections")
                 genesis = rpc(ports[0], "get_block_header_by_height", {"height": 0})["block_header"]["hash"]
                 summary = capture(f"http://127.0.0.1:{ports[0]}/json_rpc", address, root / "summary.json")
+                if summary["height"] != 1 or summary["seed_hash"] != genesis:
+                    raise RuntimeError("Template does not match fresh candidate genesis")
                 evidence = {"kind": "real-candidate-offline-template", "genesis_hash": genesis,
                             "daemon_sha256": hashlib.sha256(daemon.read_bytes()).hexdigest(),
                             "wallet_cli_sha256": hashlib.sha256(wallet.read_bytes()).hexdigest(),
@@ -87,9 +90,9 @@ def run(daemon, wallet, output, ports=(49581, 49580, 49582)):
                 if process.poll() is None:
                     try:
                         process.communicate(b"exit\n", timeout=20)
-                    except subprocess.TimeoutExpired:
+                    except (subprocess.TimeoutExpired, BrokenPipeError, OSError):
                         process.kill()
-                        process.communicate()
+                        process.wait(timeout=10)
                 if process.stdin:
                     process.stdin.close()
             if process.returncode != 0:

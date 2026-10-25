@@ -1,5 +1,7 @@
 # ForgeCoin
 
+> **Documentation hub (2026-10-25):** [Wiki home](docs/wiki/Home.md) · [Current status](docs/wiki/Current-Status.md) · [Roadmap](docs/wiki/Roadmap.md) · [Software guide](docs/wiki/Software-Guide.md) · [Testing/release](docs/wiki/Testing-and-Release.md). The proposed fresh mainnet is **not launched**; the Oracle pool page is informational and the research share journal is **not** a payment system.
+
 > **Current owner direction (2026-10-24):** Restored native-only fair launch: 50M FRG primary-emission reference, no allocated premine, 100% PoW miner subsidy and perpetual 0.20 FRG/block tail. The 55M/5M genesis treasury proposal is withdrawn. Native trading and user-deposit-backed Solana interoperability are future research. See [roadmap](ROADMAP.md).
 
 
@@ -85,7 +87,7 @@ Do not expose the wallet RPC or unrestricted daemon RPC to the public internet.
 
 ## Building
 
-See [BUILDING.md](BUILDING.md) for this source snapshot and [PUBLICATION.md](PUBLICATION.md) before publishing. The core inherits Monero's CMake build system. Build requirements and platform-specific instructions remain under [`docs`](docs). The desktop application uses the .NET Framework C# compiler and expects locally built `forged.exe` and `forge-wallet-rpc.exe`; see [`apps/desktop/BUILDING.md`](apps/desktop/BUILDING.md).
+See [BUILDING.md](BUILDING.md) for this source snapshot and [PUBLICATION.md](PUBLICATION.md) before publishing. The core inherits Monero's CMake build system. Build requirements and platform-specific instructions remain under [`docs`](docs). The **current** desktop is Tauri/Rust/React and requires reviewed native sidecars; see [`apps/desktop-tauri/README.md`](apps/desktop-tauri/README.md) and the [wiki software guide](docs/wiki/Software-Guide.md). The historical Windows Forms application uses C# and is documented separately in [`apps/desktop/BUILDING.md`](apps/desktop/BUILDING.md).
 
 Release binaries should be attached to a tagged GitHub Release instead of committed to the source repository. Publish SHA-256 checksums for every release asset.
 

@@ -134,3 +134,29 @@ Run the complete offline pool suite from the repository root:
 `python -W error::ResourceWarning -m unittest discover -s services/pool_research -t . -v`.
 Native binary and platform-dependent tests may explicitly skip when unavailable;
 fixture hashes do not prove native mining or payout acceptance.
+
+
+## Native daemon template -> RandomX job integration (2026-10-25)
+
+`daemon_job_source.py` is a **new isolation-stage native job boundary**, **not** an operational public pool. It only uses three allowlisted daemon JSON-RPC methods: `get_info`, `get_block_header_by_height` and `get_block_template`. The optional `LoopbackDaemonRpc` permits numeric localhost addresses with an explicit port and disables redirects and HTTP proxies.
+
+An operator must explicitly supply the expected chain genesis hash, network type, and an approved **disposable** mining address. Each active worker receives a daemon-generated `extra_nonce` (8 random bytes). The returned serialized coinbase reserve, previous block hash, height, native hashing blob header, current tip and network identity are checked before any job is issued. A post-fetch tip check refuses races. Identical derived hashing jobs, cross-worker submissions, duplicates, invalid claimed digests, expired work and stale tips are rejected. A supplied trusted native `RandomX(seed, blockhashing_blob)` verifier recomputes the submitted nonce; the result is **always `POW_THRESHOLD_MET_UNCREDITED`**, never accepted as a payout or block.
+
+The interface exposes Stratum-shaped `rx/0` job data but **does not open a socket, refresh jobs automatically, submit a block, account for PPLNS, persist shares or sign payouts**. It is single-threaded/single-process with a bounded outstanding job count; no production concurrency guarantees exist. Its nominal XMRig 4-byte target is limited to u32 share difficulty. Missing or improperly pinned genesis/network configuration prevents job issuance. Wallet/RPC keys never leave the host; the daemon HTTP client is intentionally loopback-only.
+
+Offline fixtures:
+
+```sh
+python -m unittest services.pool_research.test_daemon_job_source -v
+python -m unittest discover -s services/pool_research -t . -q
+```
+
+Optional actual RandomX CPU-worker exercise (requires a **separately built and trusted** `randomx_worker.cpp` binary and its runtime libraries):
+
+```sh
+python -m services.pool_research.tests.run_daemon_job_native_offline --executable /path/to/randomx_worker
+```
+
+**Observed developer evidence (Windows, October 25, 2026):** The helper compiled from the existing `tests/randomx_worker.cpp` using local MSYS2 g++ 16.2 and the already-built Fork RandomX static library. Its known 76-byte test vector returned `294083824fec5947ef2cd825e2bedcb34789e4cc6ad12d7823bcf0be51178f77`. A further test started a **disposable offline ForgeCoin daemon** in a fresh empty data directory, queried height-1 template with `extra_nonce`, and produced a matching native job digest. The daemon exited afterward. This **does not prove** compatibility with the repository's current source release or real mining payouts; the binary came from an existing isolated consensus-candidate build, not a reproducible new release build. No live production blockchain, miner, wallet funds, or pool server was touched.
+
+**Next release blockers:** integrate actual worker session lifecycle and hash job rotation into a private Stratum service; independently check native chain identity, timestamp/seed and verified block candidate submission; handle genuine block acceptance, reorgs and maturity; implement durable verified share accounting, PPLNS, payout transaction recovery and minimum payouts; demonstrate multiple compatible XMRig miners, a 100-worker load target, secure payout RPC isolation and external review. Never confuse a real RandomX digest with an accepted network block, or a synthetic share ledger with an owed balance.

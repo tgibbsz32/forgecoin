@@ -2,6 +2,7 @@
 """Read-only prerequisites for isolated desktop Solo/Pool acceptance tests."""
 import argparse
 import hashlib
+import struct
 from pathlib import Path
 
 def inspect(path, label):
@@ -13,9 +14,19 @@ def inspect(path, label):
     if p.stat().st_size == 0:
         return "BLOCKED " + label + ": empty file"
     with p.open("rb") as handle:
-        magic = handle.read(2)
-    if magic != b"MZ":
-        return "BLOCKED " + label + ": not a Windows PE executable"
+        header = handle.read(64)
+        if len(header) < 64 or header[:2] != b"MZ":
+            return "BLOCKED " + label + ": invalid DOS header"
+        offset = struct.unpack_from("<I", header, 0x3C)[0]
+        if offset < 64 or offset > p.stat().st_size - 24:
+            return "BLOCKED " + label + ": invalid PE offset"
+        handle.seek(offset)
+        pe = handle.read(24)
+        if len(pe) != 24 or pe[:4] != b"PE\\x00\\x00":
+            return "BLOCKED " + label + ": invalid PE signature"
+        machine = struct.unpack_from("<H", pe, 4)[0]
+        if machine != 0x8664:
+            return "BLOCKED " + label + ": expected Windows x64 executable"
     h = hashlib.sha256()
     with p.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):

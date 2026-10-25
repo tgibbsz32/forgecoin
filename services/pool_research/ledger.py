@@ -1,6 +1,5 @@
 """Offline SQLite reward ledger prototype; NEVER sign or initiate payouts."""
 import sqlite3
-from contextlib import contextmanager
 from .model import allocate_reward
 
 class RewardLedger:
@@ -45,20 +44,52 @@ class RewardLedger:
             self.db.executemany("INSERT INTO allocations VALUES (?,?,?)",[(block_hash,k,v) for k,v in alloc.miner_atomic.items()])
         return True
 
-    def reconcile_chain(self, canonical_hashes, tip_height):
-        """Caller supplies canonical hashes from a verified node. No automatic payout authorization."""
-        if type(tip_height)!=int or tip_height<0: raise ValueError("invalid tip")
-        canonical=set(canonical_hashes)
-        if any(not isinstance(h,str) or len(h)!=64 for h in canonical):
-            raise ValueError("invalid canonical identifiers")
+    def reconcile_chain(self, canonical_by_height, tip_height):
+        """Reconcile an externally verified, height-indexed chain snapshot.
+
+        The caller must read one coherent canonical view from a trusted node,
+        including the tip and every recorded block height at or below that tip.
+        Missing observations are errors, never evidence of an orphan. This does
+        not verify headers, chain identity, ancestry or spending authority.
+        """
+        if type(tip_height) is not int or tip_height < 0:
+            raise ValueError("invalid tip")
+        if type(canonical_by_height) is not dict:
+            raise ValueError("height-indexed canonical snapshot required")
+        canonical = canonical_by_height.copy()
+        for height, hash_ in canonical.items():
+            if type(height) is not int or not 0 <= height <= tip_height:
+                raise ValueError("invalid canonical height")
+            if (not isinstance(hash_, str) or len(hash_) != 64
+                    or any(c not in '0123456789abcdef' for c in hash_)):
+                raise ValueError("invalid canonical identifier")
+        if tip_height not in canonical:
+            raise ValueError("canonical tip observation required")
+        if len(set(canonical.values())) != len(canonical):
+            raise ValueError("canonical hash reused at multiple heights")
         with self.db:
-            rows=self.db.execute("SELECT block_hash,maturity_height,state FROM blocks").fetchall()
-            for hash_,maturity,state in rows:
-                target='orphaned' if hash_ not in canonical else ('mature' if maturity<=tip_height else 'immature')
-                # Intentionally reject automatic revival; requires operator investigation.
-                if state=='orphaned' and target!='orphaned':
+            # Lock before reading so a concurrent writer cannot add an unchecked
+            # block between the coverage check and state updates.
+            self.db.execute("BEGIN IMMEDIATE")
+            rows = self.db.execute(
+                "SELECT block_hash,height,maturity_height,state FROM blocks"
+            ).fetchall()
+            missing = {height for _, height, _, _ in rows
+                       if height <= tip_height and height not in canonical}
+            if missing:
+                raise ValueError("incomplete canonical snapshot")
+            changes = []
+            for hash_, height, maturity, state in rows:
+                if height > tip_height or canonical[height] != hash_:
+                    target = 'orphaned'
+                else:
+                    target = 'mature' if maturity <= tip_height else 'immature'
+                if state == 'orphaned' and target != 'orphaned':
                     raise ValueError("orphan revival requires independent review")
-                self.db.execute("UPDATE blocks SET state=? WHERE block_hash=?",(target,hash_))
+                changes.append((target, hash_))
+            self.db.executemany(
+                "UPDATE blocks SET state=? WHERE block_hash=?", changes
+            )
 
     def balances(self):
         return dict(self.db.execute("""

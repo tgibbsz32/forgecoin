@@ -108,3 +108,29 @@ Isolated RPC fixture capture: python -m services.pool_research.capture_template 
 Local RPC integration fixture: test_capture_template.py launches an ephemeral loopback HTTP fixture, verifies get_block_template capture metadata and local-only URL restrictions. This is a simulated daemon response, NOT actual ForgeCoin daemon integration or consensus validation. The actual candidate executable was inspected for --offline and isolated RPC flags, but real template capture remains pending until a disposable test wallet is provisioned.
 Isolated offline daemon argument builder: isolated_daemon.py constructs localhost-only, offline, distinct-port invocation for a disposable empty data directory. It does not start a node. Never point it to a real mainnet data directory. Candidate-network disposable wallet creation and real block-template capture remain pending.
 Candidate executable compatibility check: optional FORGECOIN_DAEMON_BIN environment variable enables test_isolated_daemon.py to inspect real forged --help and compare expected flags. Removed unsupported --non-interactive from generated isolated daemon command. This check does not start daemon or capture a mining template.
+
+### Height-indexed reward reconciliation (2026-10-25)
+
+`RewardLedger.reconcile_chain(canonical_by_height, tip_height)` now requires a
+`dict[int, str]` with the canonical hash at every recorded height at or below
+the tip, plus the tip itself. Missing heights, malformed hashes, duplicate hashes
+at different heights and the former list/set API are rejected before updates.
+For example, a ledger block at height 100 and tip 160 requires observations for
+both 100 and 160. A hash observed at another height cannot mature that reward.
+Competing candidates at one height are reconciled against that height's hash.
+A shorter canonical chain orphans candidates above its tip; a tip rollback below
+maturity demotes a still-canonical reward to immature. Orphan revival remains
+blocked for independent investigation. Coverage checks and all changes run in
+one locked transaction; an invalid view cannot partly change balances.
+
+The caller must still obtain and verify a coherent snapshot from a trusted native
+node. This API does not authenticate RPC, prove ancestry or network identity,
+verify share weights, or authorize payouts. The old hash-set completeness warning
+above describes the replaced API; partial observations now fail closed. Existing
+SQLite schemas need no migration. No production financial concurrency or recovery
+certification is implied.
+
+Run the complete offline pool suite from the repository root:
+`python -W error::ResourceWarning -m unittest discover -s services/pool_research -t . -v`.
+Native binary and platform-dependent tests may explicitly skip when unavailable;
+fixture hashes do not prove native mining or payout acceptance.

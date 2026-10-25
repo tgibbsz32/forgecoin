@@ -1,5 +1,5 @@
 import unittest
-from model import CapacityExceeded, WorkerRegistry, allocate_reward
+from services.pool_research.model import CapacityExceeded, WorkerRegistry, allocate_reward
 
 
 class PoolResearchTests(unittest.TestCase):

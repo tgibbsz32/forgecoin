@@ -1,5 +1,7 @@
 # ForgeCoin Project Status
 
+> **2026-10-25 status addendum:** See the [versioned wiki status](docs/wiki/Current-Status.md) and [release gates](docs/wiki/Testing-and-Release.md). This page preserves older component descriptions. The Oracle old-chain explorer and *static* pool-readiness page have been deployed; the fresh mainnet and official functional pool have **not** launched. Successful synthetic RandomX/socket/journal tests are not real share credits, miner rewards or payouts. Initial desktop V1 Solo+Pool acceptance is still **blocked**, including unverified XMRig provenance ([issue #95](https://github.com/tgibbsz32/forgecoin/issues/95)).
+
 ## Pool and explorer completion status — October 24, 2026
 
 The official native FRG pool is **planned, not deployed or payout-validated**. Its intended operator fee is **1% of eligible pooled rewards**; solo mining has no project-pool fee. The 100-worker target remains unverified. Tauri has local solo and user-configured XMRig pool controls, but verified official-pool integration is pending. Pool website/dashboard and standalone Pool Observer completion are pending. The recovered online explorer source still requires tests, security review, HTTPS and verified public deployment.

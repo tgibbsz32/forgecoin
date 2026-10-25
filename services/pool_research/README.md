@@ -160,3 +160,20 @@ python -m services.pool_research.tests.run_daemon_job_native_offline --executabl
 **Observed developer evidence (Windows, October 25, 2026):** The helper compiled from the existing `tests/randomx_worker.cpp` using local MSYS2 g++ 16.2 and the already-built Fork RandomX static library. Its known 76-byte test vector returned `294083824fec5947ef2cd825e2bedcb34789e4cc6ad12d7823bcf0be51178f77`. A further test started a **disposable offline ForgeCoin daemon** in a fresh empty data directory, queried height-1 template with `extra_nonce`, and produced a matching native job digest. The daemon exited afterward. This **does not prove** compatibility with the repository's current source release or real mining payouts; the binary came from an existing isolated consensus-candidate build, not a reproducible new release build. No live production blockchain, miner, wallet funds, or pool server was touched.
 
 **Next release blockers:** integrate actual worker session lifecycle and hash job rotation into a private Stratum service; independently check native chain identity, timestamp/seed and verified block candidate submission; handle genuine block acceptance, reorgs and maturity; implement durable verified share accounting, PPLNS, payout transaction recovery and minimum payouts; demonstrate multiple compatible XMRig miners, a 100-worker load target, secure payout RPC isolation and external review. Never confuse a real RandomX digest with an accepted network block, or a synthetic share ledger with an owed balance.
+
+
+## Loopback native-template Stratum research socket (Step 003)
+
+`native_stratum_research.py` adds a genuinely listening **numeric-loopback-only** Stratum-shaped test service which replaces synthetic header generation with the `DaemonJobSource` pipeline from Step 002. It accepts strict JSON-RPC-shaped `login`, `submit`, and `keepalived` frames through existing `SessionTable` validation. New connections receive a unique session ID and a daemon-generated `rx/0` job. Only the matching session/job can submit. Claimed hashes are recomputed with an explicitly supplied trusted native verifier; the protocol refuses duplicate/stale/cross-worker/low-difficulty jobs, inappropriate algorithms, oversized frames and concurrent overload.
+
+The research socket is limited to **8** sessions maximum (4 default), uses bounded request counts and no public binding, payment keys, reward credits, block submission or wallet RPC. It is **not** a production pool or an authenticated miner/payout service: the miner's login string is never treated as proof of address ownership, and old jobs require reconnecting because proactive job broadcasts and difficulty rotation are not implemented. The response deliberately reports `POW_THRESHOLD_MET_UNCREDITED`, which **must not** be presented as a normal mining share acceptance to third-party XMRig clients.
+
+Offline regression and optional real native CPU verification:
+
+```sh
+python -m unittest services.pool_research.test_native_stratum_research -v
+python -m unittest discover -s services/pool_research -t . -q
+python -m services.pool_research.tests.run_native_stratum_socket_offline --executable /trusted/randomx_worker
+```
+
+The optional runner uses a fake daemon and genuine C++ RandomX on a localhost socket; it opens no production daemon, accepts no funds, issues no payout, and exits after a single nonce check plus replay rejection. Release blockers are independent real-FRG daemon + actual XMRig interoperability, active worker rotation, canonical chain proof, accepted native block submission, recovery/reorg and PPLNS maturity-aware accounting, TLS, capacity and audited payout signing.

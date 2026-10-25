@@ -1,0 +1,44 @@
+name: FCMP++ source migration preflight
+
+on:
+  pull_request:
+    paths:
+      - "tools/fcmp_port_preflight.py"
+      - "tools/test_fcmp_port_preflight.py"
+      - "docs/FCMP_PORT_INTEGRATION.md"
+      - ".github/workflows/fcmp-source-preflight.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-preflight-tests:
+    name: Read-only FCMP++ inventory tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run source inventory unit tests (no node or miner)
+        run: python -m unittest tools.test_fcmp_port_preflight -v
+      - name: Confirm existing consensus is NOT falsely reported as FCMP++ ready
+        shell: bash
+        run: |
+          set +e
+          python tools/fcmp_port_preflight.py --fork-root . --require-integrated > /tmp/fcmp-result.json
+          status=$?
+          set -e
+          if [ "$status" -ne 2 ]; then
+            echo "Expected unported fork to be blocked (exit 2), got $status"
+            exit 1
+          fi
+          python - <<'PY'
+          import json
+          with open('/tmp/fcmp-result.json', encoding='utf-8') as f:
+              result = json.load(f)
+          assert result['not_an_audit'] is True
+          assert result['fork']['source_presence_complete'] is False
+          print('Expected unported state: BLOCKED; no consensus changes authorized')
+          PY

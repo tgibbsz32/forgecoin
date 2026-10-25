@@ -1,5 +1,7 @@
 # ForgeCoin development roadmap — native-first (October 24, 2026)
 
+> **2026-10-25 navigation:** [Consolidated milestone and acceptance roadmap](docs/wiki/Roadmap.md), [status snapshot](docs/wiki/Current-Status.md), and [software/testing guides](docs/wiki/Home.md). This original roadmap contains detailed planned capabilities; follow dated evidence for what is actually live.
+
 **Status:** Proposed development milestones. Roadmap features are not launched, funded, security-audited or guaranteed.
 
 **Native V1 launch:** Maintain the original Monero-derived FRG network with a **50,000,000 FRG primary-emission reference**, **no allocated genesis premine**, **100% of native block subsidies for Proof-of-Work miners**, and **perpetual 0.20 FRG/block tail emission** (therefore no fixed maximum supply). This restores the policy before the October 24 Solana/genesis-treasury redesign. Historical 55M/5M notes are withdrawn proposals. Existing development-chain and fresh-mainnet candidate are separate; there is no automatic balance migration.

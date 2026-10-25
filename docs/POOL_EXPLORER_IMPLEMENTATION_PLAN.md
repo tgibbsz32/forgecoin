@@ -4,6 +4,31 @@
 
 For branch context, completed changes, preserved local drafts and next steps by workstream, see the [implementation handoff](HANDOFF_POOL_EXPLORER_2026-10-24.md).
 
+## Initial desktop release: Solo and Pool are required
+
+The initial desktop release must let the user explicitly choose Solo or Pool
+mining. It must not ship as a solo-only release. Solo uses a synchronized local
+ForgeCoin node; Pool supports the verified official FRG pool and preserves
+user-configured independent pools. Never switch modes or endpoints silently.
+
+Release acceptance requires:
+- Tested start/stop, mode switching, thread settings, restart and reconnection.
+- Clear selected mode, network identity, connection state and hashrate; pool
+  accepted/rejected shares must be distinguished from local miner telemetry.
+- Verified official-pool accounting and mature payouts to disposable test wallets;
+  show payout status from the pool ledger with explicit stale/unavailable states.
+- Visible official-pool 1% operator fee, separately disclosed payout transaction
+  costs and XMRig donation policy; no project-pool fee for solo mining.
+- Wrong-network addresses, unavailable/full pools, invalid TLS certificates and
+  offline/unsynchronized nodes handled safely and tested.
+- Matching reviewed node/wallet binaries, wallet/process security review and
+  verified release packages. No wallet keys or recovery phrases sent to pools.
+
+A working, tested official pool is therefore a dependency of this desktop release.
+The separate network's launch date is not decided by this desktop requirement.
+These are acceptance requirements, not claims of completed integration or authority
+to deploy services, use real funds or enable Windows private template capture.
+
 ## Existing source and remaining work
 
 | Component | Evidence in this branch | Required completion |

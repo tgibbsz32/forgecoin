@@ -6,6 +6,8 @@ The official native FRG pool is **planned, not deployed or payout-validated**. I
 
 See the [implementation plan](docs/POOL_EXPLORER_IMPLEMENTATION_PLAN.md) for build, isolated integration, private staging, security, beta and rollout gates. No live service or successful production payout is established by this documentation update.
 
+The initial desktop release requires both Solo and Pool mining, including verified official-pool integration while retaining custom pools. This is a release dependency, not a completed feature; see the [acceptance requirements](docs/POOL_EXPLORER_IMPLEMENTATION_PLAN.md#initial-desktop-release-solo-and-pool-are-required).
+
 ## October source recovery
 
 The repository now includes the Tauri desktop 0.1.6, standalone read-only explorer,

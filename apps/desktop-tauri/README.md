@@ -75,6 +75,10 @@ References: [XMRig algorithms](https://xmrig.com/docs/algorithms), [XMRig pool c
 
 Version 0.1.3 adds independently saved CPU thread counts, Solo/pool log selection with a live toggle, live mining state and hashrate, and a saved-wallet dropdown. Thread changes apply at the next mining start. Wallet and mining integration tests cover reward scanning, live telemetry authentication, thread changes, wallet discovery, and log selection.
 
+## Initial release requires Solo and Pool mining
+
+The initial release must offer both modes, including a verified official-pool profile and custom pools. A solo-only release does not meet the requirement. Official-pool accounting and mature test payouts must be verified before release. See the [release acceptance requirements](../../docs/POOL_EXPLORER_IMPLEMENTATION_PLAN.md#initial-desktop-release-solo-and-pool-are-required).
+
 ## Planned official-pool integration
 
 The existing Solo mode and user-configured XMRig Pool mode are the starting point for the [pool delivery plan](../../docs/POOL_EXPLORER_IMPLEMENTATION_PLAN.md). Add a verified official native FRG pool profile only after deployment; retain independent-pool configuration and solo mining. Disclose the **1% operator fee** on eligible pooled rewards separately from network payout fees and XMRig donation policy. Solo mining has no project-pool operator fee.

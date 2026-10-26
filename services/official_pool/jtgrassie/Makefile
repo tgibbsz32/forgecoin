@@ -55,6 +55,16 @@ ifeq ($(origin MONERO_BUILD_ROOT), undefined)
     sed -e 's|[:/\\ \(\)]|_|g'`)/release
 endif
 
+ARCH := $(shell uname -m)
+
+# Native ARM64 uses wallet-crypto ALIAS cncrypto in ForgeCoin CMake.
+# That alias has no standalone .a archive. On x86_64 the optimized
+# wallet-crypto archive exists and remains a linker input.
+WALLET_CRYPTO_ARCHIVE =
+ifneq ($(filter x86_64 amd64,$(ARCH)),)
+  WALLET_CRYPTO_ARCHIVE = ${MONERO_BUILD_ROOT}/src/crypto/wallet/libwallet-crypto.a
+endif
+
 MONERO_INC = \
   ${MONERO_ROOT}/src \
   ${MONERO_ROOT}/external \
@@ -68,7 +78,7 @@ MONERO_LIBS = \
   ${MONERO_BUILD_ROOT}/src/ringct/libringct_basic.a \
   ${MONERO_BUILD_ROOT}/src/device/libdevice.a \
   ${MONERO_BUILD_ROOT}/src/cryptonote_basic/libcryptonote_format_utils_basic.a \
-  ${MONERO_BUILD_ROOT}/src/crypto/wallet/libwallet-crypto.a \
+  $(WALLET_CRYPTO_ARCHIVE) \
   ${MONERO_BUILD_ROOT}/contrib/epee/src/libepee.a \
   ${MONERO_BUILD_ROOT}/external/easylogging++/libeasylogging.a \
   ${MONERO_BUILD_ROOT}/src/libversion.a \
@@ -84,7 +94,6 @@ W = -W -Wall -Wno-unused-parameter -Wuninitialized -Wno-attributes
 # x86-only compiler options must not break native ARM64 Oracle staging.
 # AES is provided via ARM crypto extensions and RandomX's own architecture
 # dispatch; GCC on aarch64 rejects the Intel-only -maes argument.
-ARCH := $(shell uname -m)
 OPT = -fPIC
 ifneq ($(filter x86_64 amd64,$(ARCH)),)
   OPT += -maes

@@ -48,6 +48,14 @@ class NativeStaticGateTests(unittest.TestCase):
         self.assertNotIn("make release", self.script)
         self.assertNotIn("submit_block", self.script)
 
+    def test_wallet_crypto_alias_is_architecture_specific(self):
+        self.assertIn("targets+=(wallet-crypto)", self.script)
+        self.assertIn('add_library(wallet-crypto ALIAS cncrypto)', self.script)
+        self.assertIn('if [[ "$(uname -m)" == "x86_64" ]]', self.script)
+        self.assertIn("WALLET_CRYPTO_ARCHIVE =", self.make)
+        self.assertIn("$(WALLET_CRYPTO_ARCHIVE)", self.make)
+        self.assertIn("ARCH := $(shell uname -m)", self.make)
+
     def test_arm64_does_not_inherit_x86_aes_compiler_flag(self):
         self.assertIn("ARCH := $(shell uname -m)", self.make)
         self.assertIn("OPT = -fPIC", self.make)

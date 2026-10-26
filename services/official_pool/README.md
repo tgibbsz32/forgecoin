@@ -236,3 +236,29 @@ installing a persistent private pool process on Oracle. Public Stratum and
 payouts need additional canonical-chain, maturity, reorg, PPLNS and signing
 review. Do not treat an ARM64 CI success as permission to enable public pool
 ports or touch custody.
+
+
+### ARM64 crypto-link correction found in first CI attempt
+
+The first hosted ARM64 run at workflow `40304673873` reached **all the way
+through most native ForgeCoin library compilation** and then failed at
+`gmake: No rule to make target 'wallet-crypto'`. This was an actual
+architecture-specific assumption inherited from the x86 build, **not a
+failed RandomX test or bad consensus block**. In
+`src/crypto/wallet/CMakeLists.txt`, on native ARM64 the optimized
+wallet crypto engine is unavailable and CMake uses
+`add_library(wallet-crypto ALIAS cncrypto)`. This alias has **no
+standalone** `libwallet-crypto.a` or directly buildable target.
+
+`build-native-static.sh` and the pool's `Makefile` now retain the
+separate optimized archive for x86_64, but on aarch64 use `cncrypto`
+instead, with a fail-closed source assertion ensuring the CMake alias
+remains present. The expected archive count is **11 on x86_64, 10 on
+aarch64**, without skipping any native crypto function. Both native
+architecture-specific link inputs were tested by Makefile dry runs.
+
+The first legacy preflight also failed because the CI sparse checkout
+did not include the new ARM64 workflow source; the sparse list has been
+updated. The failed CI run therefore **does not establish a passing
+ARM64 binary**. Await a fresh on-target ARM64 CI result on the corrected
+commit before advancing the Oracle private-staging gate.

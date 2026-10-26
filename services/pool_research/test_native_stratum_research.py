@@ -16,7 +16,7 @@ class NativeStratumLoopbackTests(unittest.IsolatedAsyncioTestCase):
         def fake_native(seed,blob):
             self.calls += 1
             self.assertEqual(len(seed), 32)
-            self.assertEqual(blob[36:40],bytes.fromhex("01020304"))
+            self.assertEqual(blob[39:43],bytes.fromhex("01020304"))
             return bytes(32)
         self.fake_native = fake_native
         self.listener = NativeResearchListener(self.make_source, fake_native)

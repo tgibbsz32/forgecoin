@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07121c">
+  <meta name="description" content="ForgeCoin pool operations dashboard — native CPU mining infrastructure in development.">
+  <title>ForgeCoin — Mining Pool Console</title>
+  <link rel="icon" type="image/png" href="assets/forgecoin-logo.png">
+  <link rel="stylesheet" href="dashboard.css">
+  <script src="dashboard.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to dashboard</a>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Pool console navigation">
+      <a class="brand" href="dashboard.html" aria-label="ForgeCoin pool console">
+        <img src="assets/forgecoin-logo.png" alt="" width="43" height="43">
+        <span class="brand-name">FORGE<span>COIN</span><small>POOL OPERATIONS</small></span>
+      </a>
+      <div class="side-nav">
+        <p class="nav-label">OPERATIONS</p>
+        <a class="nav-link active" href="#overview"><span class="nav-glyph" aria-hidden="true">◈</span> Overview <span class="nav-active-mark" aria-hidden="true">●</span></a>
+        <a class="nav-link" href="#network"><span class="nav-glyph" aria-hidden="true">⌁</span> Network</a>
+        <a class="nav-link" href="#mining"><span class="nav-glyph" aria-hidden="true">▤</span> Start mining</a>
+        <a class="nav-link" href="#status"><span class="nav-glyph" aria-hidden="true">◉</span> Release status</a>
+      </div>
+      <div class="side-bottom">
+        <div class="sidebar-note">
+          <span class="note-pip"></span>
+          <div><strong>PRE-LAUNCH BUILD</strong><small>Mining endpoints &amp; payouts disabled.</small></div>
+        </div>
+        <a class="external-link" href="https://github.com/tgibbsz32/forgecoin" target="_blank" rel="noreferrer noopener">Source repository <span aria-hidden="true">↗</span></a>
+        <a class="external-link" href="index.html">Preparation page <span aria-hidden="true">↗</span></a>
+      </div>
+    </aside>
+    <div class="workspace">
+      <header class="topbar">
+        <div class="crumb"><span>ForgeCoin Network</span><span class="crumb-chevron">/</span><strong>Mining Pool</strong></div>
+        <div class="top-actions">
+          <span class="utc-time" id="utc-clock" aria-label="Current UTC time">— UTC</span>
+          <span class="environment"><span class="env-led"></span> PRE-LAUNCH</span>
+        </div>
+      </header>
+      <main id="main">
+        <section class="page-head" id="overview">
+          <div>
+            <p class="eyebrow"><span class="accent-bar"></span> NATIVE RANDOMX / FRG</p>
+            <h1>Mining pool <span>overview<span class="dot">.</span></span></h1>
+            <p class="lede">A clearer view of the network we're building. Real numbers only when an authorized pool backend is available.</p>
+          </div>
+          <div class="head-figure" aria-hidden="true"><div class="orb-frame"><img src="assets/forgecoin-logo.png" alt=""></div><span>FORGE / 01</span></div>
+        </section>
+        <div class="launch-banner" role="status">
+          <div class="banner-icon" aria-hidden="true">!</div>
+          <div><strong>This pool is not accepting miners.</strong><p>Live shares, pool balances and payouts are not enabled. Connecting this dashboard to a statistics source does not launch the FRG network.</p></div>
+          <span class="banner-tag">RESEARCH STAGE</span>
+        </div>
+        <section class="metrics" aria-labelledby="metrics-label">
+          <div class="section-line"><h2 id="metrics-label">Network at a glance</h2><div class="feed-state"><span class="live-dot"></span><span id="feed-label">STATISTICS DISCONNECTED</span></div></div>
+          <div class="metric-grid">
+            <div class="metric"><div class="metric-top"><span>POOL HASHRATE</span><span class="metric-icon" aria-hidden="true">↗</span></div><strong id="stat-pool-rate" data-stat="poolHashrate">—</strong><small>Observed pool work rate</small></div>
+            <div class="metric"><div class="metric-top"><span>NETWORK HASHRATE</span><span class="metric-icon" aria-hidden="true">⌁</span></div><strong id="stat-network-rate" data-stat="networkHashrate">—</strong><small>Native FRG proof of work</small></div>
+            <div class="metric"><div class="metric-top"><span>CONNECTED ACCOUNTS</span><span class="metric-icon" aria-hidden="true">◇</span></div><strong id="stat-miners" data-stat="connectedMiners">—</strong><small>As observed by backend</small></div>
+            <div class="metric"><div class="metric-top"><span>BLOCKS FOUND</span><span class="metric-icon" aria-hidden="true">▦</span></div><strong id="stat-blocks" data-stat="poolBlocksFound">—</strong><small>Backend-reported count</small></div>
+          </div>
+        </section>
+        <div class="details-grid" id="network">
+          <section class="surface performance" aria-labelledby="activity-title">
+            <div class="surface-head"><div><p class="micro-kicker">POOL INTELLIGENCE</p><h2 id="activity-title">Hashrate activity</h2></div><div class="trend-key"><span class="key-pip"></span>POOL H/s</div></div>
+            <div class="graph-space">
+              <svg id="hashrate-chart" viewBox="0 0 720 230" preserveAspectRatio="none" role="img" aria-label="No verified hashrate history available yet">
+                <g stroke="#203444" stroke-width="1"><path d="M0 32H720 M0 88H720 M0 144H720 M0 200H720"/></g>
+                <path id="chart-area" d="" fill="url(#activityFill)"/>
+                <path id="chart-line" d="" stroke="#62c6eb" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                <defs><linearGradient id="activityFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#53bfe7" stop-opacity=".20"/><stop offset="100%" stop-color="#53bfe7" stop-opacity="0"/></linearGradient></defs>
+              </svg>
+              <div id="chart-empty" class="chart-empty"><strong>No history yet</strong><span>This chart records values observed during this browser session only, after a pool backend connects.</span></div>
+            </div>
+            <div class="graph-footer"><span>EARLIER</span><span>RECENT OBSERVATIONS ONLY</span><span>NOW</span></div>
+          </section>
+          <section class="surface snapshot" aria-labelledby="snapshot-title">
+            <div class="surface-head"><div><p class="micro-kicker">CHAIN SNAPSHOT</p><h2 id="snapshot-title">Network details</h2></div></div>
+            <dl class="details-list">
+              <div><dt>Chain height</dt><dd id="stat-height">—</dd></div>
+              <div><dt>Network difficulty</dt><dd id="stat-difficulty">—</dd></div>
+              <div><dt>Round work</dt><dd id="stat-round">—</dd></div>
+              <div><dt>Last block found</dt><dd id="stat-last-block">—</dd></div>
+              <div><dt>Latest template</dt><dd id="stat-last-template">—</dd></div>
+              <div><dt>Configured pool fee</dt><dd id="stat-pool-fee">—</dd></div>
+            </dl>
+            <p class="snapshot-foot" id="observation-note">Awaiting an authenticated, read-only pool statistics source. Figures shown here are never examples or simulated balances.</p>
+          </section>
+        </div>
+        <section class="mining-panel" id="mining" aria-labelledby="mining-title">
+          <div class="mining-copy">
+            <p class="micro-kicker">GETTING STARTED</p>
+            <h2 id="mining-title">Made for CPU miners.<br><span>Not open for mining yet.</span></h2>
+            <p>The official pool will publish verified Stratum endpoints, wallet address requirements and fee terms after live block submission and payout tests are complete.</p>
+            <div class="pill-row"><span class="pill">RANDOMX</span><span class="pill">PPLNS PLANNED</span><span class="pill">1% PROPOSED FEE</span></div>
+          </div>
+          <div class="terminal-card" aria-label="Mining configuration is not yet available">
+            <div class="terminal-top"><span><i></i><i></i><i></i></span><strong>XMRIG / CONFIGURATION</strong></div>
+            <div class="terminal-text"><span class="line-num">01</span> <span class="term-note"># Mining opens after launch approval</span>
+<span class="line-num">02</span> <span class="term-key">POOL_ENDPOINT</span>=<span class="term-warn">NOT_PUBLISHED</span>
+<span class="line-num">03</span> <span class="term-key">WALLET_ADDRESS</span>=<span class="term-warn">NOT_REQUESTED</span>
+<span class="line-num">04</span> <span class="term-key">PAYMENTS</span>=<span class="term-warn">DISABLED</span>
+<span class="line-num">05</span> <span class="term-note"># Never mine to an unverified endpoint.</span></div>
+          </div>
+        </section>
+        <section class="status-section" id="status" aria-labelledby="status-title">
+          <div class="section-line"><h2 id="status-title">Engineering release gates</h2><span class="tag-outline">BEFORE PUBLIC LAUNCH</span></div>
+          <div class="release-rows">
+            <div><span class="gate-id">01</span><strong>Native RandomX and miner interoperability</strong><span class="gate-label">ISOLATED TESTS</span></div>
+            <div><span class="gate-id">02</span><strong>Canonical block acceptance and maturity</strong><span class="gate-label">PENDING</span></div>
+            <div><span class="gate-id">03</span><strong>Durable shares, PPLNS accounting and payouts</strong><span class="gate-label">PENDING</span></div>
+            <div><span class="gate-id">04</span><strong>Security review and launch authorization</strong><span class="gate-label">PENDING</span></div>
+          </div>
+        </section>
+      </main>
+      <footer class="workspace-footer"><span>© FORGECOIN NETWORK · NATIVE FRG</span><span id="last-checked">No backend data received</span><a href="https://github.com/jtgrassie/monero-pool" target="_blank" rel="noopener noreferrer">Pool engine candidate: jtgrassie ↗</a></footer>
+    </div>
+  </div>
+</body>
+</html>

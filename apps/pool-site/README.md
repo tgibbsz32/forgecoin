@@ -23,3 +23,39 @@ this README as the homepage. No build, Node dependencies, scripts, wallet access
 miner, daemon, or backend are needed.
 
 The logo is an exact copy of `docs/images/forgecoin-logo.png`; do not redraw it.
+
+
+## Read-only pool dashboard preview — 2026-10-26
+
+`dashboard.html`, `dashboard.css` and `dashboard.js` are an original
+ForgeCoin-branded responsive interface for **pool/network aggregate statistics**.
+The existing `index.html` is still the authoritative public readiness page and
+now links to the dashboard preview. Both pages retain pre-launch disclosures,
+and the website **does not** introduce a miner wallet lookup, pool endpoint,
+account balances, payment information or functional mining configuration.
+
+The dashboard makes same-origin `GET api/pool-stats` requests only. Use the
+**separate, loopback-only** `services.pool_stats_bridge.app` local preview server
+to serve the frontend and safely normalize the upstream jtgrassie
+`GET /stats` JSON. If there is no valid backend, the UI displays **dashes**,
+a disconnected status and an empty chart. It records up to 24 genuinely
+observed pool hashrate samples *in the current browser session* after a
+stats source connects; there is no fabricated demo curve or persistent tracking.
+
+From the **repository root**:
+
+```sh
+python -m services.pool_stats_bridge.app --port 48775
+```
+
+Open `http://127.0.0.1:48775/dashboard.html` on the **same computer**.
+For details and security warnings, read
+`services/pool_stats_bridge/README.md`.
+No Node installation or build pipeline is needed for the static website.
+All assets are local and keep the existing ForgeCoin logo.
+
+The local stats bridge is *not* designed for public hosting; no deployment is
+made by these files. Before production, port the native jtgrassie backend to
+ForgeCoin and arrange an audited private stats proxy with HTTPS, rate limits,
+chain-identity verification and payout maturity tests. The existing explorer
+and old network are unaffected.

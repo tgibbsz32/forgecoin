@@ -38,10 +38,13 @@ pool needs only your **public FRG receiving address** as
 5. Restore the wallet in an independent new, non-overwriting directory
    on the same trusted PC and verify that the recovered public address
    exactly matches the original before depositing funds.
-6. Supply **only the public receiving address** for operator-fee
-   configuration. The private wallet remains on your computer. Inspect
-   credited fee receipts with the owner wallet, rather than giving the
-   mining pool permission to spend them.
+6. The owner has now supplied a **public receiving address** for operator-fee
+   configuration, and it has been assigned in the pool's prelaunch source
+   config and identity manifest. The private wallet stays on your computer.
+   Independently restore a copy from your offline seed, confirm the resulting
+   public address matches the one you supplied, and inspect future credited
+   fee receipts using your own wallet. Never provide private spend keys or
+   authorize the mining pool to spend this treasury wallet.
 
 An additional `bin/forge-wallet-cli.exe` is included with the verified
 desktop package, so a GUI problem does not strand your funds. The CLI is

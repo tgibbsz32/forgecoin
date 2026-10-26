@@ -41,7 +41,8 @@
     "operator_fee_fraction": "0.01",
     "payouts_enabled": false,
     "stratum_public": false,
-    "operator_fee_address": null
+    "operator_fee_address": "YnJPKnrv2fk6MdHkvvAxDbe1L3Dv7WgtrjPBHnP3NokU1Zri6a8da9SfoDiF9SpQxP4Xn18BT2bBNLnVtCPqXTvr1UTsca4Z4",
+    "operator_fee_address_validation": "native ForgeCoin wallet RPC validate_address: valid standard mainnet, non-integrated, non-subaddress; ownership unverified"
   },
   "prior_chains": {
     "development": {

@@ -49,7 +49,13 @@ jobs:
         run: |
           $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
           if (-not (Test-Path $compiler)) { throw 'Framework C# compiler unavailable' }
-          & $compiler /nologo /target:winexe /optimize+ /platform:anycpu /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll /out:"$env:RUNNER_TEMP\ForgeCoin-NewMainnet-Prelaunch-GUI.exe" apps/desktop/Program.cs
+          # Legacy Framework csc.exe treats a relative path containing '/' as
+          # option-like input in PowerShell on GitHub's Windows runner.
+          # Pass explicit absolute Windows paths for source and output.
+          $source = Join-Path $env:GITHUB_WORKSPACE 'apps\desktop\Program.cs'
+          $output = Join-Path $env:RUNNER_TEMP 'ForgeCoin-NewMainnet-Prelaunch-GUI.exe'
+          if (-not (Test-Path -LiteralPath $source)) { throw 'Windows desktop source missing from checkout' }
+          & $compiler /nologo /target:winexe /optimize+ /platform:anycpu /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll "/out:$output" "$source"
           if ($LASTEXITCODE -ne 0) { throw 'C# GUI compile failed' }
           if (-not (Test-Path "$env:RUNNER_TEMP\ForgeCoin-NewMainnet-Prelaunch-GUI.exe")) { throw 'Compiled GUI missing' }
           Write-Output 'PASS: prelaunch GUI compiles without starting a node, miner or wallet'

@@ -1,0 +1,43 @@
+name: ForgeCoin official C pool compatibility preflight
+on:
+  pull_request:
+    paths:
+      - 'services/official_pool/**'
+      - 'src/cryptonote_config.h'
+      - '.github/workflows/official-pool-compat-preflight.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-guards:
+    name: Offline FRG source preflight (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            services/official_pool/
+            src/cryptonote_config.h
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Verify research boundaries and FRG configuration constants
+        run: python -m unittest discover -s services/official_pool/tests -p 'test_*.py' -v
+  native-c-money-test:
+    name: Exact FRG units and integer operator fee (Linux C)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: services/official_pool
+      - name: Build only the standalone monetary code (no pool or wallet link)
+        run: gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 -o /tmp/frg-money-test services/official_pool/tests/test_currency.c
+      - name: Assert parser, overflow and integer pool fee
+        run: /tmp/frg-money-test

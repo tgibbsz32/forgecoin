@@ -1,0 +1,35 @@
+name: ForgeCoin pool dashboard read-only tests
+on:
+  pull_request:
+    paths:
+      - 'apps/pool-site/**'
+      - 'services/pool_stats_bridge/**'
+      - '.github/workflows/pool-dashboard-readonly-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dashboard-tests:
+    name: Stats bridge and UI syntax (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            apps/pool-site
+            services
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test read-only backend and local HTTP behavior (no wallet or mining)
+        run: python -W error::ResourceWarning -m unittest discover -s services/pool_stats_bridge/tests -t . -v
+      - name: Validate dashboard JavaScript
+        run: node --check apps/pool-site/dashboard.js

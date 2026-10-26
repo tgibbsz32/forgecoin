@@ -44,6 +44,7 @@
 #include "cryptonote_basic/events.h"
 #include "cryptonote_config.h"
 #include "cryptonote_basic/forgecoin_difficulty.h"
+#include "cryptonote_basic/forgecoin_prelaunch.h"
 #include "cryptonote_basic/miner.h"
 #include "hardforks/hardforks.h"
 #include "misc_language.h"
@@ -228,6 +229,12 @@ bool Blockchain::scan_outputkeys_for_indexes(size_t tx_version, const txin_to_ke
         else
           output_index = m_db->get_output_key(tx_in_to_key.amount, i);
 
+        if (!forgecoin_prelaunch::output_allowed(m_nettype == MAINNET, output_index.height))
+        {
+          MERROR_VER("Mainnet genesis outputs are permanently excluded from spending rings");
+          return false;
+        }
+
         // call to the passed boost visitor to grab the public key for the output
         if (!vis.handle_output(output_index.unlock_time, output_index.pubkey, output_index.commitment))
         {
@@ -339,6 +346,10 @@ bool Blockchain::init(BlockchainDB* db, const network_type nettype, bool offline
   m_hardfork->init();
 
   m_db->set_hard_fork(m_hardfork);
+
+  CHECK_AND_ASSERT_MES(forgecoin_prelaunch::block_allowed(m_nettype == MAINNET,
+    m_db->height() == 0 ? 0 : m_db->height() - 1), false,
+    "PRELAUNCH: refusing a mainnet database containing blocks beyond genesis");
 
   // if the blockchain is new, add the genesis block
   // this feels kinda kludgy to do it this way, but can be looked at later.
@@ -1888,6 +1899,12 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
   m_timestamps_and_difficulties_height = 0;
   m_reset_timestamps_and_difficulties_height = true;
   uint64_t block_height = get_block_height(b);
+  if (!forgecoin_prelaunch::block_allowed(m_nettype == MAINNET, block_height))
+  {
+    bvc.m_verifivation_failed = true;
+    MERROR_VER("PRELAUNCH: mainnet alternative blocks are disabled");
+    return false;
+  }
   if(0 == block_height)
   {
     MERROR_VER("Block with id: " << epee::string_tools::pod_to_hex(id) << " (as alternative), but miner tx says height is 0.");
@@ -4096,6 +4113,14 @@ bool Blockchain::handle_block_to_main_chain(const block& bl, const crypto::hash&
   static bool seen_future_version = false;
 
   db_rtxn_guard rtxn_guard(m_db);
+  if (!forgecoin_prelaunch::block_allowed(m_nettype == MAINNET, m_db->height()))
+  {
+    bvc.m_verifivation_failed = true;
+    MERROR_VER("PRELAUNCH: mainnet blocks beyond genesis are disabled");
+    return false;
+  }
+
+
   uint64_t blockchain_height;
   const crypto::hash top_hash = get_tail_id(blockchain_height);
   ++blockchain_height; // block height to chain height

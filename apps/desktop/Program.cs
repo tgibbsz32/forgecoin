@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -35,6 +36,8 @@ namespace ForgeCoinDesktop
 
         private Process daemon;
         private Process walletRpc;
+        // Ephemeral Digest credentials for the local wallet RPC.
+        private NetworkCredential walletRpcCredentials;
         private Process poolMiner;
         private bool walletOpen;
 
@@ -60,6 +63,7 @@ namespace ForgeCoinDesktop
         private TextBox sendAmountBox;
         private Button createWalletButton;
         private Button openWalletButton;
+        private Button restoreWalletButton;
         private Button closeWalletButton;
         private Button seedButton;
         private Button sendButton;
@@ -117,7 +121,7 @@ namespace ForgeCoinDesktop
 
         public MainForm()
         {
-            Text = "ForgeCoin Desktop";
+            Text = "ForgeCoin Desktop - New Mainnet 20261026";
             MinimumSize = new Size(900, 680);
             Size = new Size(1040, 760);
             StartPosition = FormStartPosition.CenterScreen;
@@ -125,9 +129,9 @@ namespace ForgeCoinDesktop
             BackColor = Color.FromArgb(246, 247, 249);
 
             Directory.CreateDirectory(appRoot);
-            Directory.CreateDirectory(Path.Combine(appRoot, "blockchain"));
-            Directory.CreateDirectory(Path.Combine(appRoot, "wallets"));
-            Directory.CreateDirectory(Path.Combine(appRoot, "ringdb"));
+            Directory.CreateDirectory(Path.Combine(appRoot, "blockchain-mainnet-20261026"));
+            Directory.CreateDirectory(Path.Combine(appRoot, "wallets-mainnet-20261026"));
+            Directory.CreateDirectory(Path.Combine(appRoot, "ringdb-mainnet-20261026"));
             Directory.CreateDirectory(Path.Combine(appRoot, "logs"));
 
             TableLayoutPanel shell = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Margin = new Padding(0), Padding = new Padding(0) };
@@ -154,7 +158,7 @@ namespace ForgeCoinDesktop
         {
             Panel header = new Panel { Dock = DockStyle.Top, Height = 82, BackColor = Color.FromArgb(28, 32, 42) };
             Label title = new Label { Text = "FORGECOIN", ForeColor = Color.White, Font = new Font("Segoe UI Semibold", 22F), AutoSize = true, Location = new Point(24, 14) };
-            Label subtitle = new Label { Text = "Phase 3 desktop wallet and node", ForeColor = Color.FromArgb(181, 188, 204), AutoSize = true, Location = new Point(27, 51) };
+            Label subtitle = new Label { Text = "20261026 genesis-frozen wallet — PRELAUNCH, mining disabled", ForeColor = Color.FromArgb(181, 188, 204), AutoSize = true, Location = new Point(27, 51) };
             header.Controls.Add(title);
             header.Controls.Add(subtitle);
             return header;
@@ -201,10 +205,10 @@ namespace ForgeCoinDesktop
             peerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
             peerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             peerPanel.Controls.Add(new Label { Text = "Exclusive peer", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 0);
-            peerBox = new TextBox { Dock = DockStyle.Fill };
+            peerBox = new TextBox { Dock = DockStyle.Fill }; // No verified fresh-mainnet peer before launch.
             peerPanel.Controls.Add(peerBox, 1, 0);
             peerPanel.Controls.Add(new Label { Text = "Leave blank to reuse saved peers. A new installation needs a known ForgeCoin peer. Changes apply after restart.", ForeColor = Color.DimGray, AutoSize = true }, 1, 1);
-            bootstrapModeBox = new CheckBox { Text = "Offline bootstrap mining — mine on this PC without a second peer", AutoSize = true, ForeColor = Color.FromArgb(145, 68, 20), Font = new Font("Segoe UI Semibold", 9.5F), Padding = new Padding(0, 4, 0, 0) };
+            bootstrapModeBox = new CheckBox { Text = "Offline node — no mining before mainnet launch", AutoSize = true, ForeColor = Color.FromArgb(145, 68, 20), Font = new Font("Segoe UI Semibold", 9.5F), Padding = new Padding(0, 4, 0, 0) };
             peerPanel.Controls.Add(bootstrapModeBox, 1, 2);
 
             logBox = new RichTextBox { Dock = DockStyle.Fill, ReadOnly = true, BackColor = Color.FromArgb(18, 21, 28), ForeColor = Color.FromArgb(211, 216, 227), Font = new Font("Consolas", 9F), BorderStyle = BorderStyle.None };
@@ -247,8 +251,10 @@ namespace ForgeCoinDesktop
             openGrid.Controls.Add(createWalletButton, 4, 0);
             openGrid.Controls.Add(openWalletButton, 5, 0);
             walletState = new Label { Text = "Wallet service stopped", ForeColor = Color.DimGray, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
-            openGrid.SetColumnSpan(walletState, 4);
+            openGrid.SetColumnSpan(walletState, 3);
             openGrid.Controls.Add(walletState, 0, 1);
+            restoreWalletButton = SecondaryButton("Restore", RestoreWallet);
+            openGrid.Controls.Add(restoreWalletButton, 3, 1);
             closeWalletButton = SecondaryButton("Close wallet", CloseWallet);
             closeWalletButton.Enabled = false;
             openGrid.Controls.Add(closeWalletButton, 4, 1);
@@ -265,7 +271,12 @@ namespace ForgeCoinDesktop
 
             GroupBox receiveGroup = new GroupBox { Text = "Receive", Dock = DockStyle.Fill };
             addressBox = new TextBox { Dock = DockStyle.Fill, ReadOnly = true, Multiline = true, Font = new Font("Consolas", 9.5F), Text = "Open a wallet to view its address." };
-            receiveGroup.Controls.Add(addressBox);
+            TableLayoutPanel receivePanel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1 };
+            receivePanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            receivePanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 175));
+            receivePanel.Controls.Add(addressBox, 0, 0);
+            receivePanel.Controls.Add(SecondaryButton("Copy address", CopyPrimaryAddress), 1, 0);
+            receiveGroup.Controls.Add(receivePanel);
 
             GroupBox sendGroup = new GroupBox { Text = "Send", Dock = DockStyle.Fill };
             TableLayoutPanel sendGrid = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(10), ColumnCount = 3, RowCount = 3 };
@@ -450,7 +461,7 @@ namespace ForgeCoinDesktop
         {
             try
             {
-                IDictionary info = Rpc("http://127.0.0.1:19481/json_rpc", "get_info", new Dictionary<string, object>());
+                IDictionary info = Rpc("http://127.0.0.1:39481/json_rpc", "get_info", new Dictionary<string, object>());
                 long height = info.Contains("height") ? ToLong(info["height"]) : 0;
                 double difficulty = info.Contains("difficulty") ? Convert.ToDouble(info["difficulty"], CultureInfo.InvariantCulture) : 0;
                 double target = info.Contains("target") ? Math.Max(1, Convert.ToDouble(info["target"], CultureInfo.InvariantCulture)) : 120;
@@ -468,7 +479,7 @@ namespace ForgeCoinDesktop
                 if (height <= 0) return;
                 long end = height - 1;
                 long start = Math.Max(0, end - 9);
-                IDictionary range = Rpc("http://127.0.0.1:19481/json_rpc", "get_block_headers_range", new Dictionary<string, object> { { "start_height", start }, { "end_height", end } });
+                IDictionary range = Rpc("http://127.0.0.1:39481/json_rpc", "get_block_headers_range", new Dictionary<string, object> { { "start_height", start }, { "end_height", end } });
                 IEnumerable headers = range.Contains("headers") ? range["headers"] as IEnumerable : null;
                 if (headers == null) return;
                 List<IDictionary> ordered = new List<IDictionary>();
@@ -538,10 +549,10 @@ namespace ForgeCoinDesktop
 
         private void ShowExplorerBlock(IDictionary<string, object> parameters)
         {
-            IDictionary result = Rpc("http://127.0.0.1:19481/json_rpc", "get_block", parameters);
+            IDictionary result = Rpc("http://127.0.0.1:39481/json_rpc", "get_block", parameters);
             IDictionary header = result.Contains("block_header") ? result["block_header"] as IDictionary : null;
             if (header == null) throw new InvalidOperationException("The local node did not return that block.");
-            IDictionary info = Rpc("http://127.0.0.1:19481/json_rpc", "get_info", new Dictionary<string, object>());
+            IDictionary info = Rpc("http://127.0.0.1:39481/json_rpc", "get_info", new Dictionary<string, object>());
             long chainHeight = info.Contains("height") ? ToLong(info["height"]) : 0;
             long blockHeight = header.Contains("height") ? ToLong(header["height"]) : 0;
             long timestamp = header.Contains("timestamp") ? ToLong(header["timestamp"]) : 0;
@@ -578,7 +589,7 @@ namespace ForgeCoinDesktop
         private void ShowExplorerTransaction(string hash)
         {
             ArrayList hashes = new ArrayList { hash };
-            IDictionary result = RestRpc("http://127.0.0.1:19481/get_transactions", new Dictionary<string, object> { { "txs_hashes", hashes }, { "decode_as_json", true }, { "prune", true } });
+            IDictionary result = RestRpc("http://127.0.0.1:39481/get_transactions", new Dictionary<string, object> { { "txs_hashes", hashes }, { "decode_as_json", true }, { "prune", true } });
             IEnumerable txs = result.Contains("txs") ? result["txs"] as IEnumerable : null;
             IDictionary tx = null;
             if (txs != null) foreach (object item in txs) { tx = item as IDictionary; if (tx != null) break; }
@@ -587,7 +598,7 @@ namespace ForgeCoinDesktop
             bool inPool = tx.Contains("in_pool") && Convert.ToBoolean(tx["in_pool"], CultureInfo.InvariantCulture);
             long blockHeight = tx.Contains("block_height") ? ToLong(tx["block_height"]) : 0;
             long timestamp = tx.Contains("block_timestamp") ? ToLong(tx["block_timestamp"]) : 0;
-            IDictionary info = Rpc("http://127.0.0.1:19481/json_rpc", "get_info", new Dictionary<string, object>());
+            IDictionary info = Rpc("http://127.0.0.1:39481/json_rpc", "get_info", new Dictionary<string, object>());
             long chainHeight = info.Contains("height") ? ToLong(info["height"]) : 0;
             long confirmations = inPool ? 0 : Math.Max(0, chainHeight - blockHeight);
             long fee = 0;
@@ -814,9 +825,9 @@ namespace ForgeCoinDesktop
             string exe = Path.Combine(binRoot, "forged.exe");
             if (!File.Exists(exe)) { ShowError("The ForgeCoin daemon is missing from the bin folder."); return; }
             List<string> args = new List<string> {
-                "--data-dir", Quote(Path.Combine(appRoot, "blockchain")),
-                "--p2p-bind-ip", "0.0.0.0", "--p2p-bind-port", "19480",
-                "--rpc-bind-ip", "127.0.0.1", "--rpc-bind-port", "19481",
+                "--data-dir", Quote(Path.Combine(appRoot, "blockchain-mainnet-20261026")),
+                "--p2p-bind-ip", bootstrapModeBox.Checked ? "127.0.0.1" : "0.0.0.0", "--p2p-bind-port", "39480",
+                "--rpc-bind-ip", "127.0.0.1", "--rpc-bind-port", "39481",
                 "--no-igd", "--no-zmq", "--check-updates", "disabled",
                 "--disable-dns-checkpoints", "--non-interactive", "--log-level", "1"
             };
@@ -830,6 +841,11 @@ namespace ForgeCoinDesktop
             {
                 args.Add("--allow-local-ip"); args.Add("--add-exclusive-node"); args.Add(Quote(peer));
             }
+            if (!nodeOfflineMode && peer.Length == 0)
+            {
+                ShowError("Specify a verified fresh-mainnet peer. The retired development chain is not supported.");
+                return;
+            }
             daemon = StartCaptured(exe, string.Join(" ", args.ToArray()), "NODE");
             if (daemon != null)
             {
@@ -842,7 +858,7 @@ namespace ForgeCoinDesktop
         private void StopNode(object sender, EventArgs e)
         {
             if (!IsRunning(daemon)) { SetNodeStopped(); return; }
-            try { Rpc("http://127.0.0.1:19481/json_rpc", "stop_daemon", new Dictionary<string, object>()); } catch { }
+            try { Rpc("http://127.0.0.1:39481/json_rpc", "stop_daemon", new Dictionary<string, object>()); } catch { }
             WaitThenKill(daemon);
             daemon = null;
             SetNodeStopped();
@@ -862,8 +878,8 @@ namespace ForgeCoinDesktop
             {
                 try
                 {
-                    IDictionary result = Rpc("http://127.0.0.1:19481/json_rpc", "get_info", new Dictionary<string, object>());
-                    IDictionary header = Rpc("http://127.0.0.1:19481/json_rpc", "get_last_block_header", new Dictionary<string, object>());
+                    IDictionary result = Rpc("http://127.0.0.1:39481/json_rpc", "get_info", new Dictionary<string, object>());
+                    IDictionary header = Rpc("http://127.0.0.1:39481/json_rpc", "get_last_block_header", new Dictionary<string, object>());
                     PostUi(delegate
                     {
                         long height = ToLong(result["height"]);
@@ -894,19 +910,74 @@ namespace ForgeCoinDesktop
             if (IsRunning(walletRpc)) return;
             string exe = Path.Combine(binRoot, "forge-wallet-rpc.exe");
             if (!File.Exists(exe)) throw new FileNotFoundException("The ForgeCoin wallet service is missing.", exe);
-            string args = "--wallet-dir " + Quote(Path.Combine(appRoot, "wallets")) +
-                " --rpc-bind-ip 127.0.0.1 --rpc-bind-port 19482 --disable-rpc-login" +
-                " --daemon-address 127.0.0.1:19481 --trusted-daemon" +
-                " --shared-ringdb-dir " + Quote(Path.Combine(appRoot, "ringdb")) +
+            // Monero-derived wallet RPC supports HTTP Digest authentication.
+            // Loopback binding alone cannot protect a treasury seed or
+            // transfer methods from an unrelated local process.
+            byte[] secret = new byte[32];
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create()) rng.GetBytes(secret);
+            walletRpcCredentials = new NetworkCredential("forgecoin-desktop", BitConverter.ToString(secret).Replace("-", ""));
+            Array.Clear(secret, 0, secret.Length);
+            string login = walletRpcCredentials.UserName + ":" + walletRpcCredentials.Password;
+            string args = "--wallet-dir " + Quote(Path.Combine(appRoot, "wallets-mainnet-20261026")) +
+                " --rpc-bind-ip 127.0.0.1 --rpc-bind-port 39483 --rpc-login " + Quote(login) +
+                " --daemon-address 127.0.0.1:39481 --trusted-daemon" +
+                " --shared-ringdb-dir " + Quote(Path.Combine(appRoot, "ringdb-mainnet-20261026")) +
                 " --log-file " + Quote(Path.Combine(appRoot, "logs", "wallet-rpc.log"));
             walletRpc = StartCaptured(exe, args, "WALLET");
             if (walletRpc == null) throw new InvalidOperationException("Could not start the wallet service.");
             for (int i = 0; i < 30; i++)
             {
                 Thread.Sleep(200);
-                try { Rpc("http://127.0.0.1:19482/json_rpc", "get_version", new Dictionary<string, object>()); return; } catch { }
+                try { Rpc("http://127.0.0.1:39483/json_rpc", "get_version", new Dictionary<string, object>()); return; } catch { }
             }
             throw new InvalidOperationException("The wallet service did not become ready.");
+        }
+
+        private void RestoreWallet(object sender, EventArgs e)
+        {
+            try
+            {
+                if (walletOpen) throw new InvalidOperationException("Close the current wallet before restoring another.");
+                string name = ValidWalletName();
+                string password = passwordBox.Text;
+                if (password.Length < 12)
+                    throw new InvalidOperationException("Choose a wallet-encryption password of at least 12 characters.");
+                if (File.Exists(Path.Combine(appRoot, "wallets-mainnet-20261026", name))
+                    || File.Exists(Path.Combine(appRoot, "wallets-mainnet-20261026", name + ".keys")))
+                    throw new InvalidOperationException("This wallet name already exists. Choose a different name so your original files are preserved.");
+
+                using (Form restore = new Form { Text = "Restore ForgeCoin wallet — OFFLINE ONLY", Size = new Size(700, 235),
+                    StartPosition = FormStartPosition.CenterParent, FormBorderStyle = FormBorderStyle.FixedDialog,
+                    MinimizeBox = false, MaximizeBox = false, ShowInTaskbar = false })
+                {
+                    Label warning = new Label { Text = "Enter your 25 recovery words in order. They stay in this window and are sent only to your authenticated local wallet service. Never share them with a website or support contact.",
+                        Dock = DockStyle.Top, Height = 73, ForeColor = Color.DarkRed, Padding = new Padding(10) };
+                    TextBox words = new TextBox { Dock = DockStyle.Top, Height = 33, UseSystemPasswordChar = true,
+                        Font = new Font("Segoe UI", 10F), Margin = new Padding(10) };
+                    Panel actions = new Panel { Dock = DockStyle.Bottom, Height = 55 };
+                    Button cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 105, Location = new Point(435, 11) };
+                    Button confirm = new Button { Text = "Restore wallet", DialogResult = DialogResult.OK, Width = 130, Location = new Point(546, 11) };
+                    actions.Controls.Add(cancel); actions.Controls.Add(confirm);
+                    restore.Controls.Add(actions); restore.Controls.Add(words); restore.Controls.Add(warning);
+                    restore.AcceptButton = confirm; restore.CancelButton = cancel;
+                    try
+                    {
+                        if (restore.ShowDialog(this) != DialogResult.OK) return;
+                        string seed = words.Text.Trim();
+                        if (seed.Split(new char[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length != 25)
+                            throw new InvalidOperationException("A standard ForgeCoin recovery phrase has 25 words. Check the phrase locally and try again.");
+                        EnsureWalletService();
+                        Dictionary<string, object> values = new Dictionary<string, object> {
+                            { "filename", name }, { "password", password }, { "seed", seed },
+                            { "restore_height", 0 }, { "language", "English" }
+                        };
+                        Rpc("http://127.0.0.1:39483/json_rpc", "restore_deterministic_wallet", values);
+                        WalletOpened("Restored " + name + " — verify the address against your original backup");
+                    }
+                    finally { words.Clear(); }
+                }
+            }
+            catch (Exception ex) { ShowError(ex.Message); }
         }
 
         private void CreateWallet(object sender, EventArgs e)
@@ -914,10 +985,15 @@ namespace ForgeCoinDesktop
             try
             {
                 string name = ValidWalletName();
+                if (passwordBox.Text.Length < 12)
+                    throw new InvalidOperationException("Choose a wallet-encryption password of at least 12 characters.");
+                string existing = Path.Combine(appRoot, "wallets-mainnet-20261026", name);
+                if (File.Exists(existing) || File.Exists(existing + ".keys"))
+                    throw new InvalidOperationException("Wallet already exists. Use Open instead of overwriting it.");
                 EnsureWalletService();
                 Dictionary<string, object> p = new Dictionary<string, object> { { "filename", name }, { "password", passwordBox.Text }, { "language", "English" } };
-                Rpc("http://127.0.0.1:19482/json_rpc", "create_wallet", p);
-                WalletOpened("Created " + name);
+                Rpc("http://127.0.0.1:39483/json_rpc", "create_wallet", p);
+                WalletOpened("Created " + name + " — record and verify your recovery seed offline");
                 ShowRecoverySeed(null, EventArgs.Empty);
             }
             catch (Exception ex) { ShowError(ex.Message); }
@@ -930,7 +1006,7 @@ namespace ForgeCoinDesktop
                 string name = ValidWalletName();
                 EnsureWalletService();
                 Dictionary<string, object> p = new Dictionary<string, object> { { "filename", name }, { "password", passwordBox.Text } };
-                Rpc("http://127.0.0.1:19482/json_rpc", "open_wallet", p);
+                Rpc("http://127.0.0.1:39483/json_rpc", "open_wallet", p);
                 WalletOpened("Opened " + name);
             }
             catch (Exception ex) { ShowError(ex.Message); }
@@ -939,7 +1015,7 @@ namespace ForgeCoinDesktop
         private string ValidWalletName()
         {
             string name = walletNameBox.Text.Trim();
-            if (name.Length == 0) throw new InvalidOperationException("Enter a wallet name.");
+            if (name.Length == 0 || name.Length > 64 || name == "." || name == "..") throw new InvalidOperationException("Enter a wallet name of 1-64 characters, not a filesystem path.");
             if (name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || name.Contains("\\") || name.Contains("/")) throw new InvalidOperationException("Use a simple wallet filename without folders.");
             return name;
         }
@@ -949,20 +1025,45 @@ namespace ForgeCoinDesktop
             walletOpen = true;
             walletState.Text = message;
             walletState.ForeColor = Color.FromArgb(40, 125, 78);
-            createWalletButton.Enabled = false; openWalletButton.Enabled = false; closeWalletButton.Enabled = true; seedButton.Enabled = true; sendButton.Enabled = true;
+            createWalletButton.Enabled = false; openWalletButton.Enabled = false; restoreWalletButton.Enabled = false;
+            closeWalletButton.Enabled = true; seedButton.Enabled = true;
+            // No transaction can be broadcast before the replacement mainnet launches.
+            sendButton.Enabled = false;
             passwordBox.Clear();
+            try
+            {
+                IDictionary response = Rpc("http://127.0.0.1:39483/json_rpc", "get_address",
+                    new Dictionary<string, object> { { "account_index", 0 } });
+                if (response.Contains("address")) addressBox.Text = Convert.ToString(response["address"], CultureInfo.InvariantCulture);
+            }
+            catch (Exception ex) { walletState.Text = message + " — public address still loading: " + ex.Message; }
             RefreshWallet();
             RefreshAddressLists();
         }
 
         private void CloseWallet(object sender, EventArgs e)
         {
-            try { Rpc("http://127.0.0.1:19482/json_rpc", "close_wallet", new Dictionary<string, object>()); } catch { }
+            try { Rpc("http://127.0.0.1:39483/json_rpc", "close_wallet", new Dictionary<string, object>()); } catch { }
             walletOpen = false;
             walletState.Text = "Wallet closed"; walletState.ForeColor = Color.DimGray;
-            createWalletButton.Enabled = true; openWalletButton.Enabled = true; closeWalletButton.Enabled = false; seedButton.Enabled = false; sendButton.Enabled = false;
+            createWalletButton.Enabled = true; openWalletButton.Enabled = true; restoreWalletButton.Enabled = true;
+            closeWalletButton.Enabled = false; seedButton.Enabled = false; sendButton.Enabled = false;
             balanceValue.Text = "—"; unlockedValue.Text = "—"; addressBox.Text = "Open a wallet to view its address.";
             receiveAddressGrid.Rows.Clear(); contactGrid.Rows.Clear();
+        }
+
+        private void CopyPrimaryAddress(object sender, EventArgs e)
+        {
+            if (!walletOpen) { ShowError("Open or create a wallet first."); return; }
+            string address = addressBox.Text.Trim();
+            if (address.Length < 90 || address.IndexOf(' ') >= 0)
+            {
+                ShowError("The wallet has not returned a valid public receiving address.");
+                return;
+            }
+            Clipboard.SetText(address);
+            MessageBox.Show("Public receiving address copied. Share only this address, never the seed or wallet password.",
+                "ForgeCoin Treasury", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void ShowRecoverySeed(object sender, EventArgs e)
@@ -970,7 +1071,7 @@ namespace ForgeCoinDesktop
             try
             {
                 if (!walletOpen) throw new InvalidOperationException("Open a wallet first.");
-                IDictionary result = Rpc("http://127.0.0.1:19482/json_rpc", "query_key", new Dictionary<string, object> { { "key_type", "mnemonic" } });
+                IDictionary result = Rpc("http://127.0.0.1:39483/json_rpc", "query_key", new Dictionary<string, object> { { "key_type", "mnemonic" } });
                 string seed = result.Contains("key") ? Convert.ToString(result["key"]) : "";
                 if (seed.Length == 0) throw new InvalidOperationException("The wallet service did not return a recovery seed.");
 
@@ -978,10 +1079,10 @@ namespace ForgeCoinDesktop
                 Label warning = new Label { Text = "Write these words down and store them offline. Anyone with this seed can spend the wallet's funds.", Dock = DockStyle.Top, Height = 58, Padding = new Padding(14), ForeColor = Color.DarkRed };
                 TextBox words = new TextBox { Text = seed, ReadOnly = true, Multiline = true, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 12F), Margin = new Padding(14), ScrollBars = ScrollBars.Vertical };
                 Panel buttons = new Panel { Dock = DockStyle.Bottom, Height = 58 };
-                Button copy = new Button { Text = "Copy", Width = 100, Height = 34, Location = new Point(478, 12) };
-                Button done = new Button { Text = "I saved it", Width = 100, Height = 34, Location = new Point(588, 12), DialogResult = DialogResult.OK };
-                copy.Click += delegate { Clipboard.SetText(seed); };
-                buttons.Controls.Add(copy); buttons.Controls.Add(done);
+                // Do not copy mnemonic secrets onto the Windows clipboard.
+                // The user must keep the recovery phrase in offline custody.
+                Button done = new Button { Text = "I wrote it down", Width = 145, Height = 34, Location = new Point(533, 12), DialogResult = DialogResult.OK };
+                buttons.Controls.Add(done);
                 dialog.AcceptButton = done;
                 dialog.Controls.Add(words); dialog.Controls.Add(warning); dialog.Controls.Add(buttons);
                 dialog.ShowDialog(this);
@@ -994,7 +1095,7 @@ namespace ForgeCoinDesktop
             if (!walletOpen) return;
             try
             {
-                IDictionary addresses = Rpc("http://127.0.0.1:19482/json_rpc", "get_address", new Dictionary<string, object> { { "account_index", 0 } });
+                IDictionary addresses = Rpc("http://127.0.0.1:39483/json_rpc", "get_address", new Dictionary<string, object> { { "account_index", 0 } });
                 receiveAddressGrid.Rows.Clear();
                 IEnumerable rows = addresses.Contains("addresses") ? addresses["addresses"] as IEnumerable : null;
                 if (rows != null)
@@ -1011,7 +1112,7 @@ namespace ForgeCoinDesktop
                     }
                 }
 
-                IDictionary book = Rpc("http://127.0.0.1:19482/json_rpc", "get_address_book", new Dictionary<string, object> { { "entries", new object[0] } });
+                IDictionary book = Rpc("http://127.0.0.1:39483/json_rpc", "get_address_book", new Dictionary<string, object> { { "entries", new object[0] } });
                 contactGrid.Rows.Clear();
                 IEnumerable contacts = book.Contains("entries") ? book["entries"] as IEnumerable : null;
                 if (contacts != null)
@@ -1036,7 +1137,7 @@ namespace ForgeCoinDesktop
             {
                 if (!walletOpen) throw new InvalidOperationException("Open a wallet before generating an address.");
                 string label = receiveLabelBox.Text.Trim();
-                Rpc("http://127.0.0.1:19482/json_rpc", "create_address", new Dictionary<string, object> { { "account_index", 0 }, { "label", label } });
+                Rpc("http://127.0.0.1:39483/json_rpc", "create_address", new Dictionary<string, object> { { "account_index", 0 }, { "label", label } });
                 receiveLabelBox.Clear();
                 RefreshAddressLists();
             }
@@ -1063,7 +1164,7 @@ namespace ForgeCoinDesktop
                 string address = contactAddressBox.Text.Trim();
                 string name = contactNameBox.Text.Trim();
                 if (address.Length < 20) throw new InvalidOperationException("Enter a valid ForgeCoin recipient address.");
-                Rpc("http://127.0.0.1:19482/json_rpc", "add_address_book", new Dictionary<string, object> { { "address", address }, { "description", name } });
+                Rpc("http://127.0.0.1:39483/json_rpc", "add_address_book", new Dictionary<string, object> { { "address", address }, { "description", name } });
                 contactNameBox.Clear(); contactAddressBox.Clear();
                 RefreshAddressLists();
             }
@@ -1088,7 +1189,7 @@ namespace ForgeCoinDesktop
                 if (contactGrid.SelectedRows.Count == 0) throw new InvalidOperationException("Select a saved recipient first.");
                 int index = Convert.ToInt32(contactGrid.SelectedRows[0].Cells["Index"].Value, CultureInfo.InvariantCulture);
                 if (MessageBox.Show("Delete this saved recipient?", "ForgeCoin", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
-                Rpc("http://127.0.0.1:19482/json_rpc", "delete_address_book", new Dictionary<string, object> { { "index", index } });
+                Rpc("http://127.0.0.1:39483/json_rpc", "delete_address_book", new Dictionary<string, object> { { "index", index } });
                 RefreshAddressLists();
             }
             catch (Exception ex) { ShowError(ex.Message); }
@@ -1101,8 +1202,8 @@ namespace ForgeCoinDesktop
             {
                 try
                 {
-                    IDictionary balances = Rpc("http://127.0.0.1:19482/json_rpc", "get_balance", new Dictionary<string, object> { { "account_index", 0 } });
-                    IDictionary addresses = Rpc("http://127.0.0.1:19482/json_rpc", "get_address", new Dictionary<string, object> { { "account_index", 0 } });
+                    IDictionary balances = Rpc("http://127.0.0.1:39483/json_rpc", "get_balance", new Dictionary<string, object> { { "account_index", 0 } });
+                    IDictionary addresses = Rpc("http://127.0.0.1:39483/json_rpc", "get_address", new Dictionary<string, object> { { "account_index", 0 } });
                     PostUi(delegate
                     {
                         if (!walletOpen) return;
@@ -1134,7 +1235,7 @@ namespace ForgeCoinDesktop
                 DialogResult confirm = MessageBox.Show("Send " + amount.ToString("0.########", CultureInfo.InvariantCulture) + " FRG to\n\n" + address + "?", "Confirm transaction", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (confirm != DialogResult.Yes) return;
                 ArrayList destinations = new ArrayList { new Dictionary<string, object> { { "amount", atomic }, { "address", address } } };
-                IDictionary result = Rpc("http://127.0.0.1:19482/json_rpc", "transfer", new Dictionary<string, object> { { "destinations", destinations }, { "account_index", 0 }, { "priority", 0 }, { "get_tx_key", true } });
+                IDictionary result = Rpc("http://127.0.0.1:39483/json_rpc", "transfer", new Dictionary<string, object> { { "destinations", destinations }, { "account_index", 0 }, { "priority", 0 }, { "get_tx_key", true } });
                 string tx = result.Contains("tx_hash") ? Convert.ToString(result["tx_hash"]) : "submitted";
                 MessageBox.Show("Transaction submitted.\n\n" + tx, "ForgeCoin", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 sendAddressBox.Clear(); sendAmountBox.Clear(); RefreshWallet();
@@ -1143,6 +1244,12 @@ namespace ForgeCoinDesktop
         }
 
         private void StartMining(object sender, EventArgs e)
+        {
+            ShowError("New mainnet has not launched. Solo mining is locked until the genesis and consensus release are approved.");
+            return;
+        }
+
+        private void StartMiningAfterLaunch(object sender, EventArgs e)
         {
             try
             {
@@ -1156,7 +1263,7 @@ namespace ForgeCoinDesktop
                     { "do_background_mining", false },
                     { "ignore_battery", true }
                 };
-                RestRpc("http://127.0.0.1:19481/start_mining", request);
+                RestRpc("http://127.0.0.1:39481/start_mining", request);
                 miningState.Text = "Mining"; miningState.BackColor = Color.FromArgb(53, 145, 92);
                 miningDetailLabel.Text = "Miner monitor: starting RandomX workers…";
                 startMiningButton.Enabled = false; stopMiningButton.Enabled = true;
@@ -1167,7 +1274,7 @@ namespace ForgeCoinDesktop
 
         private void StopMining(object sender, EventArgs e)
         {
-            try { RestRpc("http://127.0.0.1:19481/stop_mining", new Dictionary<string, object>()); } catch (Exception ex) { ShowError(ex.Message); }
+            try { RestRpc("http://127.0.0.1:39481/stop_mining", new Dictionary<string, object>()); } catch (Exception ex) { ShowError(ex.Message); }
             miningState.Text = "Stopped"; miningState.BackColor = Color.FromArgb(110, 118, 130);
             hashRateValue.Text = "0"; miningThreadsValue.Text = "0";
             miningDetailLabel.Text = "Miner monitor: stopped at " + DateTime.Now.ToString("HH:mm:ss");
@@ -1193,8 +1300,8 @@ namespace ForgeCoinDesktop
             {
                 try
                 {
-                    IDictionary status = RestRpc("http://127.0.0.1:19481/mining_status", new Dictionary<string, object>());
-                    IDictionary info = Rpc("http://127.0.0.1:19481/json_rpc", "get_info", new Dictionary<string, object>());
+                    IDictionary status = RestRpc("http://127.0.0.1:39481/mining_status", new Dictionary<string, object>());
+                    IDictionary info = Rpc("http://127.0.0.1:39481/json_rpc", "get_info", new Dictionary<string, object>());
                     PostUi(delegate
                     {
                         bool active = status.Contains("active") && Convert.ToBoolean(status["active"], CultureInfo.InvariantCulture);
@@ -1231,6 +1338,12 @@ namespace ForgeCoinDesktop
         }
 
         private void StartPoolMining(object sender, EventArgs e)
+        {
+            ShowError("New mainnet has not launched. Pool mining remains disabled until launch approval.");
+            return;
+        }
+
+        private void StartPoolMiningAfterLaunch(object sender, EventArgs e)
         {
             try
             {
@@ -1371,6 +1484,14 @@ namespace ForgeCoinDesktop
             Dictionary<string, object> request = new Dictionary<string, object> { { "jsonrpc", "2.0" }, { "id", "0" }, { "method", method }, { "params", parameters } };
             byte[] body = Encoding.UTF8.GetBytes(json.Serialize(request));
             HttpWebRequest http = (HttpWebRequest)WebRequest.Create(url);
+            if (url.StartsWith("http://127.0.0.1:39483/", StringComparison.Ordinal))
+            {
+                if (walletRpcCredentials == null) throw new InvalidOperationException("Wallet RPC credentials missing.");
+                CredentialCache cache = new CredentialCache();
+                cache.Add(new Uri("http://127.0.0.1:39483/"), "Digest", walletRpcCredentials);
+                http.Credentials = cache;
+                http.PreAuthenticate = true;
+            }
             http.Method = "POST"; http.ContentType = "application/json"; http.ContentLength = body.Length; http.Timeout = 2000;
             using (Stream s = http.GetRequestStream()) s.Write(body, 0, body.Length);
             string text;
@@ -1522,7 +1643,7 @@ namespace ForgeCoinDesktop
             refreshTimer.Stop();
             miningTimer.Stop();
             if (IsRunning(poolMiner)) { try { poolMiner.Kill(); } catch { } }
-            if (walletOpen) { try { Rpc("http://127.0.0.1:19482/json_rpc", "close_wallet", new Dictionary<string, object>()); } catch { } }
+            if (walletOpen) { try { Rpc("http://127.0.0.1:39483/json_rpc", "close_wallet", new Dictionary<string, object>()); } catch { } }
             if (IsRunning(walletRpc)) { try { walletRpc.Kill(); } catch { } }
             if (IsRunning(daemon))
             {

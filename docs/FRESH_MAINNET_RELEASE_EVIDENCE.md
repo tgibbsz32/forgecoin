@@ -1,3 +1,5 @@
+> **SUPERSEDED HISTORICAL CANDIDATE (20261020).** This candidate was mined offline and archived; it is NOT the current mainnet. Read `config/mainnet.identity.json` and `docs/MAINNET_CUTOVER_RELEASE_GATES_2026-10-26.md` for the replacement chain. Do not mine this candidate.
+
 # Fresh-mainnet release evidence and gates (2026-10-23)
 
 **Status: RELEASE BLOCKED.** Evidence inventory only. No deployment, chain transition, source-merging, wallet migration, or public-mainnet approval is authorized by this document.

@@ -224,17 +224,17 @@ namespace config
   uint64_t const DEFAULT_DUST_THRESHOLD = ((uint64_t)200000); // 2 * pow(10, 9)
   uint64_t const BASE_REWARD_CLAMP_THRESHOLD = ((uint64_t)10000); // pow(10, 8)
 
-  uint64_t const CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 90;
-  uint64_t const CRYPTONOTE_PUBLIC_INTEGRATED_ADDRESS_BASE58_PREFIX = 91;
-  uint64_t const CRYPTONOTE_PUBLIC_SUBADDRESS_BASE58_PREFIX = 92;
-  uint16_t const P2P_DEFAULT_PORT = 19480;
-  uint16_t const RPC_DEFAULT_PORT = 19481;
-  uint16_t const ZMQ_RPC_DEFAULT_PORT = 19482;
+  uint64_t const CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 190;
+  uint64_t const CRYPTONOTE_PUBLIC_INTEGRATED_ADDRESS_BASE58_PREFIX = 191;
+  uint64_t const CRYPTONOTE_PUBLIC_SUBADDRESS_BASE58_PREFIX = 192;
+  uint16_t const P2P_DEFAULT_PORT = 39480;
+  uint16_t const RPC_DEFAULT_PORT = 39481;
+  uint16_t const ZMQ_RPC_DEFAULT_PORT = 39482;
   boost::uuids::uuid const NETWORK_ID = { {
-      0x38 ,0x8D, 0xCA, 0x1C , 0xBA, 0x93 , 0x41, 0xD9, 0x96, 0x41, 0x8A, 0x01, 0x21, 0x26, 0x31, 0x0C
+      0xbd, 0x93, 0x63, 0x59, 0x09, 0xe4, 0x4f, 0xdb, 0x8e, 0xc0, 0x12, 0xfa, 0x9d, 0x6e, 0xf0, 0x90
     } }; // Bender's nightmare
   std::string const GENESIS_TX = "013c01ff0001dfc9b7b80402b595d1f9b584153125490337444ba18d842151ed8dc4586a1d9d1fb06a69002a2101b079cf5447fcc6dd014fc48eff36b325a430e468c4559e70d4ae9dae6acfd961";
-  uint32_t const GENESIS_NONCE = 10000;
+  uint32_t const GENESIS_NONCE = 20261026; // NEW mainnet genesis; no test mining on this chain.
 
   // Hash domain separators
   const char HASH_KEY_BULLETPROOF_EXPONENT[] = "bulletproof";

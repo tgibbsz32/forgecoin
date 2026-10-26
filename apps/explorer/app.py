@@ -9,7 +9,7 @@ import urllib.error
 from flask import Flask, jsonify, request
 
 app = Flask(__name__, static_folder='static', static_url_path='')
-RPC_URL = os.environ.get('FORGE_RPC_URL', 'http://127.0.0.1:19481').rstrip('/')
+RPC_URL = os.environ.get('FORGE_RPC_URL', 'http://127.0.0.1:39481').rstrip('/')
 HEX = re.compile(r'^[0-9a-fA-F]{64}$')
 DIGITS = re.compile(r'^(0|[1-9][0-9]{0,8})$')
 cache = {}
@@ -48,7 +48,16 @@ def node(method, params=None, direct=False):
     if result.get('status') not in (None,'OK'): raise Unavailable()
     return result
 
-def info(): return cached('info', lambda: node('get_info'))
+EXPECTED_GENESIS_NONCE = 20261026
+EXPECTED_GENESIS_HASH = '4bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c'
+def verified_info():
+    state = node('get_info')
+    genesis = node('get_block_header_by_height', {'height': 0}).get('block_header', {})
+    if state.get('nettype') != 'mainnet' or genesis.get('nonce') != EXPECTED_GENESIS_NONCE or genesis.get('hash') != EXPECTED_GENESIS_HASH:
+        raise Unavailable('RPC is not the fresh ForgeCoin mainnet')
+    return state
+
+def info(): return cached('info', verified_info)
 def wide(obj, name):
     return int(obj['wide_'+name],16) if obj.get('wide_'+name) else int(obj.get(name,0))
 def header(h):

@@ -4,6 +4,7 @@ These are static compatibility tests, NOT proof that the C pool compiles or
 produces a valid accepted block. Never make network/daemon/wallet calls.
 """
 from pathlib import Path
+import json
 import re
 import unittest
 
@@ -29,8 +30,8 @@ class NativeBackendPreflight(unittest.TestCase):
         self.assertRegex(self.chain, r"#define CRYPTONOTE_DISPLAY_DECIMAL_POINT\s+8")
         self.assertIn("FRG_ATOMIC_UNITS UINT64_C(100000000)", self.currency)
         self.assertIn("FRG_COIN_DECIMALS 8", self.currency)
-        self.assertRegex(self.chain, r"CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX\s*=\s*90;")
-        self.assertIn("#define MAINNET_ADDRESS_PREFIX 90", self.pool)
+        self.assertRegex(self.chain, r"CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX\s*=\s*190;")
+        self.assertIn("#define MAINNET_ADDRESS_PREFIX 190", self.pool)
         self.assertIn("#define BLOCK_TIME 120", self.pool)
 
     def test_backend_payout_threshold_never_uses_float_units(self):
@@ -52,7 +53,7 @@ class NativeBackendPreflight(unittest.TestCase):
             "pool-listen": "127.0.0.1",
             "webui-listen": "127.0.0.1",
             "rpc-host": "127.0.0.1",
-            "rpc-port": "19481",
+            "rpc-port": "39481",
             "wallet-rpc-host": "127.0.0.1",
             "wallet-rpc-port": "0",
             "disable-payouts": "1",
@@ -66,6 +67,32 @@ class NativeBackendPreflight(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertEqual(self.conf.get(key), expected)
         self.assertNotIn("9y4V6rSRb", (VENDOR / "pool.conf").read_text(encoding="utf-8"))
+
+    def test_official_fee_treasury_matches_mainnet_manifest_and_preserves_prelaunch_safety(self):
+        manifest = json.loads((ROOT / "config/mainnet.identity.json").read_text(encoding="utf-8"))
+        public_address = manifest["pool"]["operator_fee_address"]
+        self.assertEqual(public_address,
+                         "YnJPKnrv2fk6MdHkvvAxDbe1L3Dv7WgtrjPBHnP3NokU1Zri6a8da9SfoDiF9SpQxP4Xn18BT2bBNLnVtCPqXTvr1UTsca4Z4")
+        self.assertEqual(self.conf["pool-fee-wallet"], public_address)
+        self.assertRegex(public_address, r"^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{97}$")
+        self.assertIn("valid standard mainnet", manifest["pool"]["operator_fee_address_validation"])
+        self.assertEqual(manifest["pool"]["operator_fee_fraction"], self.conf["pool-fee"])
+        self.assertEqual(manifest["genesis_nonce"], 20261026)
+        self.assertEqual(manifest["genesis_hash"],
+                         "4bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c")
+        # The public fee destination does not give the pool permission to run
+        # or to claim ownership of the signing keys.
+        self.assertFalse(manifest["release_authorized"])
+        self.assertFalse(manifest["pool"]["payouts_enabled"])
+        self.assertFalse(manifest["pool"]["stratum_public"])
+        self.assertEqual(self.conf["pool-wallet"], "")
+        self.assertEqual(self.conf["wallet-rpc-port"], "0")
+        self.assertEqual(self.conf["disable-payouts"], "1")
+        self.assertEqual(self.conf["pool-listen"], "127.0.0.1")
+        self.assertEqual(self.conf["webui-listen"], "127.0.0.1")
+        self.assertIn('if (!config.pool_fee_wallet[0])', self.pool)
+        self.assertIn('fee_nettype != nettype', self.pool)
+        self.assertIn('strcmp(config.pool_fee_wallet, config.pool_wallet) == 0', self.pool)
 
     def test_runtime_rejects_unsafe_user_configs(self):
         self.assertIn("#ifndef FRG_REVIEWED_PUBLIC_POOL", self.pool)

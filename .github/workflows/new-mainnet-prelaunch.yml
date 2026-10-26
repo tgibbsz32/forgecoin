@@ -1,0 +1,61 @@
+name: ForgeCoin 20261026 mainnet prelaunch checks
+on:
+  pull_request:
+    paths:
+      - 'config/mainnet.identity.json'
+      - 'src/**'
+      - 'external/randomx/CMakeLists.txt'
+      - 'apps/desktop/**'
+      - 'apps/desktop-tauri/**'
+      - 'apps/explorer/**'
+      - 'apps/pool-site/**'
+      - 'services/official_pool/**'
+      - 'tests/mainnet/**'
+      - 'tools/verify_mainnet.py'
+      - '.github/workflows/new-mainnet-prelaunch.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-verification:
+    name: Frozen genesis, desktop, and pool guards
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Mainnet identity and desktop safeguards
+        run: python -m unittest discover -s tests/mainnet -p 'test_*.py' -v
+      - name: Pool source and wallet accounting safeguards
+        run: python -m unittest discover -s services/official_pool/tests -p 'test_*.py' -v
+      - name: Strict FRG atomic amount and fee tests
+        run: |
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 -o /tmp/frg-money-test services/official_pool/tests/test_currency.c
+          /tmp/frg-money-test
+  windows-desktop-gui:
+    name: Compile Windows Forms wallet GUI only; do not start miner
+    runs-on: windows-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Compile prelaunch Windows GUI
+        shell: pwsh
+        run: |
+          $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+          if (-not (Test-Path $compiler)) { throw 'Framework C# compiler unavailable' }
+          # Legacy Framework csc.exe treats a relative path containing '/' as
+          # option-like input in PowerShell on GitHub's Windows runner.
+          # Pass explicit absolute Windows paths for source and output.
+          $source = Join-Path $env:GITHUB_WORKSPACE 'apps\desktop\Program.cs'
+          $output = Join-Path $env:RUNNER_TEMP 'ForgeCoin-NewMainnet-Prelaunch-GUI.exe'
+          if (-not (Test-Path -LiteralPath $source)) { throw 'Windows desktop source missing from checkout' }
+          & $compiler /nologo /target:winexe /optimize+ /platform:anycpu /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll "/out:$output" "$source"
+          if ($LASTEXITCODE -ne 0) { throw 'C# GUI compile failed' }
+          if (-not (Test-Path "$env:RUNNER_TEMP\ForgeCoin-NewMainnet-Prelaunch-GUI.exe")) { throw 'Compiled GUI missing' }
+          Write-Output 'PASS: prelaunch GUI compiles without starting a node, miner or wallet'

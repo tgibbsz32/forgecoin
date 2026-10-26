@@ -136,6 +136,16 @@ ForgeCoin is not yet an independently audited production network. Its inherited 
 
 ForgeCoin is derived from Monero v0.18.5.1 and CryptoNote code and is distributed under the BSD 3-Clause license included with the source. XMRig, when distributed with a desktop release, remains a separate GPLv3 component with its matching source and license.
 
+## Planned interoperability and future protocol upgrades
+
+ForgeCoin's first planned post-launch interoperability step is a **user-backed, 1:1 Solana wFRG bridge**, with audited native FRG deposit accounting, mint/burn, reserve reconciliation and user redemption.
+
+A later technical objective is an **FCMP++/CARROT upgrade of the existing ForgeCoin blockchain via a coordinated hard fork**, if independently validated compatibility makes this safe. A separate successor network and voluntary migration plan would be considered only as a fallback. Plans for eventual Solana-wrapper retirement require a usable redemption process.
+
+FCMP++/CARROT engineering includes authenticated curve-tree databases, membership-proof and Generalized Bulletproof consensus validation, CARROT wallet/address and legacy-output compatibility, mempool revalidation during upgrades, reviewed performance improvements and a separate high-volume stressnet.
+
+Additional prospective systems include native cross-chain atomic swaps, collateralized stable-denominated private transfers, independently secured multi-party trading vaults, L2 payment/settlement systems and possible L3 private applications. These are future research items rather than features of the present network. See [the complete future architecture](SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md).
+
 ## Disclaimer
 
 This document describes software behavior and project intent. It is not a promise of value, investment return, anonymity, uninterrupted operation, or regulatory treatment. Network participants are responsible for evaluating software, operational, legal, and financial risk.

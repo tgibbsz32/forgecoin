@@ -22,9 +22,17 @@ ForgeCoin is in the bootstrap stage. The chain is operational, but the network c
 
 ## Current asset scope (October 2026)
 
-**ForgeCoin V1 is native FRG only.** There is no Solana token, bridge or additional mining reward at launch. Solana market interoperability remains a **future research option**, not a commitment. The governance draft proposes native **FRG governance bonds** combined with independently verified mining participation for miner representatives; the bonding mechanism is not implemented and has no effect on native proof of work.
+**ForgeCoin V1 is native FRG only.** There is no Solana token, bridge or additional mining reward at launch. The **first intended post-launch interoperability addition** is a **1:1 native-FRG-backed Solana wFRG token and redeemable bridge**. After that, the project intends to research FCMP++/CARROT privacy upgrades, **preferably by hard-forking the existing L1 rather than replacing its blockchain**. A separate successor and opt-in migration are a fallback only if chain continuity is infeasible. The governance draft proposes native **FRG governance bonds** combined with independently verified mining participation for miner representatives; the bonding mechanism is not implemented and has no effect on native proof of work.
 
 See [roadmap](ROADMAP.md), [zero-cost pool research](docs/ZERO_COST_MINING_POOL_RESEARCH.md), and [revised governance charter](governance-charter.md).
+
+## Intended evolution: wFRG bridge first, FCMP++/CARROT later
+
+**Future development only.** ForgeCoin intends to follow native L1 launch with a **Solana Token-2022/SPL wrapper (wFRG) backed 1:1 by locked user-deposited FRG**, including explicit mint/burn/redemption and reserve reconciliation. After that, the preferred FCMP++/CARROT upgrade is a **coordinated in-place hard fork** preserving native FRG chain history and funds if technically sound; a separate successor and opt-in bridge/migration is the fallback. Any interim wFRG wind-down must protect redemption and outstanding reserve obligations.
+
+Future engineering requirements: incremental authenticated curve-tree databases; consensus verification of FCMP++ membership proofs and Generalized Bulletproofs components; CARROT wallet/address and legacy-output compatibility; mempool revalidation across hard-fork activation; and a unique heavy-load stressnet. Further research includes **native atomic swaps with ETH/USDC, backed privacy-shielded synthetic stable assets, TSS/MPC-secured private block-trade routing with potential basis-point fees, L2 payment/settlement systems and possible L3 applications**. All require separate design, audits, custody, security and compliance reviews. Neither perfect privacy nor immediate settlement is guaranteed.
+
+See [the full interoperability, migration and successor plan](docs/SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md) and [ROADMAP.md](ROADMAP.md).
 
 ## Mission
 

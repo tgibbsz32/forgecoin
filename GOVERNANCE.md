@@ -1,12 +1,8 @@
+> [Current mainnet specification, tokenomics and release status](docs/CURRENT_MAINNET.md) — October 26, 2026; prelaunch.
+
 # ForgeCoin Governance
 
-> **Current owner direction (2026-10-24):** Restored native-only fair launch: 50M FRG primary-emission reference, no allocated premine, 100% PoW miner subsidy and perpetual 0.20 FRG/block tail. The 55M/5M genesis treasury proposal is withdrawn. Native trading and user-deposit-backed Solana interoperability are future research. See [roadmap](ROADMAP.md).
 
-
-> **Owner policy update (2026-10-24):** Owner has requested design review of a **10-seat native FRG representative chamber**, without authorizing binding elections. Former legacy staker seats are NOT converted into holder-weighted native FRG votes. Miner eligibility requires verifiable mining and enforceable native FRG bonding; implementation and seat allocation are unresolved. See docs/OWNER_POLICY_DECISIONS_2026-10-24.md.
-
-
-> **Documentation status (2026-10-24):** This file describes consensus-change stewardship only. The provisional FRG governance charter is not ratified; native miner governance bonds, representative seats, quorum and binding elections are not implemented. Practice governance votes grant no authority. See governance-charter.md and docs/RELEASE_STATUS_2026-10-24.md.
 
 
 ForgeCoin consensus is enforced by software run independently by node operators. Repository maintainers can propose and publish changes but cannot remotely force independent nodes to accept them.

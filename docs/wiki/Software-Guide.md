@@ -1,3 +1,5 @@
+> **Current specification — 2026-10-26:** [Frozen mainnet parameters, tokenomics and release status](../CURRENT_MAINNET.md). Public launch is not authorized. Main-branch executables still implement legacy rules; these instructions are not proof of new-mainnet compatibility.
+
 # Software guide — developers, node operators and miners
 
 **Applies to current source only.** A source directory, UI button or successful compile is not evidence of a vetted, publicly released product. See [status](Current-Status.md) before attempting a deployment.
@@ -56,7 +58,7 @@ Do **not** blindly run either commented command until you have checked saved app
 
 ## Node and privacy precautions
 
-- ForgeCoin's old public P2P port is **19480**. Daemon RPC is typically **19481**; wallet RPC must remain protected and local.
+- The frozen mainnet P2P port is **39480**. Daemon RPC is **39481**; wallet RPC must remain protected and local.
 - A wallet **recovery phrase, private/spend key and password are secrets**. Do not post them to issues, logs, websites, screenshots or test summaries. Wallet address is public but should still be excluded from private fixture publications.
 - For offline candidate tests, use fresh test-only data directories, loopback RPC/P2P/ZMQ and disposable wallets; never start an existing public service or chain accidentally.
 - Restoring wallet scans, synchronizing to a public peer and selecting miner/pool settings can have network side effects. Obtain explicit approval for actual mining/transactions.

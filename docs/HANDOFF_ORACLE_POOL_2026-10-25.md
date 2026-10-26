@@ -1,3 +1,5 @@
+> **Historical archive — superseded for current configuration.** Original evidence and decisions below retain their original dates and network parameters. Do not use old ports, genesis, balances, token proposals or release claims as current instructions. See [current mainnet specification](CURRENT_MAINNET.md) and the current roadmap.
+
 # Oracle FRG pool continuation — 2026-10-25
 
 ## Current authorization and boundaries

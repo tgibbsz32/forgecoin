@@ -1,3 +1,5 @@
+> [Current mainnet specification, tokenomics and release status](docs/CURRENT_MAINNET.md) — October 26, 2026; prelaunch.
+
 # ForgeCoin development roadmap — native-first (October 26, 2026)
 
 **Direction:** The milestones below are ForgeCoin’s committed development direction. They describe future work, not released capabilities.

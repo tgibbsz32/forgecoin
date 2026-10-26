@@ -1,3 +1,5 @@
+> **Historical archive.** Original retired-chain results below are preserved for provenance; see [current mainnet specification](../CURRENT_MAINNET.md) for the selected October 26 parameters.
+
 # Accelerated ForgeCoin adjustment tests
 
 ## Outcome

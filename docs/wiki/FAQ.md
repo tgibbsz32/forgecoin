@@ -1,3 +1,5 @@
+> **Current specification — 2026-10-26:** [Frozen mainnet parameters, tokenomics and release status](../CURRENT_MAINNET.md). Public launch is not authorized. Main-branch executables still implement legacy rules; these instructions are not proof of new-mainnet compatibility.
+
 # ForgeCoin FAQ
 
 ### Is ForgeCoin's new mainnet live?

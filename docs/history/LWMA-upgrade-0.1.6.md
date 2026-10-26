@@ -1,3 +1,5 @@
+> **Historical archive.** Original retired-chain results below are preserved for provenance; see [current mainnet specification](../CURRENT_MAINNET.md) for the selected October 26 parameters.
+
 # ForgeCoin Desktop 0.1.6: faster difficulty adjustment
 
 ## Scheduled rules

@@ -1,3 +1,5 @@
+> [Current mainnet specification, tokenomics and release status](../../docs/CURRENT_MAINNET.md) — October 26, 2026; prelaunch.
+
 > **V1 scope:** Native FRG only. Solana wallet authentication and `staking` weights below are legacy, local practice fixtures, not authorized V1 assets or governance rights. Mining-linked secondary token issuance and Solana staking are deferred; the former chamber is withdrawn. Native miner governance bonds require a reviewed enforceable lock and independently verified mining; neither is implemented by this service. See [the current charter](../../governance-charter.md).
 
 # ForgeCoin governance API — development-only foundation

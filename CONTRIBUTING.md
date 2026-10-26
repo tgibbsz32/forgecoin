@@ -1,3 +1,5 @@
+> [Current mainnet specification, tokenomics and release status](docs/CURRENT_MAINNET.md) — October 26, 2026; prelaunch.
+
 # Contributing to ForgeCoin
 
 Thank you for helping improve ForgeCoin. Changes that affect consensus, wallet security, privacy, or release packaging require especially careful review.

@@ -1,3 +1,5 @@
+> [Current mainnet specification, tokenomics and release status](CURRENT_MAINNET.md) — October 26, 2026; prelaunch.
+
 # Native FRG pool, desktop, website and explorer delivery plan
 
 **Updated: 2026-10-24. Status: planned work, not a deployment announcement.** This plan expands [roadmap phases 1 and 2](../ROADMAP.md). No official pool endpoint, production payout service, live pool dashboard or standalone Pool Observer is verified by this review. The online blockchain explorer has recovered source but still needs completion and public deployment verification. No dates or hosting capacity are promised.

@@ -1,3 +1,5 @@
+> **Historical archive — superseded for current configuration.** Original evidence and decisions below retain their original dates and network parameters. Do not use old ports, genesis, balances, token proposals or release claims as current instructions. See [current mainnet specification](CURRENT_MAINNET.md) and the current roadmap.
+
 # XMRig v6.26.0 — isolated native-verified synthetic integration
 
 Date: 2026-10-25. **Result: PASS for the synthetic protocol/PoW boundary only.**

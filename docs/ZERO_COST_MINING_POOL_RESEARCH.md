@@ -1,3 +1,5 @@
+> [Current mainnet specification, tokenomics and release status](CURRENT_MAINNET.md) — October 26, 2026; prelaunch.
+
 # Zero-cost ForgeCoin mining-pool feasibility research
 
 **Research status:** 2026-10-24. **Pre-launch investigation only. No pool has been deployed, funded, audited or shown to produce correct native FRG payouts.** A zero-dollar hosting bill is a constraint, not a guarantee of unrestricted or durable service. Hardware, electricity, existing cloud quota and operational time still have value.

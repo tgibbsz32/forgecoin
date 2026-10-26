@@ -1,3 +1,5 @@
+> **Current specification — 2026-10-26:** [Frozen mainnet parameters, tokenomics and release status](../../docs/CURRENT_MAINNET.md). Public launch is not authorized. Main-branch executables still implement legacy rules; these instructions are not proof of new-mainnet compatibility.
+
 # ForgeCoin native mining-pool backend — isolated C fork (RESEARCH ONLY)
 
 This directory contains the **initial native-FRG compatibility port** of
@@ -42,7 +44,7 @@ imply a backend is accepting shares or sending payments.
   names because ForgeCoin is a Monero fork; that naming is **not** proof of
   a valid build against current FRG.
 - Research config binds the Stratum and statistics sockets to **127.0.0.1**,
-  avoids an embedded third-party pool wallet, uses FRG daemon RPC port 19481,
+  avoids an embedded third-party pool wallet, uses FRG daemon RPC port 39481,
   deliberately leaves wallet RPC port **0**, and disables self-select,
   payouts and any option to bypass native proof-of-work checks.
 - Research builds fail closed if the operator enables public interfaces,

@@ -1,3 +1,5 @@
+> **Current specification — 2026-10-26:** [Frozen mainnet parameters, tokenomics and release status](../CURRENT_MAINNET.md). Public launch is not authorized. Main-branch executables still implement legacy rules; these instructions are not proof of new-mainnet compatibility.
+
 # System architecture and trust boundaries
 
 ForgeCoin includes multiple codebases with **different maturity levels**. Do not infer that every source directory corresponds to a deployed service.
@@ -5,7 +7,7 @@ ForgeCoin includes multiple codebases with **different maturity levels**. Do not
 ## Native blockchain and wallets
 
 - `src/`: Monero-derived C++ consensus rules, RandomX mining, networking, daemon RPC and native wallets.
-- `forged`: full node, maintains chain, validates blocks, exposes P2P and (when configured) RPC. Existing old-network P2P uses **19480**; RPC uses **19481**. Wallet RPC is distinct from daemon RPC.
+- `forged`: full node, maintains chain, validates blocks, exposes P2P and (when configured) RPC. Selected frozen-mainnet P2P is **39480**; daemon RPC is **39481**. Legacy main-branch executables do not implement this selected identity. Wallet RPC is distinct from daemon RPC.
 - `forge-wallet-rpc`: local wallet process for addresses, balances and transactions. Wallet data and private keys must remain local and protected.
 - `tests/`: native and fork-specific tests. Source-level changes are **not** release acceptance without cross-platform and candidate-binary test evidence.
 

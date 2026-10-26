@@ -1,3 +1,5 @@
+> [Current mainnet specification, tokenomics and release status](CURRENT_MAINNET.md) — October 26, 2026; prelaunch.
+
 # ForgeCoin public release checklist
 
 ## Source publication
@@ -11,7 +13,7 @@
 - Build native binaries from the exact source commit being released.
 - Vendored dependencies are included; configure CMake with `-DMANUAL_SUBMODULES=1`.
 - Validate the native build on each supported platform before claiming support.
-- Verify genesis, network UUID, v16 activation at height 1 and monetary constants.
+- Verify genesis, network UUID, v1 genesis and v19 activation at height 1 and monetary constants.
 - Test daemon startup, two-node synchronization, wallet recovery and transfers.
 - Test mining start/stop, address creation, explorer and desktop resizing.
 - **Desktop V1 mining release gate (both modes required):** Before labeling the Windows desktop build ready, execute and record end-to-end **Solo** and **Pool** mining acceptance tests on an isolated, disposable FRG network and a compatible test pool. A process that merely starts does **not** count as a pass.

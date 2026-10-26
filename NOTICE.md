@@ -1,3 +1,5 @@
+> [Current mainnet specification, tokenomics and release status](docs/CURRENT_MAINNET.md) — October 26, 2026; prelaunch.
+
 # ForgeCoin Attribution and Component Notice
 
 ForgeCoin is derived from Monero v0.18.5.1 and CryptoNote code. Original copyright notices are retained in source files and the BSD 3-Clause license is included in `LICENSE`.

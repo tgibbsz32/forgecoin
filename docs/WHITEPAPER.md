@@ -1,25 +1,14 @@
 # ForgeCoin Technical and Economic Whitepaper
 
-> **Current owner direction (2026-10-24):** Restored native-only fair launch: 50M FRG primary-emission reference, no allocated premine, 100% PoW miner subsidy and perpetual 0.20 FRG/block tail. The 55M/5M genesis treasury proposal is withdrawn. Native trading and user-deposit-backed Solana interoperability are future research. See [roadmap](../ROADMAP.md).
+[Current mainnet specification and release status](CURRENT_MAINNET.md). The October 26 identity is frozen and unlaunched; main-branch runtime remains legacy pending separate implementation review.
 
-
-> **Owner policy update (2026-10-24):** Owner policy confirmation: intended native emission retains the 50,000,000 FRG primary-emission reference (NOT a hard cap), perpetual 0.20 FRG/block tail and 100% subsidy to PoW miners, with no ICO/founder/team premine; exact release rules still require audit. The candidate genesis output may be retained ONLY if independently proven permanently unspendable. The development chain and fresh mainnet are separate, with NO automatic balance migration. See OWNER_POLICY_DECISIONS_2026-10-24.md.
-
-
-> **Documentation status (2026-10-24):** This September technical/economic description is not a final release specification. The public development-chain source and the isolated fresh-mainnet candidate use different network identities and difficulty schedules. The 11.92092895 FRG genesis output is indexed in the tested candidate, and permanent unspendability has not been established. See RELEASE_STATUS_2026-10-24.md.
-
-
-> Historical September specification. The recovered October source adds difficulty
-> upgrades at heights 500, 600 and 700 and a new desktop application.
-> See [SOURCE_RECOVERY.md](SOURCE_RECOVERY.md) for the current source schedule.
-
-Version 0.1 - September 2026
+Version 0.2 — October 26, 2026
 
 ## Abstract
 
 ForgeCoin is a privacy-preserving, proof-of-work digital currency derived from Monero v0.18.5.1. It combines private-by-default transactions, RandomX CPU mining, independent full-node validation, and a desktop application with a local blockchain explorer. The network is designed so users can validate balances, blocks, transactions, and consensus rules without trusting a hosted website.
 
-ForgeCoin is presently in its bootstrap stage. The chain is operational, but security depends on attracting independent nodes and miners, distributing hash power across operators, reviewing the forked source, and maintaining a transparent release process.
+ForgeCoin is presently in its bootstrap stage. The selected mainnet is unlaunched; release requires attracting independent nodes and miners, distributing hash power across operators, reviewing the forked source, and maintaining a transparent release process.
 
 ## Mission
 
@@ -40,7 +29,7 @@ Full nodes verify every accepted block and transaction. Miners select valid tran
 
 ## Network identity
 
-| Item | Isolated fresh-mainnet candidate (provisional) |
+| Item | Frozen October 26 mainnet (prelaunch) |
 | --- | --- |
 | Network name | ForgeCoin |
 | Currency symbol | FRG |
@@ -48,14 +37,14 @@ Full nodes verify every accepted block and transaction. Miners select valid tran
 | P2P port | 39480 TCP |
 | RPC port | 39481 TCP |
 | ZMQ RPC port | 39482 TCP |
-| Network UUID | `9e51307a-72a4-4865-b229-114f836ca7d0` |
-| Genesis nonce | 20261020 |
-| Genesis hash | `2a91ebe3007fb301072c5b0c8e130c782d1218e4633f6a30e6c2d692b6ac5f05` |
+| Network UUID | `bd936359-09e4-4fdb-8ec0-12fa9d6ef090` |
+| Genesis nonce | 20261026 |
+| Genesis hash | `4bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c` |
 | Consensus version | v1 at height 0, v19 from height 1 |
 | Initial next-block difficulty | 500,000 through height 15 |
 | Difficulty adjustment | Progressive LWMA from height 16, up to 90 intervals, 400,000 floor |
 
-**Provenance:** The entries above come from the archived isolated fresh candidate source, and its genesis hash is confirmed by saved daemon RPC. These parameters are not approved final-mainnet settings. The existing public development chain uses a separate network identity. Its parameters must not be used to connect to this candidate.
+**Provenance:** Frozen manifest from new-mainnet source snapshot `62fc0b8`, draft PR #111; see [current specification](CURRENT_MAINNET.md). Main still contains legacy runtime code; documentation is not activation or release approval.
 
 **Release blocker:** The genesis output of 11.92092895 FRG is indexed but not yet independently proven permanently unspendable.
 Changing the genesis transaction or network UUID would create a different network. Ordinary application, seed-node, packaging, and user-interface updates do not require a chain restart.
@@ -64,7 +53,7 @@ Changing the genesis transaction or network UUID would create a different networ
 
 ForgeCoin uses RandomX proof of work. RandomX is designed to favor general-purpose CPUs and reduce the advantage of specialized mining hardware. It does not guarantee equal participation: large CPU farms, botnets, cloud resources, or a dominant pool can still acquire substantial hash power.
 
-The target interval is 120 seconds. The historical legacy difficulty calculation uses a 720-block lookback, while the recovered public development-chain source schedules newer difficulty rules at heights 500, 600 and 700, including 90-interval LWMA at height 700. The isolated fresh-mainnet candidate proposes a different startup schedule at height 16 with a 400,000 floor; that candidate has not been adopted by the public development chain. Users do not manually set the current network difficulty. Changing the target interval, window, or difficulty algorithm is a consensus change and requires a coordinated network upgrade.
+The target is 120 seconds; initial difficulty is 500,000 through height 15, followed by progressive LWMA90 from height 16 with a 400,000 floor. The height-500/600/700 schedule belongs to the retired development implementation. Changes to consensus require reviewed software and coordinated activation.
 
 ## Tokenomics
 

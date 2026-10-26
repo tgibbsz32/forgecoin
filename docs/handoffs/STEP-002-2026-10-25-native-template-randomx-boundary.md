@@ -1,3 +1,5 @@
+> **Historical archive — superseded for current configuration.** Original evidence and decisions below retain their original dates and network parameters. Do not use old ports, genesis, balances, token proposals or release claims as current instructions. See [current mainnet specification](../CURRENT_MAINNET.md) and the current roadmap.
+
 # STEP-002 — 2026-10-25 — real daemon template / native RandomX boundary
 
 ## Repository and source scope

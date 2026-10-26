@@ -54,3 +54,25 @@ proof that the new mainnet, its wallets or mining pool are production-ready.
   generated or entrusted to the assistant.
 
 **Treasury-wallet owner instructions:** `TREASURY-WALLET.md`.
+
+## Wallet-RPC authentication gate (v0.2 private prelaunch)
+
+The previous v0.1 GUI started `forge-wallet-rpc.exe` with
+`--disable-rpc-login`, so it was unsuitable for funded treasury custody.
+The v0.2 GUI generates an ephemeral 256-bit random password, starts the
+wallet RPC with `--rpc-login` bound to 127.0.0.1, and uses .NET HTTP
+Digest credentials on requests to that wallet service.
+
+Actually exercised against the same packaged native wallet RPC on an
+isolated, genesis-only, offline daemon (height 1): unauthenticated RPC
+request returned **401 Unauthorized**; a .NET `HttpWebRequest` with Digest
+credentials successfully received `get_version`; both processes were
+stopped afterward; no blocks were mined, no funded wallets accessed, and
+no phrase was output. A separate Windows C# build of the updated GUI
+passed; **13 mainnet tests + 19 C pool source tests passed**.
+
+This test does **not** prove that the GUI wallet-creation and mnemonic
+backup dialogs work interactively, nor that storing RPC credentials in
+a child process's command-line argument defends against privileged
+local processes. The owner must use a trusted Windows login and perform
+a manual seed backup and restore before funding the treasury.

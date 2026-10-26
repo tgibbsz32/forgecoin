@@ -35,6 +35,15 @@ class DesktopPrelaunchGuards(unittest.TestCase):
   self.assertIn("RANDOMX_TARGET_ARCH",r)
   self.assertIn("CryptonightR_template.S",c)
   self.assertIn("jit_compiler_x86_static.S",r)
+ def test_wallet_rpc_never_serves_treasury_methods_without_auth(self):
+  gui=src("apps/desktop/Program.cs")
+  self.assertNotIn("--disable-rpc-login",gui)
+  self.assertIn("--rpc-login",gui)
+  self.assertIn("RandomNumberGenerator.Create()",gui)
+  self.assertIn("new NetworkCredential",gui)
+  self.assertIn('"Digest"',gui)
+  self.assertIn("http.Credentials = cache",gui)
+  self.assertIn("127.0.0.1:39483",gui)
  def test_owner_fee_wallet_secret_not_necessary_for_pool(self):
   docs=src("apps/desktop/TREASURY-WALLET.md")
   self.assertIn("You alone retain",docs)

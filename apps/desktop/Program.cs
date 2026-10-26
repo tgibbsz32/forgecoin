@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -35,6 +36,8 @@ namespace ForgeCoinDesktop
 
         private Process daemon;
         private Process walletRpc;
+        // Ephemeral Digest credentials for the local wallet RPC.
+        private NetworkCredential walletRpcCredentials;
         private Process poolMiner;
         private bool walletOpen;
 
@@ -899,8 +902,16 @@ namespace ForgeCoinDesktop
             if (IsRunning(walletRpc)) return;
             string exe = Path.Combine(binRoot, "forge-wallet-rpc.exe");
             if (!File.Exists(exe)) throw new FileNotFoundException("The ForgeCoin wallet service is missing.", exe);
+            // Monero-derived wallet RPC supports HTTP Digest authentication.
+            // Loopback binding alone cannot protect a treasury seed or
+            // transfer methods from an unrelated local process.
+            byte[] secret = new byte[32];
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create()) rng.GetBytes(secret);
+            walletRpcCredentials = new NetworkCredential("forgecoin-desktop", BitConverter.ToString(secret).Replace("-", ""));
+            Array.Clear(secret, 0, secret.Length);
+            string login = walletRpcCredentials.UserName + ":" + walletRpcCredentials.Password;
             string args = "--wallet-dir " + Quote(Path.Combine(appRoot, "wallets-mainnet-20261026")) +
-                " --rpc-bind-ip 127.0.0.1 --rpc-bind-port 39483 --disable-rpc-login" +
+                " --rpc-bind-ip 127.0.0.1 --rpc-bind-port 39483 --rpc-login " + Quote(login) +
                 " --daemon-address 127.0.0.1:39481 --trusted-daemon" +
                 " --shared-ringdb-dir " + Quote(Path.Combine(appRoot, "ringdb-mainnet-20261026")) +
                 " --log-file " + Quote(Path.Combine(appRoot, "logs", "wallet-rpc.log"));
@@ -1149,9 +1160,14 @@ namespace ForgeCoinDesktop
 
         private void StartMining(object sender, EventArgs e)
         {
+            ShowError("New mainnet has not launched. Solo mining is locked until the genesis and consensus release are approved.");
+            return;
+        }
+
+        private void StartMiningAfterLaunch(object sender, EventArgs e)
+        {
             try
             {
-                throw new InvalidOperationException("New mainnet has not launched. Solo mining is locked until the genesis and consensus release are approved.");
                 if (!IsRunning(daemon)) throw new InvalidOperationException("Start the ForgeCoin node before mining.");
                 if (IsRunning(poolMiner)) throw new InvalidOperationException("Stop pool mining before starting solo mining.");
                 string address = miningAddressBox.Text.Trim();
@@ -1238,9 +1254,14 @@ namespace ForgeCoinDesktop
 
         private void StartPoolMining(object sender, EventArgs e)
         {
+            ShowError("New mainnet has not launched. Pool mining remains disabled until launch approval.");
+            return;
+        }
+
+        private void StartPoolMiningAfterLaunch(object sender, EventArgs e)
+        {
             try
             {
-                throw new InvalidOperationException("New mainnet has not launched. Pool mining remains disabled until launch approval.");
                 if (IsRunning(poolMiner)) return;
                 if (stopMiningButton.Enabled) throw new InvalidOperationException("Stop solo mining before starting pool mining.");
                 string exe = Path.Combine(binRoot, "xmrig", "xmrig.exe");
@@ -1378,6 +1399,14 @@ namespace ForgeCoinDesktop
             Dictionary<string, object> request = new Dictionary<string, object> { { "jsonrpc", "2.0" }, { "id", "0" }, { "method", method }, { "params", parameters } };
             byte[] body = Encoding.UTF8.GetBytes(json.Serialize(request));
             HttpWebRequest http = (HttpWebRequest)WebRequest.Create(url);
+            if (url.StartsWith("http://127.0.0.1:39483/", StringComparison.Ordinal))
+            {
+                if (walletRpcCredentials == null) throw new InvalidOperationException("Wallet RPC credentials missing.");
+                CredentialCache cache = new CredentialCache();
+                cache.Add(new Uri("http://127.0.0.1:39483/"), "Digest", walletRpcCredentials);
+                http.Credentials = cache;
+                http.PreAuthenticate = true;
+            }
             http.Method = "POST"; http.ContentType = "application/json"; http.ContentLength = body.Length; http.Timeout = 2000;
             using (Stream s = http.GetRequestStream()) s.Write(body, 0, body.Length);
             string text;

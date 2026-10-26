@@ -74,3 +74,26 @@ data in directories suffixed `-mainnet-20261026` under
 A wallet created for you *by someone else*, including an AI assistant,
 would expose its secret to that party. Always generate the final treasury
 wallet yourself.
+
+## Wallet-RPC security change — private prelaunch v0.2
+
+The original v0.1 prelaunch wallet ZIP used a wallet RPC service without
+HTTP authentication. **Do not use v0.1 for any real treasury funds.**
+
+The v0.2 desktop starts the native wallet RPC on loopback with a new, random
+256-bit credential and requires **HTTP Digest authentication** from the GUI
+for wallet operations. In a disposable-node test, an unauthenticated request
+returned HTTP 401 while a matching .NET Digest client authenticated and
+queried wallet RPC successfully. Only a genesis block existed in this test,
+and no user wallet or funds were involved.
+
+**Security limits:** the wallet-RPC login is passed to its child process as
+a command-line argument, so an administrator or a process capable of reading
+local process command lines may see it while the app is open. The password
+and the eventual wallet seed should still be protected by Windows account
+security and anti-malware precautions. This improvement is not a security
+audit or hardware-wallet substitute. Keep your treasury recovery phrase
+offline and never disclose it through RPC, chat or remote support.
+
+This is still a **prelaunch** wallet. Confirm recovery and the matching
+genesis hash before accepting FRG; solo and pool mining remain disabled.

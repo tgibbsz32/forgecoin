@@ -5,13 +5,6 @@ The [selected mainnet specification](CURRENT_MAINNET.md) is frozen and unlaunche
 The repository scan found legacy parameter references in the following implementation/configuration/test files. These are explicitly **legacy-source references**, not current connection guidance. Historical protocol fixtures can retain their original values. Review replacements together with the complete implementation and matching tests before any release.
 
 - `src/cryptonote_config.h`
-- `tests/unit_tests/bulletproofs.cpp`
-- `src/crypto/crypto-ops-data.c`
-- `src/crypto/crypto_ops_builder/crypto-ops-data.c`
-- `src/crypto/crypto_ops_builder/ref10/base.h`
-- `src/crypto/crypto_ops_builder/ref10/base2.h`
-- `src/crypto/crypto_ops_builder/ref10CommentedCombined/base.h`
-- `src/crypto/crypto_ops_builder/ref10CommentedCombined/base2.h`
 - `services/official_pool/jtgrassie/pool.conf`
 - `services/official_pool/tests/test_source_guards.py`
 - `services/official_pool/jtgrassie/src/pool.c`

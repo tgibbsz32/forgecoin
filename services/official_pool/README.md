@@ -194,3 +194,45 @@ and this unexecuted x86 binary must **never be installed on the ARM64
 Oracle VM**. Inherited cryptographic warnings (including an upstream
 Supercop `sc25519_window4` declared/output array-width mismatch and
 OpenSSL 3.0 deprecated APIs) require review before final release.
+
+
+## Native ARM64 compile-and-link verification — POOL-BACKEND-004 (2026-10-26)
+
+The experimental pool now has an **ephemeral, on-target** native ARM64
+link-validation workflow:
+`.github/workflows/pool-native-arm64-link-ci.yml`.
+
+This workflow uses GitHub's `ubuntu-24.04-arm` host, asserts that
+`uname -m` is `aarch64`, installs compile-only dependencies inside the
+ephemeral runner, runs the existing exact 8-decimal FRG currency checks,
+builds the eleven static ForgeCoin cryptonote/RandomX archives from the exact
+current checkout SHA, links the vendored jtgrassie C pool against those
+archives and validates the resulting ELF machine type and dependencies.
+The build script caps concurrency based on real host RAM. A Makefile dry run
+rejects x86-only `-maes` on ARM64.
+
+**The binary is never executed, uploaded, deployed or published by CI.**
+GitHub CI is not a replacement for network correctness, pool accounting,
+wallet payout, or a real miner submitting an accepted block. The production
+pool daemon, wallet RPC, public ports and payout signing remain disabled.
+
+The Oracle Free Tier VM was inspected read-only over the user's authorized
+SSH key: Ubuntu 24.04.5, ARM64, 4 CPUs, ~11 GiB RAM and 39 GiB disk free,
+with nginx/explorer running. The missing build-only packages (libevent,
+LMDB, json-c and uuid development headers, plus three libevent components)
+were installed after an `apt-get -s` dry-run confirmed **zero existing
+package upgrades/removals**. An isolated source clone of original main,
+commit `32c9a38fd73270cdd65f119fa5c3a2dab87ab435`, was created at
+`/home/ubuntu/forgecoin-pool-arm64-build-20261026`. No daemon or pool service
+was started or modified. An attempt to execute the native build there
+was blocked before execution; the remaining ARM64 compile/link check was
+therefore moved to an ephemeral GitHub-hosted runner instead.
+
+**Private Oracle staging gate:** A completed native ARM64 binary link and
+hash/dependency verification are necessary but insufficient. A separate
+approved step must prove isolated localhost startup with no real wallet,
+FRG daemon RPC, native XMRig/RandomX and accepted-block behavior before
+installing a persistent private pool process on Oracle. Public Stratum and
+payouts need additional canonical-chain, maturity, reorg, PPLNS and signing
+review. Do not treat an ARM64 CI success as permission to enable public pool
+ports or touch custody.

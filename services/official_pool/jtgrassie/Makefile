@@ -81,7 +81,16 @@ OS := $(shell uname -s)
 CPPDEFS = _GNU_SOURCE AUTO_INITIALIZE_EASYLOGGINGPP LOG_USE_COLOR
 
 W = -W -Wall -Wno-unused-parameter -Wuninitialized -Wno-attributes
-OPT = -maes -fPIC
+# x86-only compiler options must not break native ARM64 Oracle staging.
+# AES is provided via ARM crypto extensions and RandomX's own architecture
+# dispatch; GCC on aarch64 rejects the Intel-only -maes argument.
+ARCH := $(shell uname -m)
+OPT = -fPIC
+ifneq ($(filter x86_64 amd64,$(ARCH)),)
+  OPT += -maes
+else ifneq ($(ARCH),aarch64)
+  $(error Unsupported ForgeCoin pool architecture: $(ARCH))
+endif
 CFLAGS += $(W) -Wbad-function-cast $(OPT) -std=c99
 CXXFLAGS += $(W) -Wno-reorder $(OPT) -std=c++14
 LDPARAM += -fPIC -pie

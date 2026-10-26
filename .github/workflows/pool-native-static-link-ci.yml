@@ -1,0 +1,61 @@
+name: ForgeCoin native pool static libraries and link (test-only)
+on:
+  pull_request:
+    paths:
+      - 'services/official_pool/**'
+      - 'src/**'
+      - 'external/**'
+      - 'contrib/epee/**'
+      - '.github/workflows/pool-native-static-link-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-x86-link:
+    name: Offline x86_64 C++ library build and C pool link
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native build-only dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            cmake build-essential pkg-config xxd \
+            libevent-dev liblmdb-dev libjson-c-dev libsodium-dev libunbound-dev \
+            uuid-dev libssl-dev libzmq3-dev libreadline-dev libhidapi-dev libusb-1.0-0-dev \
+            libboost-system-dev libboost-date-time-dev libboost-chrono-dev \
+            libboost-filesystem-dev libboost-thread-dev libboost-regex-dev \
+            libboost-serialization-dev libboost-program-options-dev libboost-locale-dev
+      - name: Verify exact FRG units and safety source guards
+        run: |
+          python3 -m unittest discover -s services/official_pool/tests -p 'test_*.py' -v
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
+            -o /tmp/frg-money-test services/official_pool/tests/test_currency.c
+          /tmp/frg-money-test
+          bash -n services/official_pool/tools/build-native-static.sh
+      - name: Build reviewed ForgeCoin static libraries (no wallet, network or deployment)
+        env:
+          FRG_BUILD_JOBS: '2'
+        run: |
+          bash services/official_pool/tools/build-native-static.sh \
+            "$PWD" "$PWD/build/official-pool-static/release" "$(git rev-parse HEAD)"
+      - name: Link native C pool (DO NOT START IT)
+        run: |
+          make -C services/official_pool/jtgrassie -j 2 release TYPE=release \
+            FORGECOIN_ROOT="$PWD" FORGECOIN_BUILD_ROOT="$PWD/build/official-pool-static/release"
+      - name: Validate build format and runtime dependencies without execution
+        run: |
+          bin=services/official_pool/jtgrassie/build/release/forgecoin-pool
+          test -s "$bin"
+          file "$bin"
+          file "$bin" | grep -F 'ELF 64-bit'
+          file "$bin" | grep -F 'x86-64'
+          readelf -h "$bin" | grep -F 'DYN (Position-Independent Executable file)'
+          if ldd "$bin" | grep -F 'not found'; then
+            echo 'Missing pool shared dependencies' >&2
+            exit 1
+          fi
+          sha256sum "$bin"
+          echo 'PASS: Linux x86_64 native pool links but was NEVER STARTED'
+          echo 'NO ARM64, daemon RPC, Stratum, wallet or payout tests have run'

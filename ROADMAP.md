@@ -50,15 +50,34 @@ Governance, native miner bonding and any separately funded community treasury ar
 - **Wallet Swap interface:** display executable third-party quotes, recipient/network/fees/slippage, explicit approval, timeout/refund and transaction tracking. Never fabricate rates or custody guarantees.
 - Require independent security review, legal assessment of any custodial/exchange activity, and actual counterparties/liquidity before production trades.
 
-## Phase 4 — Optional Solana interoperability (not required for native launch)
+## Phase 4 — Intended first post-launch expansion: 1:1-backed Solana wFRG
 
-- Prototype a standard SPL or Token-2022 **wrapped FRG** representation on devnet, backed **1:1 by user-deposited native FRG**, not new FRG issuance or a genesis treasury. Define deposit proof, secure mint/burn, redemption, supply/liability accounting, confirmations, reorg handling, caps and emergency shutdown.
+- **First intended post-launch interoperability implementation:** develop, test and (once audited) deploy a Solana SPL/Token-2022 **wrapped FRG (wFRG)** token with **1:1 backing by reserved user-deposited native FRG** and a usable native deposit/mint/burn/redemption bridge. This aims to accelerate wallet/exchange/payment adoption, not create an ICO, additional PoW rewards, a genesis treasury or unbacked circulating supply. Define deposit proof, secure mint/burn, redemption, supply/liability accounting, confirmations, reorg handling, caps and emergency shutdown.
 - Design independently controlled custody or cryptographic locking; evaluate real Monero-derived multisig limitations. Use separate monitoring and signing services, bounded queues, idempotent jobs and verified wallet RPC flags.
 - Build a durable bridge ledger (e.g. PostgreSQL) for events, registered destinations, approvals, payouts and audits. Payment IDs are not authorization credentials.
 - Establish independently verifiable reserve attestations despite native private transfers; a public view key alone does not prove an unspent balance. Keep spend keys isolated and view secrets protected.
 - Respect native FRG's **8 decimal places** versus a Solana token's chosen decimals with exact integer arithmetic.
 - Investigate SOL/USDC liquidity and optional Solana Actions/Blinks, bridge analytics and miner-opt-in liquidity contributions only **after** the safe core bridge is demonstrated. User deposits collateralize wrapped supply; optional pool liquidity and development revenue are separate budgets.
 - Security audit, economic stress testing, operations funding, counterparty demand and explicit deployment approval are mandatory stage gates.
+
+## Future major upgrade — FCMP++/CARROT on existing FRG where feasible
+
+**Preferred network strategy:** adopt FCMP++ and CARROT through an independently audited **in-place hard fork**, preserving the existing native FRG chain, issuance and valid balances. A hard fork does **not** automatically mean a new blockchain. Only if legacy-output compatibility or security makes an in-place upgrade infeasible would a **separate successor network** and explicit, voluntary, supply-conserving bridge/migration be considered. The Solana wFRG wrapper is planned **before** this work, and would only be phased out after users can redeem and reserves/liabilities are reconciled.
+
+- **Curve-tree LMDB/database:** incremental, deterministic global commitment roots and append/rollback indices; sync, pruning, rescan, crash consistency, deep reorganizations and cross-platform performance.
+- **Consensus:** verify complete FCMP++ membership/spend proofs and Generalized Bulletproofs components against the correct tree root, with spend authorization, linkability and invalid-proof rejection.
+- **CARROT:** integrate the reviewed carrot_core/carrot_impl wallet/address protocols, new outputs, seed recovery, view-only functions and legacy unspent-output compatibility without automatic fund duplication or retroactive privacy promises.
+- **Mempool:** handle heavier proof verification, reject invalid entries, revalidate the full pool at the activation hard fork and after reorganizations, rate-limit expensive inputs and vet optimizations such as fe_pow22523.
+- **Separate FCMP++ stressnet:** unique genesis and network identifier; heavy transaction loads, large templates, invalid proofs, deep reorganizations and complete sync/resource/failure evidence before agreeing an upgrade height.
+
+## Future L1, L2 and possible L3 applications — additional protocol development
+
+- **Native atomic swaps** with supported assets including Ethereum USDC, and research for **collateralized privacy-shielded synthetic stable-denominated assets** with reserves, peg/redemption mechanics and legal review.
+- **TSS/MPC secured private block trading:** threshold-controlled cross-chain vaults, discreet trade intents, independent relayer/execution and atomic delivery-versus-payment where possible, with MEV and custody controls and an eventual disclosed **basis-point routing fee**. Transparent-chain settlement remains observable.
+- **L2:** payment channels, batching, privacy-aware liquidity routing, secure exit/dispute paths and data-availability rules.
+- **L3:** private-market applications, auctions, merchant payments and selective-disclosure services that need their own contracts/execution protocols.
+
+**All are intended research and future implementations, not existing FCMP++ capabilities, regulatory exemptions or production promises.** For the staged Solana bridge, native hard-fork preference, separate-network fallback, holder-protective wFRG phaseout, security and stressnet specifications see [full future architecture](docs/SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md).
 
 ## Phase 5 — Optional privacy applications
 

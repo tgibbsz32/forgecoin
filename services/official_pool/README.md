@@ -135,3 +135,62 @@ Use `make link-preflight TYPE=release ...` before attempting the entire `make re
 The new `.github/workflows/pool-native-linux-object-compile.yml` runs this source compilation on **Ubuntu 22.04 x86_64**, without a link or executable artifact. Native FRG mainnet deployment is still prohibited.
 
 For **private Oracle ARM64 staging**, build/review the native ForgeCoin static libraries for the exact ARM64 target, compile and link the C backend on ARM64, and exercise local-only Stratum daemon template handling and RandomX job validation before installation. Public pool access additionally requires accepted-block and mature payout verification, reorg/restart recovery, production security review and explicit launch approval. Do not copy or run this compile-only result on Oracle.
+
+
+## POOL-BACKEND-003 — pinned native archive build and x86_64 link proof (2026-10-26)
+
+`tools/build-native-static.sh` now builds the **11 expected native ForgeCoin
+static archives** from an exact, clean, 40-character Git commit on Linux.
+It refuses another checkout's CMake cache, rejects unsupported architectures,
+and enforces low-memory compiler limits: under 4 GiB RAM only one parallel job;
+under 8 GiB at most two. This is critical on the user's dedicated ForgeCoinBuild
+WSL distro, which has **1.9 GiB RAM and 1 GiB swap**. An initial eight-worker
+build rendered the dedicated WSL distro unresponsive and was safely
+terminated without shutting down other distros. Repeating with
+`FRG_BUILD_JOBS=1` **succeeded**.
+
+From a *separate, trusted, clean* Linux checkout of this original ForgeCoin
+repository (do not run in the user's local consensus worktree):
+
+```sh
+cd /path/to/isolated/forgecoin
+FRG_BUILD_JOBS=1 bash services/official_pool/tools/build-native-static.sh \
+  "$PWD" "$PWD/build/official-pool-static/release" "$(git rev-parse HEAD)"
+make -C services/official_pool/jtgrassie -j1 release TYPE=release \
+  FORGECOIN_ROOT="$PWD" \
+  FORGECOIN_BUILD_ROOT="$PWD/build/official-pool-static/release"
+```
+
+This procedure has now **successfully linked** a Linux **x86_64** research
+`forgecoin-pool` binary against ForgeCoin commit
+`cf76794731c2d4bc310b7f4d4b744173809e308f`. ELF inspection
+confirmed a 64-bit x86-64 PIE executable; local dynamic dependencies resolved
+without missing libraries. Example SHA-256 for that isolated **test binary**
+(never published as a release):
+`c9d6654998f71918d88247e4baac49fb6c9cba6b2ea512cc66e8aeca1089b05b`.
+The executable was **not started**. It did not open mining, wallet or network
+ports or process shares, blocks or payments.
+
+The jtgrassie Makefile previously supplied x86-specific `-maes` flags on
+*every* architecture. It now passes that option only on x86_64/amd64, accepts
+native `aarch64` without it, and fails closed on unreviewed architectures.
+Dedicated tests checked ARM64 and x86 compiler command-line dry-runs: the
+former contained **no** Intel `-maes`, the latter retained it. This is **not
+an ARM64 compile or executable**.
+
+`.github/workflows/pool-native-static-link-ci.yml` independently configures,
+builds, and links the Linux x86_64 pool in an ephemeral Ubuntu 22.04 CI
+runner, verifying ELF/PIE and runtime library dependencies. The CI job
+**never launches** the resulting binary, publishes no release assets, and
+cannot submit blocks or pay miners. Existing native source guards, 8-decimal
+amount tests and the new archive/architecture safeguards are also run.
+
+**Security and Oracle deployment gates remain:** verify an actual aarch64
+native build/link on a disposable ARM64 builder; validate startup with
+research guards intact; prove real FRG daemon/XMRig Stratum interoperability,
+accepted blocks, PPLNS conservation, 1% fee, 8-decimal reward maturity and
+payout recovery. No public Stratum, wallet keys or payouts should be enabled,
+and this unexecuted x86 binary must **never be installed on the ARM64
+Oracle VM**. Inherited cryptographic warnings (including an upstream
+Supercop `sc25519_window4` declared/output array-width mismatch and
+OpenSSL 3.0 deprecated APIs) require review before final release.

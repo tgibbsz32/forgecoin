@@ -62,5 +62,7 @@
     "forged.exe": "3efaf014c7fdfcea167630f1884abee2defd40f28f1e725b6c0a8fcede5b5c37",
     "forge-wallet-rpc.exe": "739eefe916f9a93017c870dde63b45c8db532d43226dc888395860122c3e851b",
     "forge-wallet-cli.exe": "e5e7a807b3a1b2c7702df9cad48dfde8871f4aab1ef662032e1b5bc5becbe991"
-  }
+  },
+  "consensus_guard_stage": "draft-unbuilt",
+  "consensus_guard_note": "Source-only prelaunch/genesis-output restrictions pending full native builds and independent consensus tests. Existing recorded binary hashes predate these restrictions; packaging is blocked."
 }

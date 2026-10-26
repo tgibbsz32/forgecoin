@@ -30,6 +30,13 @@ class StagingTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     staging.validate_network_identity(manifest)
 
+    def test_pending_consensus_changes_block_old_binary_packaging(self):
+        with tempfile.TemporaryDirectory() as root:
+            manifest = Path(root) / "identity.json"
+            manifest.write_text(json.dumps({"consensus_guard_stage": "draft-unbuilt"}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "reviewed native rebuilds"):
+                staging.validate_network_identity(manifest)
+
     def test_rejects_complete_set_before_writing(self):
         with tempfile.TemporaryDirectory() as root:
             source, dest = Path(root) / "src", Path(root) / "dest"

@@ -38,6 +38,9 @@ if (-not (Test-Path -LiteralPath $IdentityFile)) {
     throw 'New-mainnet release identity manifest missing.'
 }
 $Identity = Get-Content -LiteralPath $IdentityFile -Raw | ConvertFrom-Json
+if ($null -ne $Identity.consensus_guard_stage) {
+    throw 'Consensus guard changes require reviewed native rebuilds; packaging is blocked.'
+}
 if ($Identity.genesis_nonce -ne 20261026 -or
     $Identity.stage -ne 'genesis-frozen' -or
     [string]::IsNullOrWhiteSpace($Identity.genesis_hash) -or

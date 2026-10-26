@@ -30,6 +30,12 @@ jobs:
           python-version: '3.13'
       - name: Mainnet identity and desktop safeguards
         run: python -m unittest discover -s tests/mainnet -p 'test_*.py' -v
+      - name: Compile and execute pure prelaunch policy assertions; no node or miner
+        run: |
+          g++ -std=c++14 -Wall -Wextra -Werror -I src tests/mainnet/prelaunch_policy.cpp -o /tmp/frg-prelaunch-policy
+          /tmp/frg-prelaunch-policy
+      - name: Sidecar packaging refuses pending consensus changes
+        run: python -m unittest tools.test_stage_windows_sidecars -v
       - name: Pool source and wallet accounting safeguards
         run: python -m unittest discover -s services/official_pool/tests -p 'test_*.py' -v
       - name: Strict FRG atomic amount and fee tests

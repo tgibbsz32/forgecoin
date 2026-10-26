@@ -23,6 +23,8 @@ REVIEWED = {
 def validate_network_identity(manifest):
     """The dependency audit must approve the same bytes as the network manifest."""
     identity = json.loads(Path(manifest).read_text(encoding="utf-8"))
+    if identity.get("consensus_guard_stage") is not None:
+        raise ValueError("Consensus guard changes require reviewed native rebuilds; packaging is blocked")
     expected = identity.get("windows_prelaunch_binaries_sha256", {})
     if identity.get("release_authorized") is not False:
         raise ValueError("Expected a locked prelaunch identity; release packaging needs separate review")

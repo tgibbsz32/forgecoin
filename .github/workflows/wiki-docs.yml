@@ -1,0 +1,31 @@
+name: Wiki documentation checks
+
+on:
+  pull_request:
+    paths:
+      - "docs/wiki/**"
+      - "tools/check_wiki_docs.py"
+      - "tools/test_check_wiki_docs.py"
+      - ".github/workflows/wiki-docs.yml"
+  push:
+    paths:
+      - "docs/wiki/**"
+      - "tools/check_wiki_docs.py"
+      - "tools/test_check_wiki_docs.py"
+      - ".github/workflows/wiki-docs.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  wiki-links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Unit tests for link checker
+        run: python -m unittest tools.test_check_wiki_docs -v
+      - name: Verify repository-relative wiki links
+        run: python tools/check_wiki_docs.py

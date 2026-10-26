@@ -1,5 +1,7 @@
 # ForgeCoin Desktop
 
+> **Release-status correction (2026-10-25):** Feature descriptions below reflect implemented code or historical tests, **not approved desktop V1 acceptance**. Complete end-to-end Solo **and** compatible Pool mining, real accepted share/reward evidence, artifact provenance, offline isolation and payout verification are outstanding. See [current status](../../docs/wiki/Current-Status.md) and [testing/release gates](../../docs/wiki/Testing-and-Release.md). The Oracle old chain and a test-only Stratum fixture are not an approved fresh-mainnet mining service.
+
 > Source publication: generated native sidecars are not included. Build the node
 > and wallet RPC from the repository root and stage them as described in
 > [BUILDING.md](../../BUILDING.md). References below to included/tested binaries

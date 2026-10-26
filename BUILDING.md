@@ -1,5 +1,7 @@
 # ForgeCoin source build status
 
+> **Read before building:** [Wiki software guide](docs/wiki/Software-Guide.md) and [testing/release acceptance](docs/wiki/Testing-and-Release.md). A build success, found PE executable or matching local digest is **not** release approval. Never execute the downloaded unverified XMRig archive tracked in [#95](https://github.com/tgibbsz32/forgecoin/issues/95), nor bypass reviewed sidecar staging.
+
 ## October desktop and explorer
 
 The current Windows application is under `apps/desktop-tauri` and requires Node.js,

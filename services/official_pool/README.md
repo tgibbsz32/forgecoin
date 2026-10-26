@@ -115,3 +115,23 @@ the current repository's Linux libcryptonote or RandomX has been verified.
    mining launch is authorized.
 
 Each development step must have a separate dated committed handoff.
+
+
+## POOL-BACKEND-002 — Linux compile-only staging gate
+
+As of October 26, 2026, all nine C, C++, and HTML-derived native jtgrassie pool object files **successfully compile on Linux x86_64** using ForgeCoin's current `main` source headers. The resulting pool executable **does not link**, because no native Linux ForgeCoin static-archive build exists in this isolated checkout. The available prior Windows static libraries are unsuitable for Linux linking.
+
+The upstream Makefile now exposes an explicit, reproducible **compile-only** target that never invokes a daemon, starts Stratum, connects wallet RPC, or signs payouts:
+
+```sh
+cd services/official_pool/jtgrassie
+make -j2 compile-check TYPE=release \
+  FORGECOIN_ROOT=/reviewed/forgecoin/source \
+  FORGECOIN_BUILD_ROOT=/path/to/native/frg/build
+```
+
+Use `make link-preflight TYPE=release ...` before attempting the entire `make release` target: every required native static archive must exist or the build **fails closed with the exact missing paths**. Passing `compile-check` is **not** proof of a runnable pool or payout safety.
+
+The new `.github/workflows/pool-native-linux-object-compile.yml` runs this source compilation on **Ubuntu 22.04 x86_64**, without a link or executable artifact. Native FRG mainnet deployment is still prohibited.
+
+For **private Oracle ARM64 staging**, build/review the native ForgeCoin static libraries for the exact ARM64 target, compile and link the C backend on ARM64, and exercise local-only Stratum daemon template handling and RandomX job validation before installation. Public pool access additionally requires accepted-block and mature payout verification, reorg/restart recovery, production security review and explicit launch approval. Do not copy or run this compile-only result on Oracle.

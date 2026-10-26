@@ -119,7 +119,7 @@ else
 endif
 
 HID_FOUND := $(shell grep -qo HIDAPI_LIBRARY-NOTFOUND \
-  ${MONERO_BUILD_ROOT}/CMakeCache.txt; echo $$?)
+  ${MONERO_BUILD_ROOT}/CMakeCache.txt 2>/dev/null; echo $$?)
 ifeq ($(HID_FOUND), 1)
   LIBS += hidapi-libusb
 endif
@@ -168,9 +168,31 @@ CDFILES := $(addprefix $(STORE)/,$(CSOURCE:.c=.d))
 SDFILES := $(addprefix $(STORE)/,$(SSOURCE:.S=.d))
 
 
-.PHONY: clean dirs debug release preflight
+.PHONY: clean dirs debug release preflight compile-check link-preflight
 
-$(TARGET): preflight dirs $(OBJECTS) $(COBJECTS) $(SOBJECTS) $(HTMLOBJECTS)
+# Compile the entire pinned C/C++ pool against ForgeCoin source headers without
+# linking a daemon, wallet or RandomX library; safe for prelaunch CI.
+compile-check: preflight dirs $(OBJECTS) $(COBJECTS) $(SOBJECTS) $(HTMLOBJECTS)
+	@echo "PASS: compiled all ForgeCoin pool C/C++/web UI objects (NOT LINKED)"
+
+# With -j, ensure all object directories exist BEFORE compiler invocations.
+$(OBJECTS) $(COBJECTS) $(SOBJECTS) $(HTMLOBJECTS): | dirs
+
+# Prevent the linker from giving an opaque partial failure if a DIFFERENT
+# platform's libraries or an unbuilt source tree were supplied.
+link-preflight:
+	@missing=0; for lib in $(MONERO_LIBS); do \
+	  if [ ! -f "$$lib" ]; then \
+	    echo "Missing pinned ForgeCoin static archive: $$lib" >&2; \
+	    missing=1; \
+	  fi; \
+	done; \
+	if [ $$missing -ne 0 ]; then \
+	  echo "Pool link blocked: build the reviewed ForgeCoin native static archives for this Linux architecture first." >&2; \
+	  exit 2; \
+	fi
+
+$(TARGET): preflight dirs $(OBJECTS) $(COBJECTS) $(SOBJECTS) $(HTMLOBJECTS) link-preflight
 	@echo Linking $(OBJECTS)...
 	$(CXX) -o $(STORE)/$(TARGET) \
 	  $(OBJECTS) $(COBJECTS) $(SOBJECTS) $(HTMLOBJECTS) \

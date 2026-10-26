@@ -24,6 +24,7 @@ jobs:
             services/official_pool/
             src/cryptonote_config.h
             .github/workflows/pool-native-static-link-ci.yml
+            .github/workflows/pool-native-arm64-link-ci.yml
           sparse-checkout-cone-mode: false
       - uses: actions/setup-python@v5
         with:

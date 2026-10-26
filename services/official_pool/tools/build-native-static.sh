@@ -64,11 +64,14 @@ cmake -S "$source_root" -B "$build_root" \
   -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF \
   -DBUILD_GUI_DEPS=OFF -DMANUAL_SUBMODULES=1 -DUSE_CCACHE=OFF
 
-# These 11 build targets correspond to the pool's explicitly pinned archive list.
-cmake --build "$build_root" --parallel "$jobs" --target \
-  cryptonote_basic cncrypto common ringct_basic device \
-  cryptonote_format_utils_basic wallet-crypto epee easylogging version randomx
-
+# src/crypto/wallet/CMakeLists.txt uses wallet-crypto ALIAS cncrypto
+# when native ARM64 has no external optimized wallet-crypto backend.
+# Aliases are NOT buildable targets or archive files; cncrypto supplies the
+# required symbols instead. x86_64 still builds the optimized .a archive.
+targets=(
+  cryptonote_basic cncrypto common ringct_basic device
+  cryptonote_format_utils_basic epee easylogging version randomx
+)
 archives=(
   "src/cryptonote_basic/libcryptonote_basic.a"
   "src/crypto/libcncrypto.a"
@@ -76,12 +79,21 @@ archives=(
   "src/ringct/libringct_basic.a"
   "src/device/libdevice.a"
   "src/cryptonote_basic/libcryptonote_format_utils_basic.a"
-  "src/crypto/wallet/libwallet-crypto.a"
   "contrib/epee/src/libepee.a"
   "external/easylogging++/libeasylogging.a"
   "src/libversion.a"
   "external/randomx/librandomx.a"
 )
+if [[ "$(uname -m)" == "x86_64" ]]; then
+  targets+=(wallet-crypto)
+  archives+=("src/crypto/wallet/libwallet-crypto.a")
+else
+  # Fail closed if the expected cncrypto alias behavior changes.
+  grep -Fq 'add_library(wallet-crypto ALIAS cncrypto)' \
+    "$source_root/src/crypto/wallet/CMakeLists.txt" ||
+    { echo "ARM64 wallet-crypto alias contract changed" >&2; exit 67; }
+fi
+cmake --build "$build_root" --parallel "$jobs" --target "${targets[@]}"
 for lib in "${archives[@]}"; do
   [[ -s "$build_root/$lib" ]] || {
     echo "required native archive missing or empty: $build_root/$lib" >&2

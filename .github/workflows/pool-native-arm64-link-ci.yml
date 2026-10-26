@@ -1,0 +1,93 @@
+name: ForgeCoin official C pool native ARM64 build and link
+on:
+  pull_request:
+    paths:
+      - 'services/official_pool/**'
+      - 'src/**'
+      - 'external/**'
+      - 'contrib/epee/**'
+      - '.github/workflows/pool-native-arm64-link-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  arm64-native-static-link:
+    name: Native aarch64 FRG library build and pool link (never executed)
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify on-target ARM64 runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = aarch64
+          echo "Architecture: $(uname -m)"
+          free -h
+          df -h /
+      - name: Install build headers (CI runner only, never Oracle)
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            cmake build-essential pkg-config xxd file binutils \
+            libevent-dev liblmdb-dev libjson-c-dev libsodium-dev libunbound-dev \
+            uuid-dev libssl-dev libzmq3-dev libreadline-dev libhidapi-dev libusb-1.0-0-dev \
+            libboost-system-dev libboost-date-time-dev libboost-chrono-dev \
+            libboost-filesystem-dev libboost-thread-dev libboost-regex-dev \
+            libboost-serialization-dev libboost-program-options-dev libboost-locale-dev
+      - name: Validate FRG 8-decimal money accounting and build guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s services/official_pool/tests -p 'test_*.py' -v
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
+            -o /tmp/frg-money-test-arm64 services/official_pool/tests/test_currency.c
+          /tmp/frg-money-test-arm64
+          bash -n services/official_pool/tools/build-native-static.sh
+          make -B -n -s -C services/official_pool/jtgrassie compile-check \
+            TYPE=release ARCH=aarch64 FORGECOIN_ROOT="$PWD" \
+            FORGECOIN_BUILD_ROOT="$PWD/build/official-pool-static/release" \
+            > /tmp/frg-arm64-make-commands.txt
+          if grep -E -- '(^|[[:space:]])-maes([[:space:]]|$)' /tmp/frg-arm64-make-commands.txt; then
+            echo "Refusing Intel-only -maes flag on ARM64" >&2
+            exit 1
+          fi
+      - name: Build eleven pinned native ForgeCoin ARM64 archives
+        shell: bash
+        env:
+          FRG_BUILD_JOBS: '2'
+        run: |
+          set -euo pipefail
+          bash services/official_pool/tools/build-native-static.sh \
+            "$PWD" "$PWD/build/official-pool-static/release" "$(git rev-parse HEAD)"
+      - name: Link jtgrassie-derived C pool using native ARM64 archives (NO STARTUP)
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C services/official_pool/jtgrassie -j 2 release TYPE=release \
+            FORGECOIN_ROOT="$PWD" \
+            FORGECOIN_BUILD_ROOT="$PWD/build/official-pool-static/release"
+      - name: Verify ELF architecture, dynamic dependencies and binary fingerprint
+        shell: bash
+        run: |
+          set -euo pipefail
+          bin=services/official_pool/jtgrassie/build/release/forgecoin-pool
+          test -s "$bin"
+          file "$bin"
+          file "$bin" | grep -F 'ELF 64-bit'
+          readelf -h "$bin" | grep -F 'Machine:'
+          readelf -h "$bin" | grep -F 'AArch64'
+          readelf -h "$bin" | grep -F 'DYN (Position-Independent Executable file)'
+          ldd "$bin" > /tmp/frg-arm64-pool-deps.txt
+          cat /tmp/frg-arm64-pool-deps.txt
+          if grep -F 'not found' /tmp/frg-arm64-pool-deps.txt; then
+            echo 'Missing native pool shared dependencies' >&2
+            exit 1
+          fi
+          sha256sum "$bin"
+          echo 'PASS: native ARM64 pool is linked, but NEVER EXECUTED'
+          echo 'NOT proof of native Stratum jobs, accepted blocks, payouts, or Oracle deployment'

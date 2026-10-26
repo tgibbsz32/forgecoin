@@ -117,7 +117,7 @@ namespace ForgeCoinDesktop
 
         public MainForm()
         {
-            Text = "ForgeCoin Desktop";
+            Text = "ForgeCoin Desktop - New Mainnet 20261026";
             MinimumSize = new Size(900, 680);
             Size = new Size(1040, 760);
             StartPosition = FormStartPosition.CenterScreen;
@@ -125,9 +125,9 @@ namespace ForgeCoinDesktop
             BackColor = Color.FromArgb(246, 247, 249);
 
             Directory.CreateDirectory(appRoot);
-            Directory.CreateDirectory(Path.Combine(appRoot, "blockchain"));
-            Directory.CreateDirectory(Path.Combine(appRoot, "wallets"));
-            Directory.CreateDirectory(Path.Combine(appRoot, "ringdb"));
+            Directory.CreateDirectory(Path.Combine(appRoot, "blockchain-mainnet-20261026"));
+            Directory.CreateDirectory(Path.Combine(appRoot, "wallets-mainnet-20261026"));
+            Directory.CreateDirectory(Path.Combine(appRoot, "ringdb-mainnet-20261026"));
             Directory.CreateDirectory(Path.Combine(appRoot, "logs"));
 
             TableLayoutPanel shell = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Margin = new Padding(0), Padding = new Padding(0) };
@@ -201,7 +201,7 @@ namespace ForgeCoinDesktop
             peerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
             peerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             peerPanel.Controls.Add(new Label { Text = "Exclusive peer", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 0);
-            peerBox = new TextBox { Dock = DockStyle.Fill };
+            peerBox = new TextBox { Dock = DockStyle.Fill }; // No verified fresh-mainnet peer before launch.
             peerPanel.Controls.Add(peerBox, 1, 0);
             peerPanel.Controls.Add(new Label { Text = "Leave blank to reuse saved peers. A new installation needs a known ForgeCoin peer. Changes apply after restart.", ForeColor = Color.DimGray, AutoSize = true }, 1, 1);
             bootstrapModeBox = new CheckBox { Text = "Offline bootstrap mining — mine on this PC without a second peer", AutoSize = true, ForeColor = Color.FromArgb(145, 68, 20), Font = new Font("Segoe UI Semibold", 9.5F), Padding = new Padding(0, 4, 0, 0) };
@@ -450,7 +450,7 @@ namespace ForgeCoinDesktop
         {
             try
             {
-                IDictionary info = Rpc("http://127.0.0.1:19481/json_rpc", "get_info", new Dictionary<string, object>());
+                IDictionary info = Rpc("http://127.0.0.1:39481/json_rpc", "get_info", new Dictionary<string, object>());
                 long height = info.Contains("height") ? ToLong(info["height"]) : 0;
                 double difficulty = info.Contains("difficulty") ? Convert.ToDouble(info["difficulty"], CultureInfo.InvariantCulture) : 0;
                 double target = info.Contains("target") ? Math.Max(1, Convert.ToDouble(info["target"], CultureInfo.InvariantCulture)) : 120;
@@ -468,7 +468,7 @@ namespace ForgeCoinDesktop
                 if (height <= 0) return;
                 long end = height - 1;
                 long start = Math.Max(0, end - 9);
-                IDictionary range = Rpc("http://127.0.0.1:19481/json_rpc", "get_block_headers_range", new Dictionary<string, object> { { "start_height", start }, { "end_height", end } });
+                IDictionary range = Rpc("http://127.0.0.1:39481/json_rpc", "get_block_headers_range", new Dictionary<string, object> { { "start_height", start }, { "end_height", end } });
                 IEnumerable headers = range.Contains("headers") ? range["headers"] as IEnumerable : null;
                 if (headers == null) return;
                 List<IDictionary> ordered = new List<IDictionary>();
@@ -538,10 +538,10 @@ namespace ForgeCoinDesktop
 
         private void ShowExplorerBlock(IDictionary<string, object> parameters)
         {
-            IDictionary result = Rpc("http://127.0.0.1:19481/json_rpc", "get_block", parameters);
+            IDictionary result = Rpc("http://127.0.0.1:39481/json_rpc", "get_block", parameters);
             IDictionary header = result.Contains("block_header") ? result["block_header"] as IDictionary : null;
             if (header == null) throw new InvalidOperationException("The local node did not return that block.");
-            IDictionary info = Rpc("http://127.0.0.1:19481/json_rpc", "get_info", new Dictionary<string, object>());
+            IDictionary info = Rpc("http://127.0.0.1:39481/json_rpc", "get_info", new Dictionary<string, object>());
             long chainHeight = info.Contains("height") ? ToLong(info["height"]) : 0;
             long blockHeight = header.Contains("height") ? ToLong(header["height"]) : 0;
             long timestamp = header.Contains("timestamp") ? ToLong(header["timestamp"]) : 0;
@@ -578,7 +578,7 @@ namespace ForgeCoinDesktop
         private void ShowExplorerTransaction(string hash)
         {
             ArrayList hashes = new ArrayList { hash };
-            IDictionary result = RestRpc("http://127.0.0.1:19481/get_transactions", new Dictionary<string, object> { { "txs_hashes", hashes }, { "decode_as_json", true }, { "prune", true } });
+            IDictionary result = RestRpc("http://127.0.0.1:39481/get_transactions", new Dictionary<string, object> { { "txs_hashes", hashes }, { "decode_as_json", true }, { "prune", true } });
             IEnumerable txs = result.Contains("txs") ? result["txs"] as IEnumerable : null;
             IDictionary tx = null;
             if (txs != null) foreach (object item in txs) { tx = item as IDictionary; if (tx != null) break; }
@@ -587,7 +587,7 @@ namespace ForgeCoinDesktop
             bool inPool = tx.Contains("in_pool") && Convert.ToBoolean(tx["in_pool"], CultureInfo.InvariantCulture);
             long blockHeight = tx.Contains("block_height") ? ToLong(tx["block_height"]) : 0;
             long timestamp = tx.Contains("block_timestamp") ? ToLong(tx["block_timestamp"]) : 0;
-            IDictionary info = Rpc("http://127.0.0.1:19481/json_rpc", "get_info", new Dictionary<string, object>());
+            IDictionary info = Rpc("http://127.0.0.1:39481/json_rpc", "get_info", new Dictionary<string, object>());
             long chainHeight = info.Contains("height") ? ToLong(info["height"]) : 0;
             long confirmations = inPool ? 0 : Math.Max(0, chainHeight - blockHeight);
             long fee = 0;
@@ -814,9 +814,9 @@ namespace ForgeCoinDesktop
             string exe = Path.Combine(binRoot, "forged.exe");
             if (!File.Exists(exe)) { ShowError("The ForgeCoin daemon is missing from the bin folder."); return; }
             List<string> args = new List<string> {
-                "--data-dir", Quote(Path.Combine(appRoot, "blockchain")),
-                "--p2p-bind-ip", "0.0.0.0", "--p2p-bind-port", "19480",
-                "--rpc-bind-ip", "127.0.0.1", "--rpc-bind-port", "19481",
+                "--data-dir", Quote(Path.Combine(appRoot, "blockchain-mainnet-20261026")),
+                "--p2p-bind-ip", "0.0.0.0", "--p2p-bind-port", "39480",
+                "--rpc-bind-ip", "127.0.0.1", "--rpc-bind-port", "39481",
                 "--no-igd", "--no-zmq", "--check-updates", "disabled",
                 "--disable-dns-checkpoints", "--non-interactive", "--log-level", "1"
             };
@@ -830,6 +830,11 @@ namespace ForgeCoinDesktop
             {
                 args.Add("--allow-local-ip"); args.Add("--add-exclusive-node"); args.Add(Quote(peer));
             }
+            if (!nodeOfflineMode && peer.Length == 0)
+            {
+                ShowError("Specify a verified fresh-mainnet peer. The retired development chain is not supported.");
+                return;
+            }
             daemon = StartCaptured(exe, string.Join(" ", args.ToArray()), "NODE");
             if (daemon != null)
             {
@@ -842,7 +847,7 @@ namespace ForgeCoinDesktop
         private void StopNode(object sender, EventArgs e)
         {
             if (!IsRunning(daemon)) { SetNodeStopped(); return; }
-            try { Rpc("http://127.0.0.1:19481/json_rpc", "stop_daemon", new Dictionary<string, object>()); } catch { }
+            try { Rpc("http://127.0.0.1:39481/json_rpc", "stop_daemon", new Dictionary<string, object>()); } catch { }
             WaitThenKill(daemon);
             daemon = null;
             SetNodeStopped();
@@ -862,8 +867,8 @@ namespace ForgeCoinDesktop
             {
                 try
                 {
-                    IDictionary result = Rpc("http://127.0.0.1:19481/json_rpc", "get_info", new Dictionary<string, object>());
-                    IDictionary header = Rpc("http://127.0.0.1:19481/json_rpc", "get_last_block_header", new Dictionary<string, object>());
+                    IDictionary result = Rpc("http://127.0.0.1:39481/json_rpc", "get_info", new Dictionary<string, object>());
+                    IDictionary header = Rpc("http://127.0.0.1:39481/json_rpc", "get_last_block_header", new Dictionary<string, object>());
                     PostUi(delegate
                     {
                         long height = ToLong(result["height"]);
@@ -894,17 +899,17 @@ namespace ForgeCoinDesktop
             if (IsRunning(walletRpc)) return;
             string exe = Path.Combine(binRoot, "forge-wallet-rpc.exe");
             if (!File.Exists(exe)) throw new FileNotFoundException("The ForgeCoin wallet service is missing.", exe);
-            string args = "--wallet-dir " + Quote(Path.Combine(appRoot, "wallets")) +
-                " --rpc-bind-ip 127.0.0.1 --rpc-bind-port 19482 --disable-rpc-login" +
-                " --daemon-address 127.0.0.1:19481 --trusted-daemon" +
-                " --shared-ringdb-dir " + Quote(Path.Combine(appRoot, "ringdb")) +
+            string args = "--wallet-dir " + Quote(Path.Combine(appRoot, "wallets-mainnet-20261026")) +
+                " --rpc-bind-ip 127.0.0.1 --rpc-bind-port 39483 --disable-rpc-login" +
+                " --daemon-address 127.0.0.1:39481 --trusted-daemon" +
+                " --shared-ringdb-dir " + Quote(Path.Combine(appRoot, "ringdb-mainnet-20261026")) +
                 " --log-file " + Quote(Path.Combine(appRoot, "logs", "wallet-rpc.log"));
             walletRpc = StartCaptured(exe, args, "WALLET");
             if (walletRpc == null) throw new InvalidOperationException("Could not start the wallet service.");
             for (int i = 0; i < 30; i++)
             {
                 Thread.Sleep(200);
-                try { Rpc("http://127.0.0.1:19482/json_rpc", "get_version", new Dictionary<string, object>()); return; } catch { }
+                try { Rpc("http://127.0.0.1:39483/json_rpc", "get_version", new Dictionary<string, object>()); return; } catch { }
             }
             throw new InvalidOperationException("The wallet service did not become ready.");
         }
@@ -916,7 +921,7 @@ namespace ForgeCoinDesktop
                 string name = ValidWalletName();
                 EnsureWalletService();
                 Dictionary<string, object> p = new Dictionary<string, object> { { "filename", name }, { "password", passwordBox.Text }, { "language", "English" } };
-                Rpc("http://127.0.0.1:19482/json_rpc", "create_wallet", p);
+                Rpc("http://127.0.0.1:39483/json_rpc", "create_wallet", p);
                 WalletOpened("Created " + name);
                 ShowRecoverySeed(null, EventArgs.Empty);
             }
@@ -930,7 +935,7 @@ namespace ForgeCoinDesktop
                 string name = ValidWalletName();
                 EnsureWalletService();
                 Dictionary<string, object> p = new Dictionary<string, object> { { "filename", name }, { "password", passwordBox.Text } };
-                Rpc("http://127.0.0.1:19482/json_rpc", "open_wallet", p);
+                Rpc("http://127.0.0.1:39483/json_rpc", "open_wallet", p);
                 WalletOpened("Opened " + name);
             }
             catch (Exception ex) { ShowError(ex.Message); }
@@ -957,7 +962,7 @@ namespace ForgeCoinDesktop
 
         private void CloseWallet(object sender, EventArgs e)
         {
-            try { Rpc("http://127.0.0.1:19482/json_rpc", "close_wallet", new Dictionary<string, object>()); } catch { }
+            try { Rpc("http://127.0.0.1:39483/json_rpc", "close_wallet", new Dictionary<string, object>()); } catch { }
             walletOpen = false;
             walletState.Text = "Wallet closed"; walletState.ForeColor = Color.DimGray;
             createWalletButton.Enabled = true; openWalletButton.Enabled = true; closeWalletButton.Enabled = false; seedButton.Enabled = false; sendButton.Enabled = false;
@@ -970,7 +975,7 @@ namespace ForgeCoinDesktop
             try
             {
                 if (!walletOpen) throw new InvalidOperationException("Open a wallet first.");
-                IDictionary result = Rpc("http://127.0.0.1:19482/json_rpc", "query_key", new Dictionary<string, object> { { "key_type", "mnemonic" } });
+                IDictionary result = Rpc("http://127.0.0.1:39483/json_rpc", "query_key", new Dictionary<string, object> { { "key_type", "mnemonic" } });
                 string seed = result.Contains("key") ? Convert.ToString(result["key"]) : "";
                 if (seed.Length == 0) throw new InvalidOperationException("The wallet service did not return a recovery seed.");
 
@@ -994,7 +999,7 @@ namespace ForgeCoinDesktop
             if (!walletOpen) return;
             try
             {
-                IDictionary addresses = Rpc("http://127.0.0.1:19482/json_rpc", "get_address", new Dictionary<string, object> { { "account_index", 0 } });
+                IDictionary addresses = Rpc("http://127.0.0.1:39483/json_rpc", "get_address", new Dictionary<string, object> { { "account_index", 0 } });
                 receiveAddressGrid.Rows.Clear();
                 IEnumerable rows = addresses.Contains("addresses") ? addresses["addresses"] as IEnumerable : null;
                 if (rows != null)
@@ -1011,7 +1016,7 @@ namespace ForgeCoinDesktop
                     }
                 }
 
-                IDictionary book = Rpc("http://127.0.0.1:19482/json_rpc", "get_address_book", new Dictionary<string, object> { { "entries", new object[0] } });
+                IDictionary book = Rpc("http://127.0.0.1:39483/json_rpc", "get_address_book", new Dictionary<string, object> { { "entries", new object[0] } });
                 contactGrid.Rows.Clear();
                 IEnumerable contacts = book.Contains("entries") ? book["entries"] as IEnumerable : null;
                 if (contacts != null)
@@ -1036,7 +1041,7 @@ namespace ForgeCoinDesktop
             {
                 if (!walletOpen) throw new InvalidOperationException("Open a wallet before generating an address.");
                 string label = receiveLabelBox.Text.Trim();
-                Rpc("http://127.0.0.1:19482/json_rpc", "create_address", new Dictionary<string, object> { { "account_index", 0 }, { "label", label } });
+                Rpc("http://127.0.0.1:39483/json_rpc", "create_address", new Dictionary<string, object> { { "account_index", 0 }, { "label", label } });
                 receiveLabelBox.Clear();
                 RefreshAddressLists();
             }
@@ -1063,7 +1068,7 @@ namespace ForgeCoinDesktop
                 string address = contactAddressBox.Text.Trim();
                 string name = contactNameBox.Text.Trim();
                 if (address.Length < 20) throw new InvalidOperationException("Enter a valid ForgeCoin recipient address.");
-                Rpc("http://127.0.0.1:19482/json_rpc", "add_address_book", new Dictionary<string, object> { { "address", address }, { "description", name } });
+                Rpc("http://127.0.0.1:39483/json_rpc", "add_address_book", new Dictionary<string, object> { { "address", address }, { "description", name } });
                 contactNameBox.Clear(); contactAddressBox.Clear();
                 RefreshAddressLists();
             }
@@ -1088,7 +1093,7 @@ namespace ForgeCoinDesktop
                 if (contactGrid.SelectedRows.Count == 0) throw new InvalidOperationException("Select a saved recipient first.");
                 int index = Convert.ToInt32(contactGrid.SelectedRows[0].Cells["Index"].Value, CultureInfo.InvariantCulture);
                 if (MessageBox.Show("Delete this saved recipient?", "ForgeCoin", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
-                Rpc("http://127.0.0.1:19482/json_rpc", "delete_address_book", new Dictionary<string, object> { { "index", index } });
+                Rpc("http://127.0.0.1:39483/json_rpc", "delete_address_book", new Dictionary<string, object> { { "index", index } });
                 RefreshAddressLists();
             }
             catch (Exception ex) { ShowError(ex.Message); }
@@ -1101,8 +1106,8 @@ namespace ForgeCoinDesktop
             {
                 try
                 {
-                    IDictionary balances = Rpc("http://127.0.0.1:19482/json_rpc", "get_balance", new Dictionary<string, object> { { "account_index", 0 } });
-                    IDictionary addresses = Rpc("http://127.0.0.1:19482/json_rpc", "get_address", new Dictionary<string, object> { { "account_index", 0 } });
+                    IDictionary balances = Rpc("http://127.0.0.1:39483/json_rpc", "get_balance", new Dictionary<string, object> { { "account_index", 0 } });
+                    IDictionary addresses = Rpc("http://127.0.0.1:39483/json_rpc", "get_address", new Dictionary<string, object> { { "account_index", 0 } });
                     PostUi(delegate
                     {
                         if (!walletOpen) return;
@@ -1134,7 +1139,7 @@ namespace ForgeCoinDesktop
                 DialogResult confirm = MessageBox.Show("Send " + amount.ToString("0.########", CultureInfo.InvariantCulture) + " FRG to\n\n" + address + "?", "Confirm transaction", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (confirm != DialogResult.Yes) return;
                 ArrayList destinations = new ArrayList { new Dictionary<string, object> { { "amount", atomic }, { "address", address } } };
-                IDictionary result = Rpc("http://127.0.0.1:19482/json_rpc", "transfer", new Dictionary<string, object> { { "destinations", destinations }, { "account_index", 0 }, { "priority", 0 }, { "get_tx_key", true } });
+                IDictionary result = Rpc("http://127.0.0.1:39483/json_rpc", "transfer", new Dictionary<string, object> { { "destinations", destinations }, { "account_index", 0 }, { "priority", 0 }, { "get_tx_key", true } });
                 string tx = result.Contains("tx_hash") ? Convert.ToString(result["tx_hash"]) : "submitted";
                 MessageBox.Show("Transaction submitted.\n\n" + tx, "ForgeCoin", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 sendAddressBox.Clear(); sendAmountBox.Clear(); RefreshWallet();
@@ -1146,6 +1151,7 @@ namespace ForgeCoinDesktop
         {
             try
             {
+                throw new InvalidOperationException("New mainnet has not launched. Solo mining is locked until the genesis and consensus release are approved.");
                 if (!IsRunning(daemon)) throw new InvalidOperationException("Start the ForgeCoin node before mining.");
                 if (IsRunning(poolMiner)) throw new InvalidOperationException("Stop pool mining before starting solo mining.");
                 string address = miningAddressBox.Text.Trim();
@@ -1156,7 +1162,7 @@ namespace ForgeCoinDesktop
                     { "do_background_mining", false },
                     { "ignore_battery", true }
                 };
-                RestRpc("http://127.0.0.1:19481/start_mining", request);
+                RestRpc("http://127.0.0.1:39481/start_mining", request);
                 miningState.Text = "Mining"; miningState.BackColor = Color.FromArgb(53, 145, 92);
                 miningDetailLabel.Text = "Miner monitor: starting RandomX workers…";
                 startMiningButton.Enabled = false; stopMiningButton.Enabled = true;
@@ -1167,7 +1173,7 @@ namespace ForgeCoinDesktop
 
         private void StopMining(object sender, EventArgs e)
         {
-            try { RestRpc("http://127.0.0.1:19481/stop_mining", new Dictionary<string, object>()); } catch (Exception ex) { ShowError(ex.Message); }
+            try { RestRpc("http://127.0.0.1:39481/stop_mining", new Dictionary<string, object>()); } catch (Exception ex) { ShowError(ex.Message); }
             miningState.Text = "Stopped"; miningState.BackColor = Color.FromArgb(110, 118, 130);
             hashRateValue.Text = "0"; miningThreadsValue.Text = "0";
             miningDetailLabel.Text = "Miner monitor: stopped at " + DateTime.Now.ToString("HH:mm:ss");
@@ -1193,8 +1199,8 @@ namespace ForgeCoinDesktop
             {
                 try
                 {
-                    IDictionary status = RestRpc("http://127.0.0.1:19481/mining_status", new Dictionary<string, object>());
-                    IDictionary info = Rpc("http://127.0.0.1:19481/json_rpc", "get_info", new Dictionary<string, object>());
+                    IDictionary status = RestRpc("http://127.0.0.1:39481/mining_status", new Dictionary<string, object>());
+                    IDictionary info = Rpc("http://127.0.0.1:39481/json_rpc", "get_info", new Dictionary<string, object>());
                     PostUi(delegate
                     {
                         bool active = status.Contains("active") && Convert.ToBoolean(status["active"], CultureInfo.InvariantCulture);
@@ -1234,6 +1240,7 @@ namespace ForgeCoinDesktop
         {
             try
             {
+                throw new InvalidOperationException("New mainnet has not launched. Pool mining remains disabled until launch approval.");
                 if (IsRunning(poolMiner)) return;
                 if (stopMiningButton.Enabled) throw new InvalidOperationException("Stop solo mining before starting pool mining.");
                 string exe = Path.Combine(binRoot, "xmrig", "xmrig.exe");
@@ -1522,7 +1529,7 @@ namespace ForgeCoinDesktop
             refreshTimer.Stop();
             miningTimer.Stop();
             if (IsRunning(poolMiner)) { try { poolMiner.Kill(); } catch { } }
-            if (walletOpen) { try { Rpc("http://127.0.0.1:19482/json_rpc", "close_wallet", new Dictionary<string, object>()); } catch { } }
+            if (walletOpen) { try { Rpc("http://127.0.0.1:39483/json_rpc", "close_wallet", new Dictionary<string, object>()); } catch { } }
             if (IsRunning(walletRpc)) { try { walletRpc.Kill(); } catch { } }
             if (IsRunning(daemon))
             {

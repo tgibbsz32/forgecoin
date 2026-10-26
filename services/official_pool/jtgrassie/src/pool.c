@@ -79,7 +79,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CLIENT_JOBS_MAX 4
 #define BLOCK_HEADERS_MAX 4
 #define BLOCK_TEMPLATES_MAX 4
-#define MAINNET_ADDRESS_PREFIX 90 /* ForgeCoin native mainnet; see cryptonote_config.h */
+#define MAINNET_ADDRESS_PREFIX 190 /* Fresh FRG mainnet; config/mainnet.identity.json */
 #define TESTNET_ADDRESS_PREFIX 53
 #define BLOCK_HEADERS_RANGE 10
 #define DB_INIT_SIZE 0x140000000 /* 5G */
@@ -4196,17 +4196,24 @@ read_config(const char *config_file)
         log_fatal("Invalid pool wallet");
         exit(-1);
     }
-    if (config.pool_fee_wallet[0] &&
-            parse_address(config.pool_fee_wallet, NULL, NULL, NULL))
+    /* Never deduct miner fees without a valid destination on this network. */
+    if (!config.pool_fee_wallet[0])
     {
-        log_error("Invalid fee wallet; ignoring");
-        memset(config.pool_fee_wallet, 0, sizeof(config.pool_fee_wallet));
+        log_fatal("Missing pool-fee-wallet: no operator fee destination");
+        exit(-1);
     }
-    if (strncmp(config.pool_fee_wallet, config.pool_wallet,
-            sizeof(config.pool_wallet)-1) == 0)
+    uint8_t fee_nettype = 0;
+    unsigned char fee_pub_spend[32] = {0};
+    if (parse_address(config.pool_fee_wallet, NULL, &fee_nettype,
+            &fee_pub_spend[0]) || fee_nettype != nettype)
     {
-        log_error("Fee wallet cannot match the pool wallet; ignoring");
-        memset(config.pool_fee_wallet, 0, sizeof(config.pool_fee_wallet));
+        log_fatal("Invalid pool-fee-wallet or wrong network");
+        exit(-1);
+    }
+    if (strcmp(config.pool_fee_wallet, config.pool_wallet) == 0)
+    {
+        log_fatal("Operator fee wallet must differ from the pool reward wallet");
+        exit(-1);
     }
     if (!config.wallet_rpc_host[0] || config.wallet_rpc_port == 0)
     {

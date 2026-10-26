@@ -30,13 +30,13 @@ The NSIS installer is generated in `src-tauri/target/release/bundle/nsis`. Both 
 
 ## First use
 
-1. Configure a trusted ForgeCoin node URL. For the bundled local node, the actual public peer `150.136.209.227:19480` is prefilled; start the node. The peer is exclusive so inherited Monero bootstrap nodes are not contacted. DNS checkpoints and automatic daemon update checks are disabled.
+1. Configure a trusted ForgeCoin node URL. For the bundled local node, the actual public peer `150.136.209.227:39480` is prefilled; start the node. The peer is exclusive so inherited Monero bootstrap nodes are not contacted. DNS checkpoints and automatic daemon update checks are disabled.
 2. Create a wallet and write down its recovery phrase, or recover an existing wallet. A wallet password is required. Use restore height 0 if unknown.
 3. Wait for node synchronization and wallet scanning. The balance screen shows wallet height and offline status; Settings shows node height and sync status. Wallet auto-scanning is enabled only while the node responds, so offline balance and recovery controls remain usable.
 4. Solo mining uses the local daemon. Pool mining requires a ForgeCoin-compatible pool and a standard non-elevated XMRig executable. Pool login uses the primary wallet address and password `x`; pools requiring custom login formats are outside this minimal version.
 5. Choose the correct TLS port advertised by the pool. CPU threads default to one. XMRig's normal donation policy applies. Read the miner log to confirm accepted shares; a running process alone does not establish a successful connection.
 
-The public peer was recovered from the prior hosting conversation and its P2P port verified reachable on 2026-10-17. Its RPC port 19481 timed out, so the wallet defaults to local RPC `http://127.0.0.1:19481` while the bundled node syncs from the prefilled public peer. An empty saved peer is filled automatically; a nonempty custom peer is preserved. No pool is preconfigured. Existing wallet files and chain directories are not migrated. To import wallet files, close their existing wallet program and copy both the wallet cache and `.keys` file into the folder shown in Settings, using a simple alphanumeric/hyphen/underscore wallet name. Keep the original backup. Recovery is the other supported import path.
+The public peer was recovered from the prior hosting conversation and its P2P port verified reachable on 2026-10-17. Its RPC port 39481 timed out, so the wallet defaults to local RPC `http://127.0.0.1:39481` while the bundled node syncs from the prefilled public peer. An empty saved peer is filled automatically; a nonempty custom peer is preserved. No pool is preconfigured. Existing wallet files and chain directories are not migrated. To import wallet files, close their existing wallet program and copy both the wallet cache and `.keys` file into the folder shown in Settings, using a simple alphanumeric/hyphen/underscore wallet name. Keep the original backup. Recovery is the other supported import path.
 
 ## Keys and processes
 
@@ -82,3 +82,7 @@ The existing Solo mode and user-configured XMRig Pool mode are the starting poin
 Official-pool accepted-share/payout status, TLS/offline/full-pool handling and end-to-end two-miner mature-payout tests remain pending. The 100-worker target is not tested capacity. Pool website/dashboard, standalone Pool Observer and online explorer are separate planned services, not embedded or deployed features of this desktop. Security review and staged rollout are required before public integration.
 
 See the [workstream handoff](../../docs/HANDOFF_POOL_EXPLORER_2026-10-24.md) for branch context, completed documentation work and the next desktop integration deliverable.
+
+## Network cutover: 20261026
+
+The application defaults to the new isolated mainnet P2P/RPC ports 39480/39481 and fresh local chain/wallet storage. Existing saved settings using 19480/19481 fail closed with instructions to change the connection explicitly. Old LMDB files and wallets are not migrated. The fresh mainnet is not yet live; never mine or transfer value until an approved genesis hash and binaries have been released.

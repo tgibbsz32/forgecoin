@@ -1,3 +1,5 @@
+> **SUPERSEDED HISTORICAL CANDIDATE (20261020).** This candidate was mined offline and archived; it is NOT the current mainnet. Read `config/mainnet.identity.json` and `docs/MAINNET_CUTOVER_RELEASE_GATES_2026-10-26.md` for the replacement chain. Do not mine this candidate.
+
 # Fresh-mainnet launch: difficulty specification (draft)
 
 > **Planning document, not an activation announcement.** The existing ForgeCoin development chain is unchanged. No chain reset, genesis replacement, or new-mainnet deployment is authorized by this document.

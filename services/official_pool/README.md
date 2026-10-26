@@ -1,3 +1,5 @@
+> **NEW MAINNET PRELAUNCH 20261026.** The C research pool now targets address prefix 190, RPC 39481, and genesis hash `4bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c`. All public listeners and payouts remain disabled. Never reuse RPC 19481 or nonce 20261020. The owner-controlled fee wallet is unconfigured. See `../../config/mainnet.identity.json`.
+
 # ForgeCoin native mining-pool backend — isolated C fork (RESEARCH ONLY)
 
 This directory contains the **initial native-FRG compatibility port** of

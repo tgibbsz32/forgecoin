@@ -50,8 +50,13 @@ set(crypto_sources
   CryptonightR_JIT.c
   tree-hash.c)
 
-if(ARCH_ID STREQUAL "i386" OR ARCH_ID STREQUAL "x86_64" OR ARCH_ID STREQUAL "x86-64" OR ARCH_ID STREQUAL "amd64")
-list(APPEND crypto_sources CryptonightR_template.S)
+# MinGW's CMAKE_SYSTEM_PROCESSOR can be "AMD64" (uppercase).
+# The previous case-sensitive check silently omitted the CryptoNightR
+# assembler template, leaving every CryptonightR_instruction_mov* symbol
+# unresolved at final daemon/wallet link. Normalize before selecting code.
+string(TOLOWER "${ARCH_ID}" FORGE_CRYPTO_ARCH_ID)
+if(FORGE_CRYPTO_ARCH_ID STREQUAL "i386" OR FORGE_CRYPTO_ARCH_ID STREQUAL "x86_64" OR FORGE_CRYPTO_ARCH_ID STREQUAL "x86-64" OR FORGE_CRYPTO_ARCH_ID STREQUAL "amd64")
+  list(APPEND crypto_sources CryptonightR_template.S)
 endif()
 
 include_directories(${RANDOMX_INCLUDE})

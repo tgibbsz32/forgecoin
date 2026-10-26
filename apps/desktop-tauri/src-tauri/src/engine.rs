@@ -21,8 +21,8 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            daemon_url: "http://127.0.0.1:19481".into(),
-            peer: "150.136.209.227:19480".into(),
+            daemon_url: "http://127.0.0.1:39481".into(),
+            peer: String::new(), // No public fresh-mainnet peer exists before launch.
             xmrig_path: String::new(),
             pool: String::new(),
             tls: true,
@@ -169,7 +169,7 @@ fn validate_settings(s: &Settings) -> Result<(), String> {
 }
 impl Engine {
     pub fn new(dir: PathBuf) -> Result<Self, String> {
-        fs::create_dir_all(dir.join("wallets")).map_err(error)?;
+        fs::create_dir_all(dir.join("wallets-mainnet-20261026")).map_err(error)?;
         let instance_lock = fs::OpenOptions::new()
             .read(true)
             .write(true)
@@ -187,6 +187,9 @@ impl Engine {
         };
         if settings.peer.trim().is_empty() {
             settings.peer = Settings::default().peer;
+        }
+        if settings.daemon_url.contains(":19481") || settings.peer.ends_with(":19480") {
+            return Err("Retired development-network settings detected. Back up old wallets and choose RPC port 39481 and peer port 39480. Wallets and chain data are never migrated automatically.".into());
         }
         validate_settings(&settings)?;
         Ok(Self {
@@ -328,7 +331,7 @@ impl Engine {
                 &self.wallet_port.to_string(),
                 "--wallet-dir",
             ])
-            .arg(self.dir.join("wallets"))
+            .arg(self.dir.join("wallets-mainnet-20261026"))
             .args([
                 "--daemon-address",
                 &self.settings.daemon_url,
@@ -393,12 +396,12 @@ impl Engine {
                     self.login = None;
                 }
                 Ok(
-                    json!({"node":node,"nodeConnected":node_connected,"nodeReady":node_ready,"nodeHeight":node_info["height"],"nodeDifficulty":node_info["difficulty"],"nodeTargetSeconds":node_info["target"],"nodeTarget":node_info["target_height"],"wallet":self.opened,"pool":pool,"solo":self.solo,"settings":self.settings,"walletDirectory":self.dir.join("wallets")}),
+                    json!({"node":node,"nodeConnected":node_connected,"nodeReady":node_ready,"nodeHeight":node_info["height"],"nodeDifficulty":node_info["difficulty"],"nodeTargetSeconds":node_info["target"],"nodeTarget":node_info["target_height"],"wallet":self.opened,"pool":pool,"solo":self.solo,"settings":self.settings,"walletDirectory":self.dir.join("wallets-mainnet-20261026")}),
                 )
             }
             "wallet_names" => {
                 let mut names = Vec::new();
-                for entry in fs::read_dir(self.dir.join("wallets")).map_err(error)? {
+                for entry in fs::read_dir(self.dir.join("wallets-mainnet-20261026")).map_err(error)? {
                     let entry = entry.map_err(error)?;
                     if !entry.file_type().map_err(error)?.is_file() {
                         continue;
@@ -459,20 +462,20 @@ impl Engine {
                 if running(&mut self.node) {
                     return Ok(json!(true));
                 }
-                fs::create_dir_all(self.dir.join("chain")).map_err(error)?;
+                fs::create_dir_all(self.dir.join("chain-mainnet-20261026")).map_err(error)?;
                 self.node = Some(
                     command(&binary("forged")?)
                         .args(["--data-dir"])
-                        .arg(self.dir.join("chain"))
+                        .arg(self.dir.join("chain-mainnet-20261026"))
                         .args([
                             "--p2p-bind-ip",
                             "0.0.0.0",
                             "--p2p-bind-port",
-                            "19480",
+                            "39480",
                             "--rpc-bind-ip",
                             "127.0.0.1",
                             "--rpc-bind-port",
-                            "19481",
+                            "39481",
                             "--no-igd",
                             "--add-exclusive-node",
                             &self.settings.peer,
@@ -597,6 +600,7 @@ impl Engine {
                 Ok(json!({"txid":v["tx_hash"]}))
             }
             "start_solo" => {
+                return Err("Fresh mainnet has not launched: solo mining is deliberately disabled.".into());
                 if running(&mut self.miner) || self.solo {
                     return Err("Stop the active miner first.".into());
                 }
@@ -618,6 +622,7 @@ impl Engine {
                 Ok(json!(true))
             }
             "start_pool" => {
+                return Err("Fresh mainnet has not launched: pool mining is deliberately disabled.".into());
                 if running(&mut self.miner) || self.solo {
                     return Err("Stop the active miner first.".into());
                 }
@@ -733,7 +738,7 @@ impl Engine {
             "miner_log" => {
                 use std::io::{Read, Seek, SeekFrom};
                 let path = match p["mode"].as_str().unwrap_or("pool") {
-                    "solo" => self.dir.join("chain").join("forgecoin.log"),
+                    "solo" => self.dir.join("chain-mainnet-20261026").join("forgecoin.log"),
                     "pool" => self.dir.join("miner.log"),
                     _ => return Err("Choose Solo or Pool mining for the activity log.".into()),
                 };

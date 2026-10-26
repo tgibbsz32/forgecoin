@@ -95,8 +95,11 @@ function(add_flag flag)
   endif()
 endfunction()
 
-# x86-64
-if ((CMAKE_SIZEOF_VOID_P EQUAL 8) AND (ARCH_ID STREQUAL "x86_64" OR ARCH_ID STREQUAL "x86-64" OR ARCH_ID STREQUAL "amd64"))
+# x86-64: CMAKE_SYSTEM_PROCESSOR is uppercase AMD64 in MinGW/CMake.
+# The previous case-sensitive architecture guard omitted both JIT sources
+# and produced unresolved randomx::JitCompilerX86 symbols at link time.
+string(TOLOWER "${ARCH_ID}" RANDOMX_TARGET_ARCH)
+if ((CMAKE_SIZEOF_VOID_P EQUAL 8) AND (RANDOMX_TARGET_ARCH STREQUAL "x86_64" OR RANDOMX_TARGET_ARCH STREQUAL "x86-64" OR RANDOMX_TARGET_ARCH STREQUAL "amd64"))
   list(APPEND randomx_sources
     src/jit_compiler_x86.cpp)
 

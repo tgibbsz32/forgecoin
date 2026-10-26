@@ -5,8 +5,8 @@
 1. Extract the entire `ForgeCoin-Desktop-phase3` folder. Keep the `bin` folder beside `ForgeCoin Desktop.exe`.
 2. Double-click `ForgeCoin Desktop.exe`.
 3. If Windows SmartScreen appears, choose **More info**, then **Run anyway**. This test build is unsigned.
-4. On the **Node** tab, optionally enter a known ForgeCoin peer as `host:19480`, then choose **Start Node**.
-5. Allow ForgeCoin on private networks if Windows Firewall prompts. The node's P2P port is TCP `19480`. RPC ports `19481` and `19482` stay on `127.0.0.1` and must never be forwarded through the router.
+4. On the **Node** tab, optionally enter a known ForgeCoin peer as `host:39480`, then choose **Start Node**.
+5. Allow ForgeCoin on private networks if Windows Firewall prompts. The node's P2P port is TCP `39480`. RPC ports `39481` and `39483` stay on `127.0.0.1` and must never be forwarded through the router.
 
 If this is the only running ForgeCoin node, enable **Offline bootstrap mining** before starting it. This allows the first PC to mine without a synchronized peer. The node does not accept P2P connections while offline. Stop it, turn the option off, and restart when another ForgeCoin node is available.
 
@@ -40,4 +40,8 @@ The pool must explicitly support ForgeCoin's network and `rx/0` RandomX jobs. A 
 
 ## Back up or remove
 
-Back up `%LOCALAPPDATA%\ForgeCoin\wallets` and the recovery seed. To remove the application, close it and delete the extracted program folder. Delete `%LOCALAPPDATA%\ForgeCoin` only if the wallet and blockchain data are no longer needed.
+Back up `%LOCALAPPDATA%\ForgeCoin\wallets-mainnet-20261026` and the recovery seed. To remove the application, close it and delete the extracted program folder. Delete `%LOCALAPPDATA%\ForgeCoin` only if the wallet and blockchain data are no longer needed.
+
+## Fresh mainnet 20261026 — no migration
+
+This release source targets genesis nonce 20261026 and P2P/RPC ports 39480/39481. Previous desktop builds, LMDB chain data, legacy wallet files, and mining addresses are NOT migrated. Desktop mining must stay disabled until a verified matching daemon/wallet release and independent new-genesis hash check are published. The new blockchain, wallet, and ring database paths end in “-mainnet-20261026”. Keep backups of all previous wallets and archives; never delete them as part of installation.

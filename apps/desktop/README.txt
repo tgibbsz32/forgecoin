@@ -7,8 +7,8 @@ files under %LOCALAPPDATA%\ForgeCoin.
 Node
 ----
 Choose Start Node. Leave Exclusive peer blank for normal peer discovery, or enter
-a known ForgeCoin peer such as host:19480 before starting. The node listens for
-ForgeCoin P2P traffic on TCP 19480. Its control port is bound to 127.0.0.1:19481.
+a known ForgeCoin peer such as host:39480 before starting. The node listens for
+ForgeCoin P2P traffic on TCP 39480. Its control port is bound to 127.0.0.1:39481.
 
 For the first node on a network, enable Offline bootstrap mining before choosing
 Start Node. This marks the local chain ready for mining without a second PC, but
@@ -19,7 +19,7 @@ Wallet
 ------
 Start the node, then enter a wallet filename and password. Choose Create for a new
 wallet or Open for an existing wallet. The wallet service binds only to
-127.0.0.1:19482. Keep the wallet password and seed phrase private. Back up the
+127.0.0.1:39483. Keep the wallet password and seed phrase private. Back up the
 wallet files from %LOCALAPPDATA%\ForgeCoin\wallets. A newly created wallet shows
 its recovery seed once, and Recovery seed displays it again while the wallet is
 open.

@@ -25,9 +25,33 @@ if (-not (Test-Path -LiteralPath $Compiler)) {
     throw 'The .NET Framework C# compiler was not found.'
 }
 
-@('forged.exe', 'forge-wallet-rpc.exe') | ForEach-Object {
+@('forged.exe', 'forge-wallet-rpc.exe', 'forge-wallet-cli.exe') | ForEach-Object {
     if (-not (Test-Path -LiteralPath (Join-Path $ForgeBin $_))) {
         throw "Missing required ForgeCoin binary: $_"
+    }
+}
+
+# Packaging old-chain binaries as the new mainnet would be a fund-loss risk.
+# Pin EVERY native executable to the genesis-frozen test-built hashes.
+$IdentityFile = Join-Path $RepositoryRoot 'config\mainnet.identity.json'
+if (-not (Test-Path -LiteralPath $IdentityFile)) {
+    throw 'New-mainnet release identity manifest missing.'
+}
+$Identity = Get-Content -LiteralPath $IdentityFile -Raw | ConvertFrom-Json
+if ($Identity.genesis_nonce -ne 20261026 -or
+    $Identity.stage -ne 'genesis-frozen' -or
+    [string]::IsNullOrWhiteSpace($Identity.genesis_hash) -or
+    $Identity.release_authorized -ne $false) {
+    throw 'Refusing packaging: expected locked new-mainnet genesis and PRELAUNCH status.'
+}
+foreach ($Name in @('forged.exe', 'forge-wallet-rpc.exe', 'forge-wallet-cli.exe')) {
+    $Expected = $Identity.windows_prelaunch_binaries_sha256.PSObject.Properties[$Name].Value
+    if ([string]::IsNullOrWhiteSpace($Expected)) {
+        throw "No pinned new-mainnet hash for $Name"
+    }
+    $Actual = (Get-FileHash -LiteralPath (Join-Path $ForgeBin $Name) -Algorithm SHA256).Hash
+    if ($Actual -ine $Expected) {
+        throw "Wrong network, stale build or tampered executable: $Name"
     }
 }
 
@@ -48,6 +72,7 @@ if ($LASTEXITCODE -ne 0) {
 
 Copy-Item -LiteralPath (Join-Path $ForgeBin 'forged.exe') -Destination $BinRoot
 Copy-Item -LiteralPath (Join-Path $ForgeBin 'forge-wallet-rpc.exe') -Destination $BinRoot
+Copy-Item -LiteralPath (Join-Path $ForgeBin 'forge-wallet-cli.exe') -Destination $BinRoot
 
 $RuntimeDlls = @(
     'libiconv-2.dll', 'libicuin78.dll', 'libicuuc78.dll', 'libicudt78.dll',
@@ -80,9 +105,11 @@ if (-not [string]::IsNullOrWhiteSpace($XmrigRoot)) {
     Copy-Item -LiteralPath (Join-Path $ProjectRoot 'XMRIG-NOTICE.txt') -Destination $XmrigBin
 }
 
-@('README.txt', 'INSTALL.md', 'VALIDATION.md') | ForEach-Object {
+@('README.txt', 'INSTALL.md', 'VALIDATION.md', 'TREASURY-WALLET.md') | ForEach-Object {
     Copy-Item -LiteralPath (Join-Path $ProjectRoot $_) -Destination $OutputRoot
 }
 Copy-Item -LiteralPath (Join-Path $RepositoryRoot 'LICENSE') -Destination $OutputRoot
+Copy-Item -LiteralPath $IdentityFile -Destination (Join-Path $OutputRoot 'mainnet.identity.json')
+Write-Host 'PRELAUNCH WALLET KIT ONLY: solo and pool mining remain disabled until mainnet launch authorization.'
 
 Write-Host "Built $OutputRoot"

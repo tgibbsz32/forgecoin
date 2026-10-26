@@ -29,8 +29,8 @@ class NativeBackendPreflight(unittest.TestCase):
         self.assertRegex(self.chain, r"#define CRYPTONOTE_DISPLAY_DECIMAL_POINT\s+8")
         self.assertIn("FRG_ATOMIC_UNITS UINT64_C(100000000)", self.currency)
         self.assertIn("FRG_COIN_DECIMALS 8", self.currency)
-        self.assertRegex(self.chain, r"CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX\s*=\s*90;")
-        self.assertIn("#define MAINNET_ADDRESS_PREFIX 90", self.pool)
+        self.assertRegex(self.chain, r"CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX\s*=\s*190;")
+        self.assertIn("#define MAINNET_ADDRESS_PREFIX 190", self.pool)
         self.assertIn("#define BLOCK_TIME 120", self.pool)
 
     def test_backend_payout_threshold_never_uses_float_units(self):
@@ -52,7 +52,7 @@ class NativeBackendPreflight(unittest.TestCase):
             "pool-listen": "127.0.0.1",
             "webui-listen": "127.0.0.1",
             "rpc-host": "127.0.0.1",
-            "rpc-port": "19481",
+            "rpc-port": "39481",
             "wallet-rpc-host": "127.0.0.1",
             "wallet-rpc-port": "0",
             "disable-payouts": "1",

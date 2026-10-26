@@ -63,6 +63,7 @@ namespace ForgeCoinDesktop
         private TextBox sendAmountBox;
         private Button createWalletButton;
         private Button openWalletButton;
+        private Button restoreWalletButton;
         private Button closeWalletButton;
         private Button seedButton;
         private Button sendButton;
@@ -157,7 +158,7 @@ namespace ForgeCoinDesktop
         {
             Panel header = new Panel { Dock = DockStyle.Top, Height = 82, BackColor = Color.FromArgb(28, 32, 42) };
             Label title = new Label { Text = "FORGECOIN", ForeColor = Color.White, Font = new Font("Segoe UI Semibold", 22F), AutoSize = true, Location = new Point(24, 14) };
-            Label subtitle = new Label { Text = "Phase 3 desktop wallet and node", ForeColor = Color.FromArgb(181, 188, 204), AutoSize = true, Location = new Point(27, 51) };
+            Label subtitle = new Label { Text = "20261026 genesis-frozen wallet — PRELAUNCH, mining disabled", ForeColor = Color.FromArgb(181, 188, 204), AutoSize = true, Location = new Point(27, 51) };
             header.Controls.Add(title);
             header.Controls.Add(subtitle);
             return header;
@@ -207,7 +208,7 @@ namespace ForgeCoinDesktop
             peerBox = new TextBox { Dock = DockStyle.Fill }; // No verified fresh-mainnet peer before launch.
             peerPanel.Controls.Add(peerBox, 1, 0);
             peerPanel.Controls.Add(new Label { Text = "Leave blank to reuse saved peers. A new installation needs a known ForgeCoin peer. Changes apply after restart.", ForeColor = Color.DimGray, AutoSize = true }, 1, 1);
-            bootstrapModeBox = new CheckBox { Text = "Offline bootstrap mining — mine on this PC without a second peer", AutoSize = true, ForeColor = Color.FromArgb(145, 68, 20), Font = new Font("Segoe UI Semibold", 9.5F), Padding = new Padding(0, 4, 0, 0) };
+            bootstrapModeBox = new CheckBox { Text = "Offline node — no mining before mainnet launch", AutoSize = true, ForeColor = Color.FromArgb(145, 68, 20), Font = new Font("Segoe UI Semibold", 9.5F), Padding = new Padding(0, 4, 0, 0) };
             peerPanel.Controls.Add(bootstrapModeBox, 1, 2);
 
             logBox = new RichTextBox { Dock = DockStyle.Fill, ReadOnly = true, BackColor = Color.FromArgb(18, 21, 28), ForeColor = Color.FromArgb(211, 216, 227), Font = new Font("Consolas", 9F), BorderStyle = BorderStyle.None };
@@ -250,8 +251,10 @@ namespace ForgeCoinDesktop
             openGrid.Controls.Add(createWalletButton, 4, 0);
             openGrid.Controls.Add(openWalletButton, 5, 0);
             walletState = new Label { Text = "Wallet service stopped", ForeColor = Color.DimGray, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
-            openGrid.SetColumnSpan(walletState, 4);
+            openGrid.SetColumnSpan(walletState, 3);
             openGrid.Controls.Add(walletState, 0, 1);
+            restoreWalletButton = SecondaryButton("Restore", RestoreWallet);
+            openGrid.Controls.Add(restoreWalletButton, 3, 1);
             closeWalletButton = SecondaryButton("Close wallet", CloseWallet);
             closeWalletButton.Enabled = false;
             openGrid.Controls.Add(closeWalletButton, 4, 1);
@@ -268,7 +271,12 @@ namespace ForgeCoinDesktop
 
             GroupBox receiveGroup = new GroupBox { Text = "Receive", Dock = DockStyle.Fill };
             addressBox = new TextBox { Dock = DockStyle.Fill, ReadOnly = true, Multiline = true, Font = new Font("Consolas", 9.5F), Text = "Open a wallet to view its address." };
-            receiveGroup.Controls.Add(addressBox);
+            TableLayoutPanel receivePanel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1 };
+            receivePanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            receivePanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 175));
+            receivePanel.Controls.Add(addressBox, 0, 0);
+            receivePanel.Controls.Add(SecondaryButton("Copy address", CopyPrimaryAddress), 1, 0);
+            receiveGroup.Controls.Add(receivePanel);
 
             GroupBox sendGroup = new GroupBox { Text = "Send", Dock = DockStyle.Fill };
             TableLayoutPanel sendGrid = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(10), ColumnCount = 3, RowCount = 3 };
@@ -818,7 +826,7 @@ namespace ForgeCoinDesktop
             if (!File.Exists(exe)) { ShowError("The ForgeCoin daemon is missing from the bin folder."); return; }
             List<string> args = new List<string> {
                 "--data-dir", Quote(Path.Combine(appRoot, "blockchain-mainnet-20261026")),
-                "--p2p-bind-ip", "0.0.0.0", "--p2p-bind-port", "39480",
+                "--p2p-bind-ip", bootstrapModeBox.Checked ? "127.0.0.1" : "0.0.0.0", "--p2p-bind-port", "39480",
                 "--rpc-bind-ip", "127.0.0.1", "--rpc-bind-port", "39481",
                 "--no-igd", "--no-zmq", "--check-updates", "disabled",
                 "--disable-dns-checkpoints", "--non-interactive", "--log-level", "1"
@@ -925,15 +933,67 @@ namespace ForgeCoinDesktop
             throw new InvalidOperationException("The wallet service did not become ready.");
         }
 
+        private void RestoreWallet(object sender, EventArgs e)
+        {
+            try
+            {
+                if (walletOpen) throw new InvalidOperationException("Close the current wallet before restoring another.");
+                string name = ValidWalletName();
+                string password = passwordBox.Text;
+                if (password.Length < 12)
+                    throw new InvalidOperationException("Choose a wallet-encryption password of at least 12 characters.");
+                if (File.Exists(Path.Combine(appRoot, "wallets-mainnet-20261026", name))
+                    || File.Exists(Path.Combine(appRoot, "wallets-mainnet-20261026", name + ".keys")))
+                    throw new InvalidOperationException("This wallet name already exists. Choose a different name so your original files are preserved.");
+
+                using (Form restore = new Form { Text = "Restore ForgeCoin wallet — OFFLINE ONLY", Size = new Size(700, 235),
+                    StartPosition = FormStartPosition.CenterParent, FormBorderStyle = FormBorderStyle.FixedDialog,
+                    MinimizeBox = false, MaximizeBox = false, ShowInTaskbar = false })
+                {
+                    Label warning = new Label { Text = "Enter your 25 recovery words in order. They stay in this window and are sent only to your authenticated local wallet service. Never share them with a website or support contact.",
+                        Dock = DockStyle.Top, Height = 73, ForeColor = Color.DarkRed, Padding = new Padding(10) };
+                    TextBox words = new TextBox { Dock = DockStyle.Top, Height = 33, UseSystemPasswordChar = true,
+                        Font = new Font("Segoe UI", 10F), Margin = new Padding(10) };
+                    Panel actions = new Panel { Dock = DockStyle.Bottom, Height = 55 };
+                    Button cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 105, Location = new Point(435, 11) };
+                    Button confirm = new Button { Text = "Restore wallet", DialogResult = DialogResult.OK, Width = 130, Location = new Point(546, 11) };
+                    actions.Controls.Add(cancel); actions.Controls.Add(confirm);
+                    restore.Controls.Add(actions); restore.Controls.Add(words); restore.Controls.Add(warning);
+                    restore.AcceptButton = confirm; restore.CancelButton = cancel;
+                    try
+                    {
+                        if (restore.ShowDialog(this) != DialogResult.OK) return;
+                        string seed = words.Text.Trim();
+                        if (seed.Split(new char[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length != 25)
+                            throw new InvalidOperationException("A standard ForgeCoin recovery phrase has 25 words. Check the phrase locally and try again.");
+                        EnsureWalletService();
+                        Dictionary<string, object> values = new Dictionary<string, object> {
+                            { "filename", name }, { "password", password }, { "seed", seed },
+                            { "restore_height", 0 }, { "language", "English" }
+                        };
+                        Rpc("http://127.0.0.1:39483/json_rpc", "restore_deterministic_wallet", values);
+                        WalletOpened("Restored " + name + " — verify the address against your original backup");
+                    }
+                    finally { words.Clear(); }
+                }
+            }
+            catch (Exception ex) { ShowError(ex.Message); }
+        }
+
         private void CreateWallet(object sender, EventArgs e)
         {
             try
             {
                 string name = ValidWalletName();
+                if (passwordBox.Text.Length < 12)
+                    throw new InvalidOperationException("Choose a wallet-encryption password of at least 12 characters.");
+                string existing = Path.Combine(appRoot, "wallets-mainnet-20261026", name);
+                if (File.Exists(existing) || File.Exists(existing + ".keys"))
+                    throw new InvalidOperationException("Wallet already exists. Use Open instead of overwriting it.");
                 EnsureWalletService();
                 Dictionary<string, object> p = new Dictionary<string, object> { { "filename", name }, { "password", passwordBox.Text }, { "language", "English" } };
                 Rpc("http://127.0.0.1:39483/json_rpc", "create_wallet", p);
-                WalletOpened("Created " + name);
+                WalletOpened("Created " + name + " — record and verify your recovery seed offline");
                 ShowRecoverySeed(null, EventArgs.Empty);
             }
             catch (Exception ex) { ShowError(ex.Message); }
@@ -955,7 +1015,7 @@ namespace ForgeCoinDesktop
         private string ValidWalletName()
         {
             string name = walletNameBox.Text.Trim();
-            if (name.Length == 0) throw new InvalidOperationException("Enter a wallet name.");
+            if (name.Length == 0 || name.Length > 64 || name == "." || name == "..") throw new InvalidOperationException("Enter a wallet name of 1-64 characters, not a filesystem path.");
             if (name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || name.Contains("\\") || name.Contains("/")) throw new InvalidOperationException("Use a simple wallet filename without folders.");
             return name;
         }
@@ -965,8 +1025,18 @@ namespace ForgeCoinDesktop
             walletOpen = true;
             walletState.Text = message;
             walletState.ForeColor = Color.FromArgb(40, 125, 78);
-            createWalletButton.Enabled = false; openWalletButton.Enabled = false; closeWalletButton.Enabled = true; seedButton.Enabled = true; sendButton.Enabled = true;
+            createWalletButton.Enabled = false; openWalletButton.Enabled = false; restoreWalletButton.Enabled = false;
+            closeWalletButton.Enabled = true; seedButton.Enabled = true;
+            // No transaction can be broadcast before the replacement mainnet launches.
+            sendButton.Enabled = false;
             passwordBox.Clear();
+            try
+            {
+                IDictionary response = Rpc("http://127.0.0.1:39483/json_rpc", "get_address",
+                    new Dictionary<string, object> { { "account_index", 0 } });
+                if (response.Contains("address")) addressBox.Text = Convert.ToString(response["address"], CultureInfo.InvariantCulture);
+            }
+            catch (Exception ex) { walletState.Text = message + " — public address still loading: " + ex.Message; }
             RefreshWallet();
             RefreshAddressLists();
         }
@@ -976,9 +1046,24 @@ namespace ForgeCoinDesktop
             try { Rpc("http://127.0.0.1:39483/json_rpc", "close_wallet", new Dictionary<string, object>()); } catch { }
             walletOpen = false;
             walletState.Text = "Wallet closed"; walletState.ForeColor = Color.DimGray;
-            createWalletButton.Enabled = true; openWalletButton.Enabled = true; closeWalletButton.Enabled = false; seedButton.Enabled = false; sendButton.Enabled = false;
+            createWalletButton.Enabled = true; openWalletButton.Enabled = true; restoreWalletButton.Enabled = true;
+            closeWalletButton.Enabled = false; seedButton.Enabled = false; sendButton.Enabled = false;
             balanceValue.Text = "—"; unlockedValue.Text = "—"; addressBox.Text = "Open a wallet to view its address.";
             receiveAddressGrid.Rows.Clear(); contactGrid.Rows.Clear();
+        }
+
+        private void CopyPrimaryAddress(object sender, EventArgs e)
+        {
+            if (!walletOpen) { ShowError("Open or create a wallet first."); return; }
+            string address = addressBox.Text.Trim();
+            if (address.Length < 90 || address.IndexOf(' ') >= 0)
+            {
+                ShowError("The wallet has not returned a valid public receiving address.");
+                return;
+            }
+            Clipboard.SetText(address);
+            MessageBox.Show("Public receiving address copied. Share only this address, never the seed or wallet password.",
+                "ForgeCoin Treasury", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void ShowRecoverySeed(object sender, EventArgs e)
@@ -994,10 +1079,10 @@ namespace ForgeCoinDesktop
                 Label warning = new Label { Text = "Write these words down and store them offline. Anyone with this seed can spend the wallet's funds.", Dock = DockStyle.Top, Height = 58, Padding = new Padding(14), ForeColor = Color.DarkRed };
                 TextBox words = new TextBox { Text = seed, ReadOnly = true, Multiline = true, Dock = DockStyle.Fill, Font = new Font("Segoe UI", 12F), Margin = new Padding(14), ScrollBars = ScrollBars.Vertical };
                 Panel buttons = new Panel { Dock = DockStyle.Bottom, Height = 58 };
-                Button copy = new Button { Text = "Copy", Width = 100, Height = 34, Location = new Point(478, 12) };
-                Button done = new Button { Text = "I saved it", Width = 100, Height = 34, Location = new Point(588, 12), DialogResult = DialogResult.OK };
-                copy.Click += delegate { Clipboard.SetText(seed); };
-                buttons.Controls.Add(copy); buttons.Controls.Add(done);
+                // Do not copy mnemonic secrets onto the Windows clipboard.
+                // The user must keep the recovery phrase in offline custody.
+                Button done = new Button { Text = "I wrote it down", Width = 145, Height = 34, Location = new Point(533, 12), DialogResult = DialogResult.OK };
+                buttons.Controls.Add(done);
                 dialog.AcceptButton = done;
                 dialog.Controls.Add(words); dialog.Controls.Add(warning); dialog.Controls.Add(buttons);
                 dialog.ShowDialog(this);

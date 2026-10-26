@@ -1,47 +1,46 @@
-# ForgeCoin Desktop Phase 3
+# ForgeCoin Windows wallet — prelaunch installation and recovery
 
-## Install and start
+**Current status:** private wallet testing only, NOT an authorized public mainnet/miner release. No miner or pool payouts are enabled in this package. Native genesis nonce `20261026`; expected genesis hash `4bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c`.
 
-1. Extract the entire `ForgeCoin-Desktop-phase3` folder. Keep the `bin` folder beside `ForgeCoin Desktop.exe`.
-2. Double-click `ForgeCoin Desktop.exe`.
-3. If Windows SmartScreen appears, choose **More info**, then **Run anyway**. This test build is unsigned.
-4. On the **Node** tab, optionally enter a known ForgeCoin peer as `host:39480`, then choose **Start Node**.
-5. Allow ForgeCoin on private networks if Windows Firewall prompts. The node's P2P port is TCP `39480`. RPC ports `39481` and `39483` stay on `127.0.0.1` and must never be forwarded through the router.
+## Installation
 
-If this is the only running ForgeCoin node, enable **Offline bootstrap mining** before starting it. This allows the first PC to mine without a synchronized peer. The node does not accept P2P connections while offline. Stop it, turn the option off, and restart when another ForgeCoin node is available.
+1. Extract the entire **verified owner test ZIP** into a new folder. Keep `ForgeCoin Desktop.exe` next to the `bin` directory. Do not use older v0.1 or v0.2 test packages for custody.
+2. Confirm `mainnet.identity.json` specifies the expected genesis nonce/hash and `release_authorized=false`. Verify the release ZIP hash against the owner-verified SHA-256, not an untrusted message.
+3. Open the desktop application. If Windows security flags the unsigned executable, investigate its provenance and hash; **do not automatically bypass security prompts**.
+4. The Node tab can inspect an offline, genesis-only chain; offline mode must not mine or connect a public P2P port. The daemon RPC is loopback-only at `127.0.0.1:39481`; wallet RPC at `127.0.0.1:39483` requires randomly generated HTTP Digest credentials.
+5. Existing development-chain blockchain databases, wallets and transaction balances are **not imported or merged**. Back them up separately.
 
-## Create or open a wallet
+## Create and protect a wallet
 
-1. Start the node and wait for **Synchronized**.
-2. Open the **Wallet** tab.
-3. Enter a simple wallet filename and password, then choose **Create** or **Open**.
-4. When creating a wallet, write down the recovery seed and store it offline. Anyone with the seed can spend the wallet's funds.
+1. Open the **Wallet** tab, select a new wallet name and enter a unique encryption password of at least 12 characters.
+2. Click **Create**. The native wallet RPC creates the files in `%LOCALAPPDATA%\ForgeCoin\wallets-mainnet-20261026`.
+3. The GUI displays a **25-word recovery phrase**. Write the phrase in correct order on offline media and store it securely. Do not photograph, copy to clipboard, upload or transmit it.
+4. Record the public address on the Wallet tab. Use **Copy address** to copy ONLY that public address. Verify its beginning and ending characters against the wallet display.
+5. Click **Close wallet**, then use **Open** with the same name and password to confirm that the encrypted wallet files load normally.
 
-Wallets, blockchain data, logs, and the shared ring database are stored under `%LOCALAPPDATA%\ForgeCoin`.
+## Independently verify recovery BEFORE funding
 
-## Mine ForgeCoin
+1. Record your public address and close the current wallet.
+2. Choose a **new filename** (for example `treasury-recovery-test`), set a new encryption password, then click **Restore**.
+3. Enter your 25 offline recovery words in order. Entry is masked and sent only to the locally authenticated wallet service. The words are cleared from the input after the restore attempt.
+4. Verify that the new wallet displays **exactly the same public address** as the original. Your original wallet files remain untouched. Keep the encrypted original and recovery backups separately.
+5. Reopen the original wallet when finished. Do not send the recovery phrase to the team, the pool server, an assistant, or anyone else.
 
-1. Keep the node running and synchronized with at least one ForgeCoin peer.
-2. Open a wallet, or paste a ForgeCoin payout address on the **Mining** tab.
-3. Select the CPU thread count and choose **Start Mining**.
-4. Use **Stop** before shutting down or when you want to release the CPU.
+An automated interactive Windows Forms test successfully created a disposable wallet, displayed its recovery dialog, closed and restored it into a second wallet file, verified the public address match, and deleted only the disposable test files. This is **not** an independent security audit or a test involving real funds.
 
-Solo mode uses the RandomX CPU miner already compiled into `forged.exe`. XMRig is bundled for pool mode and is not required for solo mining.
+## Treasury and pool
 
-## Mine with a pool
+The owner-controlled **1% pool operator fee treasury** is separate from the pool reward/payout hot wallet and any proposed future governance treasury. The pool may require only the PUBLIC receiving address to account for operator fees. It must never receive the treasury mnemonic/password/private keys. Payout distribution remains disabled pending production safety review and a distinct pool reward wallet.
 
-The **Pool Mining** tab includes XMRig 6.26.0 for future ForgeCoin-compatible RandomX pools. Enter the pool URL and port, wallet address or pool username, worker name, pool password, and thread count. Choose **Start Pool** to see live hash rate, accepted and rejected shares, share difficulty, ping, uptime, and miner output.
+## Mining and networking
 
-## Local blockchain explorer
+- Native RandomX SOLO and XMRig-compatible POOL source controls are present but intentionally **locked** in this genesis-frozen prelaunch package.
+- No publicly authorized mining, Stratum endpoint, fee collection, block template submission or transfer is permitted at this phase. A GUI button or local test is not evidence of a live network.
+- The official mining package must eventually include a verified, legally distributable pool-miner implementation and successfully pass accepted-share/payout and solo block-maturity tests on a **separate disposable network**, not on the frozen public launch genesis.
+- Node P2P `39480`, daemon RPC `39481`, wallet RPC `39483`. Never expose wallet RPC or unrestricted daemon RPC to the internet.
 
-The **Explorer** tab uses only the ForgeCoin daemon on `127.0.0.1`. Choose **Refresh** to list recent blocks. Search by block height, block hash, or transaction ID. Each full-node wallet therefore has an independent explorer and does not need a hosted explorer website.
+## Backups and removal
 
-The pool must explicitly support ForgeCoin's network and `rx/0` RandomX jobs. A Monero pool will not mine ForgeCoin. XMRig's license and corresponding source archive are included under `bin\xmrig`.
+Preserve `%LOCALAPPDATA%\ForgeCoin\wallets-mainnet-20261026`, your offline seed phrase, and (where relevant) your private wallet password. Never delete `%LOCALAPPDATA%\ForgeCoin` during a simple application uninstall because it may contain valuable encrypted wallets or historical backups.
 
-## Back up or remove
-
-Back up `%LOCALAPPDATA%\ForgeCoin\wallets-mainnet-20261026` and the recovery seed. To remove the application, close it and delete the extracted program folder. Delete `%LOCALAPPDATA%\ForgeCoin` only if the wallet and blockchain data are no longer needed.
-
-## Fresh mainnet 20261026 — no migration
-
-This release source targets genesis nonce 20261026 and P2P/RPC ports 39480/39481. Previous desktop builds, LMDB chain data, legacy wallet files, and mining addresses are NOT migrated. Desktop mining must stay disabled until a verified matching daemon/wallet release and independent new-genesis hash check are published. The new blockchain, wallet, and ring database paths end in “-mainnet-20261026”. Keep backups of all previous wallets and archives; never delete them as part of installation.
+Read [technical validation](VALIDATION.md), [treasury setup](TREASURY-WALLET.md), and the [new-mainnet cutover gates](../../docs/MAINNET_CUTOVER_RELEASE_GATES_2026-10-26.md).

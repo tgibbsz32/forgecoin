@@ -36,11 +36,9 @@ proof that the new mainnet, its wallets or mining pool are production-ready.
 
 ## Outstanding validations — MUST NOT claim they passed
 
-- An unfunded throwaway wallet was created through the new wallet RPC, its
-  public address and zero balance verified and the wallet closed. GUI
-  Create and Restore still need interactive owner-side testing.
+- **The actual Windows Forms GUI wallet create/restore lifecycle has now been exercised.** On an offline genesis-only matching node, the native wallet RPC created an unfunded disposable wallet; the GUI displayed the seed dialog and public address; the test closed it, restored it from its mnemonic into a separate disposable name, and compared addresses. The restored public address matched, both wallet files were then deleted and the owner treasury was not touched.
 - The throwaway wallet reported zero balance against genesis-only RPC;
-  live balance scanning, sending/receiving and recovery remain untested.
+  actual on-chain transfers and chain rescans remain untested. Unfunded recovery was verified through the Windows GUI.
 - RandomX mining and pool Stratum were tested on separate disposable
   historical research networks, **not on this fresh mainnet**.
 - Independent consensus review, preallocation unspendability, fully
@@ -50,8 +48,7 @@ proof that the new mainnet, its wallets or mining pool are production-ready.
 - Until the genesis coinbase output can be proved permanently unspendable
   (or consensus explicitly disallows its spending), a categorical
   'zero-premine' public claim is not justified.
-- No funds, wallet keys, actual fee treasury or official fee transfers were
-  generated or entrusted to the assistant.
+- No real user wallet recovery phrase, wallet password, spend key, pool fee payout or actual fee transfer was handled by the test. A separate owner-controlled public pool-fee address has been recorded in a subsequent pool configuration branch. The owner retains the wallet secrets.
 
 **Treasury-wallet owner instructions:** `TREASURY-WALLET.md`.
 
@@ -71,8 +68,36 @@ stopped afterward; no blocks were mined, no funded wallets accessed, and
 no phrase was output. A separate Windows C# build of the updated GUI
 passed; **13 mainnet tests + 19 C pool source tests passed**.
 
-This test does **not** prove that the GUI wallet-creation and mnemonic
-backup dialogs work interactively, nor that storing RPC credentials in
-a child process's command-line argument defends against privileged
-local processes. The owner must use a trusted Windows login and perform
-a manual seed backup and restore before funding the treasury.
+The later **interactive GUI automation** did successfully exercise the Create, seed-backup dialog, Close, Restore, address equality and Close workflow on disposable files with zero mined blocks. This is not an independent security audit and the owner should still independently restore their actual wallet offline before funding it. The RPC credential in the child process command line is potentially visible to privileged local processes.
+
+## Actual interactive GUI wallet lifecycle (private prelaunch v0.4)
+
+A reproducible Windows Forms integration test is available under
+`apps/desktop/tests/GuiCreateRestoreSmoke.cs` and
+`apps/desktop/tests/run-gui-create-restore-smoke.ps1`. It uses the **native
+new-mainnet** `forged.exe` and `forge-wallet-rpc.exe`, a private offline
+genesis-only chain directory, and its own disposable GUI wallet names.
+The test neither touches the operator's existing treasury files nor
+prints or saves a private mnemonic in the results.
+
+Verified through the **actual desktop GUI event handlers** on Windows:
+
+1. Authenticated native wallet-RPC startup from the packaged `bin` directory.
+2. Click/create a synthetic encrypted wallet; display its 25-word recovery dialog.
+3. Display the expected-length native public receiving address in Wallet.
+4. Close wallet, then restore from its synthetic 25 words into a **different**
+   wallet filename using a masked seed-entry dialog.
+5. Confirm exactly matching recovered public address and close the wallet.
+6. Stop the isolated daemon; confirm it remained at **RPC height 1**, with
+   no submitted/mined blocks. Delete only four disposable synthetic wallet
+   files, leaving the owner's treasury untouched.
+
+The test output contained no seed or private key. Source-level tests now
+also check for per-session Digest authentication, address-copy-only UI,
+no mnemonic clipboard button, minimum password length, and wallet
+filename collision protection.
+
+**Scope limits:** even with tested offline wallet creation and recovery, this
+does not establish live receive/send maturity, audited private-key custody,
+real pool Stratum accepted shares/payouts or correct activation of SOLO
+mining. Those must pass independent launch gates before public release.

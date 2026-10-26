@@ -177,3 +177,43 @@ python -m services.pool_research.tests.run_native_stratum_socket_offline --execu
 ```
 
 The optional runner uses a fake daemon and genuine C++ RandomX on a localhost socket; it opens no production daemon, accepts no funds, issues no payout, and exits after a single nonce check plus replay rejection. Release blockers are independent real-FRG daemon + actual XMRig interoperability, active worker rotation, canonical chain proof, accepted native block submission, recovery/reorg and PPLNS maturity-aware accounting, TLS, capacity and audited payout signing.
+
+
+## XMRig 6.26.0 nonce-layout interoperability (Step 004)
+
+A real, existing Windows **XMRig 6.26.0** executable was run for ten seconds with a single CPU thread, zero donations, RandomX light mode, and a loopback-only connection to `NativeResearchListener`. A **fixture daemon** supplied per-worker template fields; an actual C++ RandomX helper separately validated the miner-submitted nonce/digest. The bounded run reported **63 matching submissions**, all `POW_THRESHOLD_MET_UNCREDITED`. No pool shares, FRG, block rewards or payments were accepted. The miner was stopped by the test harness.
+
+A first run found that fixture timestamps encoded in two bytes place the CryptoNote nonce at **byte 36**; XMRig `rx/0` instead patches **byte 39**. Although the existing offline bound-job validator allows variable nonce offsets, its `rx/0` job issuer now **fails closed if the daemon template doesn't place its nonce at byte 39**. The fake daemon was updated to use a five-byte timestamp varint, like current real ForgeCoin templates, and a unit test now asserts that the incompatible two-byte layout is rejected before job issuance. This is an interoperability constraint, not a consensus change.
+
+Run the optional real-XMRig probe **only on an authorized Windows test machine** with reviewed XMRig/native binaries:
+
+```powershell
+python -m services.pool_research.tests.run_xmrig_native_loopback_offline --xmrig-executable C:\\test\\xmrig.exe --native-worker C:\\test\\randomx_worker.exe --seconds 10
+```
+
+The script accepts **no external pool endpoint**, opens only a random local TCP port, disables donation, limits XMRig to one thread and light RandomX, and terminates it at the hard-coded time bound. The script now fails if XMRig exits prematurely, rejects its CLI options, fails to log in, or produces zero native-verified submissions. The registered test login is a placeholder, not a real wallet address. Miner stdout may be empty due to Windows pipe buffering and process termination; the server-side native verification count is the principal evidence.
+
+**Not proven:** mining against a canonical actual ForgeCoin daemon through the Stratum socket, a multi-worker XMRig load test, automatic job refresh on new block height, accepted block submission, active PPLNS rewards, mature wallet payouts, robust restart/reorg recovery, or an audited public mining pool. Do not open a public Stratum service or credit rewards based on these research fixtures.
+
+
+## Real disposable ForgeCoin daemon + two actual XMRig instances (Step 005)
+
+`tests/run_disposable_daemon_two_xmrig.py` adds a **manually invoked** isolated integration harness. It uses the owner-provided *disposable* offline wallet solely to obtain a public mining address, copied to a new temporary directory; starts a local **offline** ForgeCoin daemon on loopback-only P2P/RPC/ZMQ ports with a **fresh temporary chain**; and issues real `get_block_template` work through `DaemonJobSource` to two separate XMRig 6.26.0 instances connected only to the local Stratum research listener. Both XMRig processes use one CPU thread, zero donation and RandomX light mode. Their native shares are verified using the separately built C++ RandomX worker; **all are uncredited**, with no `submit_block`, share ledger, payout key or reward signing. At exit the miner/daemon processes are terminated and temporary files removed.
+
+Observed on Windows in an extended **24-second**, worker-difficulty **30** bounded test: **2 local XMRig sessions received jobs**, **both submitted independently native-verified RandomX shares**, **59** matching submissions total, **19** legitimate busy rejections due to the listener's single global native verifier, and **0** credited shares, accepted blocks or paid rewards. An earlier 12-second run at difficulty 100 verified seven shares from only one of the two sessions. The extended test uses a stricter success condition: both distinct sessions must pass native RandomX verification.
+
+The ForgeCoin daemon executable was an **earlier isolated consensus-candidate Windows binary**, not a newly reproducible binary from this repository's current main commit. The disposable chain is *mainnet-typed* but entirely offline/fresh and not the existing public network. The supplied genesis hash is obtained from the same daemon and therefore **is not independently verified**. This is an integration check, not security or canonical-mainnet evidence.
+
+The script requires manually selected local binaries and the explicit disposable wallet filename, never follows URLs, opens no remote mining endpoint, and limits test duration and the number of worker processes. It is **not** the pool service and should not be deployed as one. Remediation remains necessary for busy-verifier fairness/throughput, automatic tip job rotation, accepted-block submission and durable canonical reward/payout accounting.
+
+
+## Step 006 — bounded FIFO native RandomX verification (2026-10-26)
+
+`native_verification_queue.py` replaces the native pool research listener's immediate busy rejection with a bounded first-in/first-out work queue, retaining **one active RandomX worker** to prevent concurrent use of the same persistent RandomX subprocess. Limits remain strict: 1–8 queued shares, one request awaiting completion per connected miner session, and an explicit deadline. Cancellation and full-queue overload fail closed; no canceled result is ever credited. A failing native verifier returns a failure, not successful proof. The queue is **not** a general-purpose, fully audited parallel pool scheduler.
+
+`native_stratum_research.py` now submits each XMRig share through the queue and awaits its native result instead of dropping it when the single verifier is busy. The research responses remain `POW_THRESHOLD_MET_UNCREDITED` and `submitted_block: false`. The code still opens **only a random local loopback TCP port**, holds no wallet keys, and cannot issue payouts or submit blocks. The fairness tests use blocked first verification plus competing worker requests to prove the second is queued and eventually processed.
+
+Run `python -m unittest services.pool_research.test_native_verification_queue services.pool_research.test_native_stratum_research -v` and the existing complete `unittest discover` suite. A separate manually run two-XMRig real-daemon disposable test is needed to measure whether busy rejections disappear; fixture unit tests alone do not establish throughput or security. Current research socket capacity remains at most eight, far below the proposed 100-worker public pool target.
+
+
+**Measured disposable integration (Windows, 2026-10-26):** On a fresh *offline* ForgeCoin daemon, two independent XMRig 6.26.0 processes each provided native-verified shares. At worker difficulty 30 over a 24-second test interval the FIFO listener returned **98 native-verified uncredited shares, 0 busy rejections**, compared with the Step 005 research listener's **59 verified shares and 19 busy rejections** under a similar bounded run. This is an observed small-load comparison, not a statistically controlled throughput benchmark; a single native helper still serializes work. The disposable daemon and both miners were stopped; no block was submitted.

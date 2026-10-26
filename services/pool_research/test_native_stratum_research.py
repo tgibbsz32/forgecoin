@@ -16,7 +16,7 @@ class NativeStratumLoopbackTests(unittest.IsolatedAsyncioTestCase):
         def fake_native(seed,blob):
             self.calls += 1
             self.assertEqual(len(seed), 32)
-            self.assertEqual(blob[36:40],bytes.fromhex("01020304"))
+            self.assertEqual(blob[39:43],bytes.fromhex("01020304"))
             return bytes(32)
         self.fake_native = fake_native
         self.listener = NativeResearchListener(self.make_source, fake_native)
@@ -135,28 +135,34 @@ class NativeStratumLoopbackTests(unittest.IsolatedAsyncioTestCase):
         await a[1].drain()
         self.assertEqual(await asyncio.wait_for(a[0].readline(),timeout=2),b"")
 
-    async def test_busy_does_not_consume_second_worker(self):
+    async def test_fifo_waits_for_first_worker_then_verifies_second(self):
         a,b=await self.client(),await self.client()
         al,bl=await self.login(a),await self.login(b)
         entered,release=threading.Event(),threading.Event()
-        original=self.listener.verifier
+        original=self.listener.native_queue.verifier
+        order=[]
         def slow(s,blob):
+            order.append(blob)
             entered.set()
             if not release.wait(3):
                 raise RuntimeError("test barrier timed out")
             return original(s,blob)
-        self.listener.verifier=slow
-        pending=asyncio.create_task(self.request(a,2,"submit",self.submit_params(al)))
+        self.listener.native_queue.verifier=slow
+        first=asyncio.create_task(self.request(a,2,"submit",self.submit_params(al)))
+        second=None
         try:
             self.assertTrue(await asyncio.to_thread(entered.wait,2))
-            reply=await self.request(b,2,"submit",self.submit_params(bl))
-            self.assertIn("busy",reply["error"]["message"])
+            second=asyncio.create_task(self.request(b,2,"submit",self.submit_params(bl)))
+            await asyncio.sleep(0.06)
+            self.assertFalse(second.done(), "second share should be queued, not rejected as busy")
+            self.assertEqual(self.calls,0)
         finally:
             release.set()
-        self.assertIsNone((await pending)["error"])
-        self.listener.verifier=original
-        self.assertIsNone((await self.request(b,3,"submit",self.submit_params(bl)))["error"])
+        self.assertIsNone((await first)["error"])
+        self.assertIsNone((await second)["error"])
+        self.assertEqual(len(order),2)
         self.assertEqual(self.calls,2)
+        self.listener.native_queue.verifier=original
 
 
 if __name__=="__main__":

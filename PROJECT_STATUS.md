@@ -1,41 +1,19 @@
-# ForgeCoin Project Status
+# ForgeCoin project status — October 26, 2026
 
-## Pool and explorer completion status — October 24, 2026
+The selected mainnet is genesis-frozen and **not launched**. [Current parameters and tokenomics](docs/CURRENT_MAINNET.md) are authoritative for documentation. The main branch still carries the legacy runtime implementation; the new-mainnet implementation in draft PR #111 remains unmerged. Documentation publication is not network activation.
 
-The official native FRG pool is **planned, not deployed or payout-validated**. Its intended operator fee is **1% of eligible pooled rewards**; solo mining has no project-pool fee. The 100-worker target remains unverified. Tauri has local solo and user-configured XMRig pool controls, but verified official-pool integration is pending. Pool website/dashboard and standalone Pool Observer completion are pending. The recovered online explorer source still requires tests, security review, HTTPS and verified public deployment.
+## Completed evidence and open gates
 
-See the [implementation plan](docs/POOL_EXPLORER_IMPLEMENTATION_PLAN.md) for build, isolated integration, private staging, security, beta and rollout gates. No live service or successful production payout is established by this documentation update.
+- Frozen nonce 20261026, exact genesis hash and native Windows binary hashes recorded in the selected source manifest.
+- Windows Forms create/restore passed in feature-branch handoffs; 14 mainnet/desktop source checks and 20 pool source/build guards passed in the subsequent isolated review.
+- Tauri matching binary hashes and Windows imports audited; Rust/frontend builds and local debug NSIS construction passed. Installer was not installed or runtime-tested. Draft #114 contains the packaging audit update.
+- Genesis output permanent unspendability, real solo/pool acceptance and payouts, funded transfers, clean-machine packaging, matching ARM64 consensus and independent security review remain unresolved.
+- Old Oracle explorer and pool preparation pages are not new-mainnet infrastructure. No public pool, payout service or approved bootstrap peer is available for this identity.
 
-## October source recovery
+## Delivery direction
 
-The repository now includes the Tauri desktop 0.1.6, standalone read-only explorer,
-and existing mainnet upgrades v17/500, v18/600 and v19/700. See
-[SOURCE_RECOVERY.md](docs/SOURCE_RECOVERY.md) for provenance, exact rules and
-validation limits. These are recovered implementations, not a newly tested release.
-Historical Phase 3 component descriptions below refer to the Windows Forms app.
+The first planned post-launch integration is a user-deposit-backed, redeemable 1:1 Solana wFRG bridge. The preferred later privacy upgrade is an in-place FCMP++/CARROT hard fork preserving native FRG history and balances; a separate successor and voluntary, supply-conserving migration are the fallback. Later work includes native atomic swaps, backed private stable assets, TSS/MPC private trades, L2 settlement and L3 applications.
 
-## Working components
+<small>Proposed future upgrades; implementation and timing are not guaranteed.</small>
 
-- ForgeCoin mainnet identity and genesis block
-- Version 16 consensus from height 1
-- RandomX proof-of-work mining
-- Eight-decimal FRG accounting
-- Historical Windows Forms desktop: node, wallet, address book, solo miner, pool-miner interface and local explorer. Current Tauri scope is documented in [its README](apps/desktop-tauri/README.md); the online explorer is a separate service.
-- Local-only daemon and wallet RPC defaults in the desktop application
-
-## Completed source cleanup
-
-- Removed inherited Monero mainnet checkpoints
-- Removed inherited Monero DNS and IP seed nodes
-- Added native support for eight-decimal FRG formatting
-- Preserved the Phase 3 genesis, network UUID, rewards, and emission policy
-
-## Before broad public-value use
-
-- Obtain independent review of fork-specific consensus and wallet changes
-- Publish stable seed nodes operated by more than one party
-- Produce signed, reproducible release builds
-- Create ForgeCoin-specific testnet and stagenet identities
-- Test upgrades, reorganizations, backup recovery, and multi-node synchronization
-- Establish multiple independent miners and pools
-- Document the spendability and intended treatment of the genesis transaction output
+See [roadmap](ROADMAP.md), [future architecture](docs/SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md), and [release gates](docs/POOL_EXPLORER_IMPLEMENTATION_PLAN.md). No mining or public launch is authorized.

@@ -1,3 +1,5 @@
+> [Current mainnet specification, tokenomics and release status](docs/CURRENT_MAINNET.md) — October 26, 2026; prelaunch.
+
 # ForgeCoin Security Policy
 
 ## Supported versions

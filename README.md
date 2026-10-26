@@ -1,24 +1,12 @@
 # ForgeCoin
 
-> **Current owner direction (2026-10-24):** Restored native-only fair launch: 50M FRG primary-emission reference, no allocated premine, 100% PoW miner subsidy and perpetual 0.20 FRG/block tail. The 55M/5M genesis treasury proposal is withdrawn. Native trading and user-deposit-backed Solana interoperability are future research. See [roadmap](ROADMAP.md).
-
+> **Current mainnet specification:** [October 26 frozen identity, tokenomics and release status](docs/CURRENT_MAINNET.md). Public launch is not authorized.
 
 ![ForgeCoin mark](docs/images/forgecoin-logo.png)
 
-> **Owner policy update (2026-10-24):** Owner policy: no automatic balance migration from the existing development chain; fresh-mainnet identity and difficulty parameters remain provisional. Native PoW miners receive 100% of block subsidy, no founder/team/ICO premine is authorized, and 0.20 FRG per-block tail emission is retained subject to source audit. Genesis output must be independently proven permanently unspendable before release. See docs/OWNER_POLICY_DECISIONS_2026-10-24.md.
-
-
-> **Documentation status (2026-10-24):** The repository currently describes the public development-chain source. A separately identified fresh-mainnet candidate passed offline mining through RPC height 17 and a competing-chain reorganization repeat, but has NOT been approved or deployed. See docs/RELEASE_STATUS_2026-10-24.md.
-
-
-> Source restored October 20, 2026, including the existing October 0.1.6 work.
-> See [source provenance and validation limits](docs/SOURCE_RECOVERY.md).
-> The current desktop is [Tauri/Rust/React](apps/desktop-tauri); the Phase 3
-> Windows Forms application remains available as historical source.
-
 ForgeCoin is an experimental, privacy-preserving, proof-of-work cryptocurrency derived from Monero v0.18.5.1. It uses RandomX CPU mining, private transactions, a two-minute target block time, and a desktop wallet that can run a node, wallet, miner, and local blockchain explorer from one application.
 
-ForgeCoin is in the bootstrap stage. The chain is operational, but the network currently has limited independent hash power and has not received an independent security audit. Do not treat it as suitable for substantial value until multiple independent nodes and miners are operating and the release process has been reviewed.
+ForgeCoin’s selected October 26 mainnet is genesis-frozen and unlaunched. The old chains are retired. Main-branch runtime code still reflects the legacy implementation; new-mainnet source remains under review in draft PR #111.
 
 ## Current asset scope (October 2026)
 
@@ -40,49 +28,30 @@ See [the full interoperability, migration and successor plan](docs/SOLANA_FCMP_C
 
 ForgeCoin aims to provide private, CPU-accessible peer-to-peer digital cash that people can validate, mine, and explore on their own computers without relying on a central custodian or hosted block-explorer website.
 
-## Network parameters
+## Current network parameters
 
-| Parameter | Value |
+| Parameter | Frozen mainnet specification |
 | --- | --- |
-| Ticker | FRG |
-| Atomic precision | 8 decimal places |
-| Proof of work | RandomX |
-| Target block time | 120 seconds |
-| Difficulty window | Public development-source schedule: legacy before height 700, LWMA90 from 700; separate fresh candidate proposes LWMA from height 16 (unreleased) |
-| Primary emission reference | 50,000,000 FRG |
-| Initial post-genesis reward | approximately 23.84185222 FRG |
-| Tail reward | 0.20 FRG per block |
-| Coinbase maturity | 60 blocks |
-| Mainnet P2P port | 19480 |
-| Mainnet RPC port | 19481 |
-| Mainnet consensus | v16 at height 1; v17 at 500; v18 at 600; v19 at 700 |
-| Genesis hash | `a9651ecf2aec7c92443e7e7e8bfd4c6e6d5de3de8a52c04f9a98274d5031f9b9` |
+| Status | Prelaunch; release_authorized=false |
+| Native asset | FRG, 8 decimals |
+| Proof of work / target | RandomX / 120 seconds |
+| Genesis nonce | 20261026 |
+| Genesis hash | `4bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c` |
+| UUID | `bd936359-09e4-4fdb-8ec0-12fa9d6ef090` |
+| Address prefixes | 190 / 191 / 192 |
+| P2P / daemon RPC / ZMQ RPC | 39480 / 39481 / 39482 |
+| Protocol | v1 genesis; v19 at height 1 |
+| Initial / minimum difficulty | 500,000 / 400,000 |
+| Adjustment | Progressive LWMA90 from height 16 |
+| Primary emission reference | 50,000,000 FRG; no fixed cap |
+| Initial height-1 base reward | 23.84185222 FRG before penalties/fees |
+| Tail / coinbase maturity | 0.20 FRG per block / 60 blocks |
 
-The tail reward means total supply is not permanently capped. See [the whitepaper](docs/WHITEPAPER.md) for the emission formula, estimates, privacy model, governance limits, and risks.
+See [current mainnet specification](docs/CURRENT_MAINNET.md) for source provenance, exact tokenomics, launch blockers and the [documentation manifest](docs/mainnet.identity.json). The genesis contains 11.92092895 FRG whose permanent unspendability remains unproven.
 
-## Desktop application
+## Desktop and joining status
 
-The current [Tauri desktop](apps/desktop-tauri) supports wallet creation/recovery,
-fee review and sending, transaction history, local node operation, solo mining,
-and user-configured XMRig pools. It does not embed an explorer.
-The separate [read-only explorer](apps/explorer) provides block and transaction
-lookup. Native sidecar binaries must be built separately; they are not committed.
-
-The historical Windows Forms desktop is under [`apps/desktop`](apps/desktop). It includes:
-
-- a local ForgeCoin node;
-- wallet creation, recovery seed access, receiving addresses, contacts, and transfers;
-- built-in RandomX solo mining and optional XMRig pool mining;
-- separate node and miner status monitors;
-- a decentralized local explorer for recent blocks and block or transaction lookup.
-
-The daemon and wallet RPC bind only to loopback by default in the desktop application. P2P traffic uses TCP port 19480.
-
-## Joining the network
-
-New installations need the address of at least one existing ForgeCoin peer until stable project seed nodes are published. Start the daemon with `--add-peer host:19480` or enter the peer in the desktop application's Node tab. A node stores discovered peers locally for later connections.
-
-Do not expose the wallet RPC or unrestricted daemon RPC to the public internet.
+Windows Forms private prelaunch create/restore tests passed as recorded in the feature-branch handoffs. Tauri compilation and a local debug installer build passed; clean-machine installation and runtime validation remain open. Mining remains locked. No official new-mainnet public peer or pool is approved. Do not use the retired peer or main-branch binaries as a new-mainnet release. Never expose wallet RPC or unrestricted daemon RPC publicly.
 
 ## Source layout
 
@@ -101,7 +70,7 @@ Release binaries should be attached to a tagged GitHub Release instead of commit
 
 ## Project status
 
-The current source removes inherited Monero mainnet checkpoints and seed nodes, accepts ForgeCoin's eight-decimal precision at source level, and preserves the Phase 3 network identity and monetary policy. Testnet and stagenet still need ForgeCoin-specific identities before they should be advertised for public use.
+The current source removes inherited Monero mainnet checkpoints and seed nodes, accepts ForgeCoin's eight-decimal precision at source level, and contains legacy runtime network identity pending the separately reviewed new-mainnet implementation. Testnet and stagenet still need ForgeCoin-specific identities before they should be advertised for public use.
 
 ## Contributing and security
 

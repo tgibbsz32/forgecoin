@@ -1,3 +1,5 @@
+> [Current mainnet specification, tokenomics and release status](CURRENT_MAINNET.md) — October 26, 2026; prelaunch.
+
 # ForgeCoin interoperability and FCMP++/CARROT evolution
 
 **Committed development direction — October 26, 2026.** The capabilities below are planned engineering work and are not implemented on the current network.

@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "chain": "forgecoin-mainnet",
+  "stage": "genesis-frozen",
+  "release_authorized": false,
+  "network_uuid": "bd936359-09e4-4fdb-8ec0-12fa9d6ef090",
+  "genesis_nonce": 20261026,
+  "genesis_tx_hex": "013c01ff0001dfc9b7b80402b595d1f9b584153125490337444ba18d842151ed8dc4586a1d9d1fb06a69002a2101b079cf5447fcc6dd014fc48eff36b325a430e468c4559e70d4ae9dae6acfd961",
+  "genesis_hash": "4bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c",
+  "genesis_height": 0,
+  "mined_blocks_permitted_before_launch": 0,
+  "devnet_retired": true,
+  "previous_candidate_retired": true,
+  "address_prefixes": {
+    "standard": 190,
+    "integrated": 191,
+    "subaddress": 192
+  },
+  "ports": {
+    "p2p": 39480,
+    "daemon_rpc": 39481,
+    "zmq_rpc": 39482
+  },
+  "mining": {
+    "algorithm": "RandomX",
+    "target_seconds": 120,
+    "starting_difficulty": 500000,
+    "difficulty_floor": 400000,
+    "startup_fixed_last_height": 15,
+    "lwma_activation_height": 16,
+    "lwma_window": 90
+  },
+  "currency": {
+    "ticker": "FRG",
+    "decimals": 8,
+    "money_supply_constant_frg": 50000000,
+    "genesis_output_atomic": 1192092895,
+    "genesis_spendability": "unverified"
+  },
+  "pool": {
+    "operator_fee_fraction": "0.01",
+    "payouts_enabled": false,
+    "stratum_public": false,
+    "operator_fee_address": "YnJPKnrv2fk6MdHkvvAxDbe1L3Dv7WgtrjPBHnP3NokU1Zri6a8da9SfoDiF9SpQxP4Xn18BT2bBNLnVtCPqXTvr1UTsca4Z4",
+    "operator_fee_address_validation": "native ForgeCoin wallet RPC validate_address: valid standard mainnet, non-integrated, non-subaddress; ownership unverified"
+  },
+  "prior_chains": {
+    "development": {
+      "rpc_port": 19481,
+      "p2p_port": 19480,
+      "genesis_nonce": 10000,
+      "classification": "archive_only"
+    },
+    "candidate_20261020": {
+      "rpc_port": 39481,
+      "genesis_nonce": 20261020,
+      "offline_smoke_saved_height": 3,
+      "classification": "archive_only"
+    }
+  },
+  "windows_prelaunch_binaries_sha256": {
+    "forged.exe": "3efaf014c7fdfcea167630f1884abee2defd40f28f1e725b6c0a8fcede5b5c37",
+    "forge-wallet-rpc.exe": "739eefe916f9a93017c870dde63b45c8db532d43226dc888395860122c3e851b",
+    "forge-wallet-cli.exe": "e5e7a807b3a1b2c7702df9cad48dfde8871f4aab1ef662032e1b5bc5becbe991"
+  }
+}

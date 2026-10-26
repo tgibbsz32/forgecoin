@@ -1,3 +1,5 @@
+> **Historical archive — superseded for current configuration.** Original evidence and decisions below retain their original dates and network parameters. Do not use old ports, genesis, balances, token proposals or release claims as current instructions. See [current mainnet specification](CURRENT_MAINNET.md) and the current roadmap.
+
 # Source recovery â€” October 20, 2026
 
 This publication restores the complete source tree to the existing GitHub history

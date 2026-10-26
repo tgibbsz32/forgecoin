@@ -1,3 +1,5 @@
+> [Current mainnet specification, tokenomics and release status](docs/CURRENT_MAINNET.md) — October 26, 2026; prelaunch.
+
 # ForgeCoin Governance Charter
 
 > **Current owner direction (2026-10-24):** Restored native-only fair launch: 50M FRG primary-emission reference, no allocated premine, 100% PoW miner subsidy and perpetual 0.20 FRG/block tail. The 55M/5M genesis treasury proposal is withdrawn. Native trading and user-deposit-backed Solana interoperability are future research. See [roadmap](ROADMAP.md).
@@ -95,13 +97,13 @@ Before public launch or binding governance, prioritize:
 
 Do not deploy the practice governance API, local admin dashboard or mock Solana-category election flow as a production voter registry.
 
-## 8. Future Solana interoperability (research only)
+## 8. Planned interoperability and privacy upgrades
 
-The future roadmap may explore a **redeemable, fully FRG-backed representation on Solana**, primarily for exchange access, payments and compatible DeFi use. This would be a separate optional project. Any wrapped asset must be fully collateralized by verified native FRG deposits.
+The first planned post-launch integration is a user-deposit-backed, redeemable 1:1 Solana wFRG bridge. The preferred later privacy upgrade is an in-place FCMP++/CARROT hard fork preserving native FRG history and balances; a separate successor and voluntary, supply-conserving migration are the fallback. Later work includes native atomic swaps, backed private stable assets, TSS/MPC private trades, L2 settlement and L3 applications.
 
-Any proposed bridge requires native deposit verification, transparent reserve/liability accounting despite FRG privacy, independent controls, safe mint/burn and redemption, chain-reorganization handling, audits, legal review, credible liquidity and a decision to launch. Until those requirements are satisfied, **no wrapped FRG token issuance or deployment is planned**.
+<small>Proposed future upgrades; implementation and timing are not guaranteed.</small>
 
-See [ROADMAP.md](ROADMAP.md) for stage gates. Future cross-chain features require a separate reviewed specification before implementation.
+Bridge custody, reserves, mint/burn, redemption, audits and authorization are required before deployment. Governance bonds and elections remain unimplemented and confer no authority to mint FRG or change consensus.
 
 ## 9. Open governance-design questions
 

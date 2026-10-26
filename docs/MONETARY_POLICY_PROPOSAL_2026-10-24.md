@@ -1,3 +1,5 @@
+> **Historical archive — superseded for current configuration.** Original evidence and decisions below retain their original dates and network parameters. Do not use old ports, genesis, balances, token proposals or release claims as current instructions. See [current mainnet specification](CURRENT_MAINNET.md) and the current roadmap.
+
 # Withdrawn proposal â€” 55M primary reference / 5M genesis treasury
 
 **WITHDRAWN 2026-10-24. Do not implement or advertise as current policy.** The owner restored the original 50M reference, zero allocated premine, full PoW block subsidy and perpetual 0.20 FRG tail. See [current roadmap](../ROADMAP.md). Historical material follows.

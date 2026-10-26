@@ -1,3 +1,5 @@
+> [Current mainnet specification, tokenomics and release status](../../docs/CURRENT_MAINNET.md) — October 26, 2026; prelaunch.
+
 # ForgeCoin pool research: offline accounting model
 
 This directory contains **experimental research**, not a production mining pool or payout service. Most modules are offline models. The explicitly invoked synthetic listener below opens loopback sockets and verifies fixed synthetic work with a supplied native RandomX executable. It has no chain submission, wallet access, rewards or payouts. Never advertise this directory as a working public pool.

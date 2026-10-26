@@ -1,43 +1,11 @@
-# ForgeCoin Desktop Phase 3
+ForgeCoin private prelaunch desktop — October 26, 2026
 
-## Install and start
+Current specification: https://tgibbsz32.github.io/forgecoin/current-mainnet.html
 
-1. Extract the entire `ForgeCoin-Desktop-phase3` folder. Keep the `bin` folder beside `ForgeCoin Desktop.exe`.
-2. Double-click `ForgeCoin Desktop.exe`.
-3. If Windows SmartScreen appears, choose **More info**, then **Run anyway**. This test build is unsigned.
-4. On the **Node** tab, optionally enter a known ForgeCoin peer as `host:19480`, then choose **Start Node**.
-5. Allow ForgeCoin on private networks if Windows Firewall prompts. The node's P2P port is TCP `19480`. RPC ports `19481` and `19482` stay on `127.0.0.1` and must never be forwarded through the router.
+The selected mainnet is frozen and NOT LAUNCHED. Nonce20261026; ports39480/39481/39482; standard/integrated/subaddress prefixes190/191/192. Wallet RPC is distinct and protected (Windows Forms uses localhost39483). Never expose wallet RPC or unrestricted daemon RPC publicly.
 
-If this is the only running ForgeCoin node, enable **Offline bootstrap mining** before starting it. This allows the first PC to mine without a synchronized peer. The node does not accept P2P connections while offline. Stop it, turn the option off, and restart when another ForgeCoin node is available.
+Main-branch desktop source is the legacy implementation. Matching private prelaunch Windows Forms source and binaries are tracked separately in draft PR #111. Do not use legacy packages or retired public peers for this chain. Solo/pool mining and sending remain locked in the private new-mainnet GUI. There is no approved public peer, pool, installer or download for launch.
 
-## Create or open a wallet
+GUI create/restore passed in the feature-branch handoff; funded transfers and real Solo/Pool acceptance remain unverified. Keep private owner wallets separate from disposable QA wallets. Never send a seed, private spend/view key or password to a server, pool or community site. Back up recovery material offline.
 
-1. Start the node and wait for **Synchronized**.
-2. Open the **Wallet** tab.
-3. Enter a simple wallet filename and password, then choose **Create** or **Open**.
-4. When creating a wallet, write down the recovery seed and store it offline. Anyone with the seed can spend the wallet's funds.
-
-Wallets, blockchain data, logs, and the shared ring database are stored under `%LOCALAPPDATA%\ForgeCoin`.
-
-## Mine ForgeCoin
-
-1. Keep the node running and synchronized with at least one ForgeCoin peer.
-2. Open a wallet, or paste a ForgeCoin payout address on the **Mining** tab.
-3. Select the CPU thread count and choose **Start Mining**.
-4. Use **Stop** before shutting down or when you want to release the CPU.
-
-Solo mode uses the RandomX CPU miner already compiled into `forged.exe`. XMRig is bundled for pool mode and is not required for solo mining.
-
-## Mine with a pool
-
-The **Pool Mining** tab includes XMRig 6.26.0 for future ForgeCoin-compatible RandomX pools. Enter the pool URL and port, wallet address or pool username, worker name, pool password, and thread count. Choose **Start Pool** to see live hash rate, accepted and rejected shares, share difficulty, ping, uptime, and miner output.
-
-## Local blockchain explorer
-
-The **Explorer** tab uses only the ForgeCoin daemon on `127.0.0.1`. Choose **Refresh** to list recent blocks. Search by block height, block hash, or transaction ID. Each full-node wallet therefore has an independent explorer and does not need a hosted explorer website.
-
-The pool must explicitly support ForgeCoin's network and `rx/0` RandomX jobs. A Monero pool will not mine ForgeCoin. XMRig's license and corresponding source archive are included under `bin\xmrig`.
-
-## Back up or remove
-
-Back up `%LOCALAPPDATA%\ForgeCoin\wallets` and the recovery seed. To remove the application, close it and delete the extracted program folder. Delete `%LOCALAPPDATA%\ForgeCoin` only if the wallet and blockchain data are no longer needed.
+Public distribution requires genesis review, compatible consensus/build evidence, actual test mining/payout acceptance, security review and explicit launch approval. No mining, migration or server activation is authorized by these instructions.

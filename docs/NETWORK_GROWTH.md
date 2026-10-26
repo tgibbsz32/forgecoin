@@ -1,3 +1,5 @@
+> **Current specification — 2026-10-26:** [Frozen mainnet parameters, tokenomics and release status](CURRENT_MAINNET.md). Public launch is not authorized. Main-branch executables still implement legacy rules; these instructions are not proof of new-mainnet compatibility.
+
 # Growing the ForgeCoin Network Without Paid Hosting
 
 ForgeCoin can distribute software and organize a community without operating a conventional website. A public GitHub repository can act as the canonical source for code, releases, documentation, checksums, issues, and announcements.
@@ -27,9 +29,9 @@ Avoid repetitive promotions across unrelated communities. Publish useful technic
 
 A website is not involved in normal P2P operation. Nodes need one initial contact and then exchange peer information. During bootstrap:
 
-- publish several volunteer `host:19480` addresses in a pinned GitHub Discussion;
+- publish several volunteer `host:39480` addresses in a pinned GitHub Discussion;
 - include two or more stable seed addresses in a future release only after their operators agree;
-- encourage users to run listening nodes and forward TCP 19480;
+- encourage users to run listening nodes and forward TCP 39480;
 - maintain seed nodes with different operators and hosting providers;
 - retain manual `--seed-node` and `--add-peer` support so the network can recover if defaults disappear.
 

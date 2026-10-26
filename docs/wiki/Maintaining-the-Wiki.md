@@ -1,3 +1,5 @@
+> **Current specification — 2026-10-26:** [Frozen mainnet parameters, tokenomics and release status](../CURRENT_MAINNET.md). Public launch is not authorized. Main-branch executables still implement legacy rules; these instructions are not proof of new-mainnet compatibility.
+
 # Maintaining the ForgeCoin documentation hub
 
 This `docs/wiki/` directory is the **reviewable documentation source** for a future optional GitHub Wiki mirror. Pages are written in portable Markdown with relative links and no embedded keys, addresses from disposable test wallets, mining block blobs or private infrastructure credentials.

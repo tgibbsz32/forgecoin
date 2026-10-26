@@ -1,3 +1,5 @@
+> **Historical archive — superseded for current configuration.** Original evidence and decisions below retain their original dates and network parameters. Do not use old ports, genesis, balances, token proposals or release claims as current instructions. See [current mainnet specification](../CURRENT_MAINNET.md) and the current roadmap.
+
 # POOL-BACKEND-003 — 2026-10-26 — first real native x86_64 pool link and ARM64 flag preflight
 
 ## Repo scope and exact implementation

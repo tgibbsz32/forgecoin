@@ -1,3 +1,5 @@
+> **Historical archive — superseded for current configuration.** Original evidence and decisions below retain their original dates and network parameters. Do not use old ports, genesis, balances, token proposals or release claims as current instructions. See [current mainnet specification](CURRENT_MAINNET.md) and the current roadmap.
+
 # Handoff: native pool, desktop, website, Observer and explorer
 
 **Updated: 2026-10-24. Review only; do not merge or deploy.**

@@ -1,3 +1,5 @@
+> [Current mainnet specification, tokenomics and release status](CURRENT_MAINNET.md) — October 26, 2026; prelaunch.
+
 # Fresh-mainnet launch: difficulty specification (draft)
 
 > **Planning document, not an activation announcement.** The existing ForgeCoin development chain is unchanged. No chain reset, genesis replacement, or new-mainnet deployment is authorized by this document.

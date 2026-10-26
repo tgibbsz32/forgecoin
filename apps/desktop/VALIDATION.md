@@ -1,3 +1,5 @@
+> **Historical archive — superseded for current configuration.** Original evidence and decisions below retain their original dates and network parameters. Do not use old ports, genesis, balances, token proposals or release claims as current instructions. See [current mainnet specification](../../docs/CURRENT_MAINNET.md) and the current roadmap.
+
 # ForgeCoin Desktop Phase 3 validation
 
 - GUI compiled as a Windows desktop executable and completed a startup smoke test.

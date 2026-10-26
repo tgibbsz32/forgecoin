@@ -1,0 +1,43 @@
+name: ForgeCoin pool native Linux object compile
+on:
+  pull_request:
+    paths:
+      - 'services/official_pool/**'
+      - 'src/**'
+      - 'external/**'
+      - 'contrib/epee/**'
+      - '.github/workflows/pool-native-linux-object-compile.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-source-compile:
+    name: Native C/C++ objects only (Ubuntu 22.04 x86_64)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native C dependencies for isolated compiler check
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            libevent-dev liblmdb-dev libjson-c-dev libsodium-dev \
+            libunbound-dev uuid-dev libssl-dev libhidapi-dev libusb-1.0-0-dev \
+            libboost-system-dev libboost-date-time-dev libboost-chrono-dev \
+            libboost-filesystem-dev libboost-thread-dev libboost-regex-dev \
+            libboost-serialization-dev libboost-program-options-dev xxd
+      - name: Verify source-level fail-closed build guards
+        run: python3 -m unittest discover -s services/official_pool/tests -p 'test_*.py' -v
+      - name: Compile native C, C++ bridge and web UI objects (NO LINK)
+        working-directory: services/official_pool/jtgrassie
+        env:
+          FORGECOIN_ROOT: ${{ github.workspace }}
+          FORGECOIN_BUILD_ROOT: ${{ runner.temp }}/frg-link-is-intentionally-disabled
+        run: make -j 2 compile-check TYPE=release
+      - name: Confirm linked pool executable was NOT produced
+        run: |
+          test ! -e services/official_pool/jtgrassie/build/release/forgecoin-pool
+          test -f services/official_pool/jtgrassie/build/release/src/pool.o
+          test -f services/official_pool/jtgrassie/build/release/src/webui.o
+          test -f services/official_pool/jtgrassie/build/release/src/xmr.o
+          echo "PASS: all native pool source compiled; NO runnable pool or payout signer built"

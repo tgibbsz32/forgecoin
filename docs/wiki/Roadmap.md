@@ -1,6 +1,10 @@
 # ForgeCoin roadmap and acceptance gates
 
-**Plan as of 2026-10-25.** Roadmap entries describe **proposed work**, not commitments or released capabilities. Detailed policy authority remains with [owner decisions](../OWNER_POLICY_DECISIONS_2026-10-24.md), [ROADMAP.md](../../ROADMAP.md) and consensus code validated for a *specific build*.
+**Plan as of 2026-10-26.** Roadmap entries describe ForgeCoin’s committed development direction and future engineering work.
+
+<small>Proposed future upgrades; implementation and timing are not guaranteed.</small>
+
+ Detailed policy authority remains with [owner decisions](../OWNER_POLICY_DECISIONS_2026-10-24.md), [ROADMAP.md](../../ROADMAP.md) and consensus code validated for a *specific build*.
 
 ## Principles and economic decisions
 
@@ -47,8 +51,14 @@
 
 **Done when:** a miner can independently verify accepted blocks, allocations and matured payouts from an audited service. **State:** synthetic research only; public pool unavailable.
 
-## Later research — optional, not V1
+## Post-launch development direction
 
-Native FRG liquidity/swaps → optional user-deposit-backed, redeemable cross-chain FRG representation → privacy applications and native governance bonds. Each requires its own protocol, economic, legal and security analysis; no bridged assets, yield or Solana reward issuance are committed.
+First integrate the user-deposit-backed Solana wFRG bridge; follow with the preferred native FCMP++/CARROT hard fork and later native swaps, private finance and L2/L3 applications. Each workstream requires its own engineering and review. Native governance bonds remain a separate governance proposal.
+
+## Intended next-stage technology: wrapper first, FCMP++ later
+
+After the native FRG L1 launch, prioritize a **1:1 reserve-backed Solana wFRG bridge with secure mint/burn and user redemption**. Subsequently, research an **in-place FCMP++/CARROT hard fork** on the existing chain: incrementally updated curve-tree storage, consensus proof verification, legacy wallet/output compatibility, mempool revalidation and a dedicated FCMP++ stressnet. A separate blockchain and voluntary migration mechanism would be a contingency only if an in-place fork cannot be made safe.
+
+Longer-term planned implementations include cross-chain atomic swaps, reserve-backed synthetic stable assets, TSS/MPC-secured private block trading and optional routing fees, L2 payment/settlement, and L3 private-market applications. Their cryptography, financial controls, and execution mechanisms need independent validation; they are **not currently supported**. [Full engineering intentions](../SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md).
 
 See [testing and release verification](Testing-and-Release.md), [current status](Current-Status.md) and [detailed implementation plan](../POOL_EXPLORER_IMPLEMENTATION_PLAN.md).

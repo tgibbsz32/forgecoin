@@ -76,3 +76,40 @@ local tests.
 The failed first ARM64 CI does **not** establish link success. A fresh
 GitHub-hosted ARM64 compilation and link must pass on the corrected commit
 before any claim of a usable ARM64 executable or private Oracle staging.
+
+
+## VERIFIED RESULT — corrected ARM64 native CI
+
+GitHub Actions on the corrected implementation commit
+`d01d00034acffd8431238c3bab1aa3e570281415` passed **all stages**
+of `ForgeCoin official C pool native ARM64 build and link`, workflow run
+`40305709493`, job `121514169258`:
+
+- **Actual ARM64 runner**, Ubuntu 24.04 ARM; verified `uname -m=aarch64`.
+- Development dependencies installed only on this disposable hosted runner.
+- FRG source guard, exact 8-decimal monetary checks and ARM compiler
+  flag tests passed.
+- **Ten** actual native aarch64 ForgeCoin cryptonote/RandomX static archives
+  were compiled/verified. The optimized x86-only `wallet-crypto` archive
+  is correctly replaced by CMake's ARM-native `cncrypto` alias, rather than
+  linked from a mismatched architecture.
+- The jtgrassie-derived C mining-pool **executable linked successfully**.
+- `file` and `readelf` confirmed **ELF 64-bit little-endian,
+  machine AArch64, DYN/PIE**, interpreter `/lib/ld-linux-aarch64.so.1`.
+- `ldd` resolved all native shared dependencies; none was reported
+  missing. Reproducible CI binary SHA-256 from that exact job:
+  `591ef3f5c68cec6b59173f293fbb0cb7e0325769dfcca44fd69fd771e7ea58b5`.
+- **The executable was never launched, published, copied to Oracle, or
+  uploaded as an artifact.** The ephemeral runner discarded the test
+  binary after CI.
+
+Cross-platform compatibility preflight and Linux object compilation both
+passed on the corrected commit. The separate x86_64 full-link workflow was
+still in progress at this verification point; x86_64 local native link
+regression had already passed on the corrected source.
+
+**Updated gate:** Native aarch64 code compilation and link no longer block
+private staging. The new blockers are a securely reviewed ARM64 artifact
+delivery/build procedure and a disposable localhost-only pool/daemon/XMRig
+startup and share-verification test. Canonical accepted blocks, PPLNS/mature
+payouts and security review still block any official public pool.

@@ -1,4 +1,5 @@
 import hashlib
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -7,6 +8,28 @@ from tools import stage_windows_sidecars as staging
 
 
 class StagingTests(unittest.TestCase):
+    def test_network_manifest_must_match_reviewed_artifacts(self):
+        with tempfile.TemporaryDirectory() as root:
+            manifest = Path(root) / "identity.json"
+            identity = {"stage": "genesis-frozen", "genesis_hash": "a" * 64,
+                        "release_authorized": False,
+                        "windows_prelaunch_binaries_sha256": {
+                            f"{name}.exe": digest for name, digest in staging.REVIEWED.items()}}
+            manifest.write_text(json.dumps(identity), encoding="utf-8")
+            staging.validate_network_identity(manifest)
+            identity["windows_prelaunch_binaries_sha256"]["forged.exe"] = "b" * 64
+            manifest.write_text(json.dumps(identity), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Stale sidecar audit"):
+                staging.validate_network_identity(manifest)
+
+    def test_release_or_unfrozen_identity_requires_separate_review(self):
+        with tempfile.TemporaryDirectory() as root:
+            manifest = Path(root) / "identity.json"
+            for identity in ({"release_authorized": True}, {"release_authorized": False}):
+                manifest.write_text(json.dumps(identity), encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    staging.validate_network_identity(manifest)
+
     def test_rejects_complete_set_before_writing(self):
         with tempfile.TemporaryDirectory() as root:
             source, dest = Path(root) / "src", Path(root) / "dest"

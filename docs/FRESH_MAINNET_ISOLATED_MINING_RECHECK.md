@@ -25,7 +25,7 @@ A second local offline run resumed the preserved disposable candidate chain from
 
 **Not passed:** chain height 16 transition, full-window LWMA, genuine divergent-branch reorg, ARM64 agreement. No production/network changes; local isolated database retained as checkpoint.
 
-## Native startup-to-LWMA boundary — 2026-10-23
+## Native startup-to-LWMA boundary â€” 2026-10-23
 
 This isolated offline Windows candidate was resumed from the preserved local checkpoint using the existing candidate `forged.exe` (no rebuild), native six-thread RandomX mining, loopback P2P/RPC 39580/39581, and no fixed-difficulty override. The daemon mined from RPC height 11 to 15 in one bounded run and was stopped (exit 0). It then resumed at height 15 and successfully crossed the difficulty boundary.
 

@@ -9,7 +9,7 @@ import urllib.error
 from flask import Flask, jsonify, request
 
 app = Flask(__name__, static_folder='static', static_url_path='')
-RPC_URL = os.environ.get('FORGE_RPC_URL', 'http://127.0.0.1:19481').rstrip('/')
+RPC_URL = os.environ.get('FORGE_RPC_URL', 'http://127.0.0.1:39481').rstrip('/')
 HEX = re.compile(r'^[0-9a-fA-F]{64}$')
 DIGITS = re.compile(r'^(0|[1-9][0-9]{0,8})$')
 cache = {}
@@ -48,7 +48,16 @@ def node(method, params=None, direct=False):
     if result.get('status') not in (None,'OK'): raise Unavailable()
     return result
 
-def info(): return cached('info', lambda: node('get_info'))
+EXPECTED_GENESIS_NONCE = 20261026
+EXPECTED_GENESIS_HASH = '4bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c'
+def verified_info():
+    state = node('get_info')
+    genesis = node('get_block_header_by_height', {'height': 0}).get('block_header', {})
+    if state.get('nettype') != 'mainnet' or genesis.get('nonce') != EXPECTED_GENESIS_NONCE or genesis.get('hash') != EXPECTED_GENESIS_HASH:
+        raise Unavailable('RPC is not the fresh ForgeCoin mainnet')
+    return state
+
+def info(): return cached('info', verified_info)
 def wide(obj, name):
     return int(obj['wide_'+name],16) if obj.get('wide_'+name) else int(obj.get(name,0))
 def header(h):
@@ -62,6 +71,33 @@ def headers(start,end):
 def height_arg(value):
     if not DIGITS.fullmatch(value): raise ValueError('Invalid block height.')
     return int(value)
+
+# Defensive route-wide gate: block and tx lookups must never show legacy-chain
+# records even when the attacker requests a valid-looking 64-character hash.
+# The unauthenticated /api/status document contains only public, frozen constants.
+@app.before_request
+def require_frozen_new_mainnet_identity():
+    if request.path.startswith('/api/') and request.path != '/api/status':
+        info()
+
+@app.get('/api/status')
+def release_status():
+    try:
+        info()
+        verified_node = True
+    except (Unavailable, Missing, KeyError, ValueError, TypeError):
+        verified_node = False
+    return jsonify(
+        chain='forgecoin-mainnet',
+        expected_genesis_nonce=EXPECTED_GENESIS_NONCE,
+        expected_genesis_hash=EXPECTED_GENESIS_HASH,
+        expected_daemon_rpc_port=39481,
+        public_launch_authorized=False,
+        native_mining_enabled=False,
+        verified_native_node_connected=verified_node,
+        explorer_mode='prelaunch-read-only',
+        note='Native FRG mainnet is genesis-frozen; no public mining or releases are authorized.'
+    )
 
 @app.get('/')
 def home(): return app.send_static_file('index.html')
@@ -127,7 +163,7 @@ def invalid(e): return jsonify(error=str(e)),400
 @app.errorhandler(Missing)
 def missing(e): return jsonify(error='Block or transaction not found.'),404
 @app.errorhandler(Unavailable)
-def unavailable(e): return jsonify(error='The node is temporarily unavailable. Please try again shortly.'),503
+def unavailable(e): return jsonify(error='The new ForgeCoin mainnet node is offline or has an unrecognized genesis. Public launch is not authorized.'),503
 @app.errorhandler(404)
 def not_found(e): return jsonify(error='Page not found.'),404
 @app.errorhandler(405)

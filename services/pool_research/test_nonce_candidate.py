@@ -3,6 +3,7 @@ import unittest
 from dataclasses import replace
 
 from services.pool_research.nonce_candidate import build_nonce_candidate
+from tools.verify_isolated_native_reserve import apply_miner_nonce
 from services.pool_research.pow_boundary import VerificationError
 from services.pool_research.template_adapter import validate_template
 
@@ -37,6 +38,19 @@ class NonceCandidateTests(unittest.TestCase):
         candidate = build_nonce_candidate(template, "aabbccdd")
         self.assertEqual(candidate.nonce_offset, 36)
         self.assertEqual(candidate.full_block_blob[36:40], b"\xaa\xbb\xcc\xdd")
+
+    def test_xmrig_nonce_equal_to_template_is_valid_for_independent_check(self):
+        template = self.fixture()
+        original_nonce = template.blockhashing_blob[35:39].hex()
+        verified = apply_miner_nonce(template, original_nonce)
+        self.assertEqual(verified.full_block_blob, template.blocktemplate_blob)
+        self.assertEqual(verified.hashing_blob, template.blockhashing_blob)
+        self.assertEqual(verified.nonce_offset, 35)
+        changed = apply_miner_nonce(template, "01020304")
+        self.assertNotEqual(changed.full_block_blob, template.blocktemplate_blob)
+        for invalid in ("", "ab", "zzzzzzzz", 123, None):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                apply_miner_nonce(template, invalid)
 
     def test_rejects_unchanged_and_invalid_nonces(self):
         template = self.fixture()

@@ -9,7 +9,7 @@ from dataclasses import replace
 import json
 from pathlib import Path
 
-from services.pool_research.nonce_candidate import build_nonce_candidate
+from services.pool_research.nonce_candidate import build_nonce_candidate, NonceCandidate, _read_varint
 from services.pool_research.reserve_candidate import build_reserve_candidate
 from services.pool_research.template_adapter import validate_template
 
@@ -19,6 +19,27 @@ def read_json(path):
         raise ValueError("oversized private evidence file")
     with path.open(encoding="utf-8") as stream:
         return json.load(stream)
+
+
+def apply_miner_nonce(template, nonce_hex):
+    """A valid miner nonce may equal the template nonce at difficulty one."""
+    if (not isinstance(nonce_hex, str) or len(nonce_hex) != 8 or
+            any(c not in "0123456789abcdefABCDEF" for c in nonce_hex)):
+        raise ValueError("invalid miner nonce")
+    offset = 0
+    for _ in range(3):
+        offset = _read_varint(template.blockhashing_blob, offset)
+    offset += 32
+    end = offset + 4
+    if (end > len(template.blockhashing_blob) or
+            end > len(template.blocktemplate_blob) or
+            template.blockhashing_blob[:end] != template.blocktemplate_blob[:end]):
+        raise ValueError("native template header mismatch")
+    nonce = bytes.fromhex(nonce_hex)
+    if template.blockhashing_blob[offset:end] == nonce:
+        return NonceCandidate(offset, nonce, template.blocktemplate_blob,
+                              template.blockhashing_blob)
+    return build_nonce_candidate(template, nonce_hex)
 
 
 def main():
@@ -41,7 +62,7 @@ def main():
     modified_template = replace(
         original, blocktemplate_blob=native.full_block_blob,
         blockhashing_blob=native.hashing_blob)
-    with_nonce = build_nonce_candidate(modified_template, proposed["nonce_hex"])
+    with_nonce = apply_miner_nonce(modified_template, proposed["nonce_hex"])
     if (with_nonce.full_block_blob.hex() != proposed["blocktemplate_blob"]
             or with_nonce.hashing_blob.hex() != proposed["blockhashing_blob"]
             or with_nonce.nonce_offset != proposed["nonce_offset"]

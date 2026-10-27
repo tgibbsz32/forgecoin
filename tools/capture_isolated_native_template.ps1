@@ -7,13 +7,15 @@ param(
     [switch]$SubmitUnmodifiedBlock,
     [switch]$SubmitModifiedNonceBlock,
     [switch]$SubmitModifiedReservedBlock,
+    [switch]$SubmitMinerDerivedBlock,
     [ValidateRange(1024,65532)][int]$PortBase = 49580,
     [string]$BaseDirectory = (Join-Path $env:LOCALAPPDATA 'ForgeCoin\IsolatedTemplateCaptures')
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-if (($SubmitUnmodifiedBlock -and ($SubmitModifiedNonceBlock -or $SubmitModifiedReservedBlock)) -or
-    ($SubmitModifiedNonceBlock -and $SubmitModifiedReservedBlock)) {
+if (($SubmitUnmodifiedBlock -and ($SubmitModifiedNonceBlock -or $SubmitModifiedReservedBlock -or $SubmitMinerDerivedBlock)) -or
+    ($SubmitModifiedNonceBlock -and ($SubmitModifiedReservedBlock -or $SubmitMinerDerivedBlock)) -or
+    ($SubmitModifiedReservedBlock -and $SubmitMinerDerivedBlock)) {
     throw 'Select exactly one isolated candidate submission mode'
 }
 if ([IO.Path]::GetFileName($DaemonExecutable) -ne 'forged.exe') {
@@ -73,7 +75,7 @@ try {
     }
     [IO.File]::WriteAllText($captureFile,($capture | ConvertTo-Json -Depth 8 -Compress),
         (New-Object Text.UTF8Encoding($false)))
-    if ($SubmitUnmodifiedBlock -or $SubmitModifiedNonceBlock -or $SubmitModifiedReservedBlock) {
+    if ($SubmitUnmodifiedBlock -or $SubmitModifiedNonceBlock -or $SubmitModifiedReservedBlock -or $SubmitMinerDerivedBlock) {
         # This tests only isolated daemon block acceptance.
         # It is NOT a miner-discovered block or Stratum pool submission.
         if ([int64]$capture.result.difficulty -ne 1 -or [int64]$capture.result.height -ne 1) {
@@ -124,6 +126,62 @@ try {
                     throw 'Reserved coinbase change and tree root not both present'
                 }
             }
+        }
+        if ($SubmitMinerDerivedBlock) {
+            # Explicit test mode: real XMRig nonce, native RandomX, full coinbase
+            # reconstruction, then submit only to THIS fresh offline daemon.
+            $candidatePath = Join-Path $root 'xmrig-miner-candidate.json'
+            $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+            $toLinux = {
+                param([string]$windowsPath)
+                $absolute = [IO.Path]::GetFullPath($windowsPath)
+                if ($absolute -notmatch '^[Cc]:\\') { throw 'WSL test requires a C: private path' }
+                return '/mnt/c/' + $absolute.Substring(3).Replace('\','/')
+            }
+            $linuxRunner = & $toLinux (Join-Path $repo 'tools\run_isolated_xmrig_native_template.sh')
+            $linuxCapture = & $toLinux $captureFile
+            $linuxCandidate = & $toLinux $candidatePath
+            & wsl.exe -d ForgeCoinBuild -- bash $linuxRunner $linuxCapture $linuxCandidate
+            if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $candidatePath -PathType Leaf)) {
+                throw 'Isolated XMRig native-template runner failed'
+            }
+            $candidate = Get-Content -LiteralPath $candidatePath -Raw | ConvertFrom-Json
+            if ($candidate.result.source -ne 'isolated-xmrig-native-template-test' -or
+                $candidate.result.verified_by_native_randomx -ne $true -or
+                $candidate.result.credited -ne $false -or
+                $candidate.result.height -ne 1 -or $candidate.result.difficulty -ne 1 -or
+                $candidate.result.native_digest_hex -notmatch '^[0-9a-f]{64}$') {
+                throw 'Miner-derived candidate evidence invalid'
+            }
+            # A separate C++ consensus reconstruction must agree on the full
+            # block and hashing blob before its submission.
+            $nativeHelper = Join-Path $repo 'build-disposable\src\cryptonote_basic\forge-isolated-block-reconstruct.exe'
+            $nativeHash = 'C7968C748DECA79D546E8D2D14DBD8BAC7776927B38567E3F3C405B0A46D20A4'
+            if (-not (Test-Path -LiteralPath $nativeHelper -PathType Leaf) -or
+                (Get-FileHash -LiteralPath $nativeHelper -Algorithm SHA256).Hash -ne $nativeHash) {
+                throw 'Native consensus helper missing or digest mismatch'
+            }
+            $verifyPsi = New-Object Diagnostics.ProcessStartInfo
+            $verifyPsi.FileName = (Get-Command py.exe -ErrorAction Stop).Source
+            $verifyPsi.WorkingDirectory = $repo
+            $verifyPsi.UseShellExecute = $false
+            $verifyPsi.CreateNoWindow = $true
+            $verifyPsi.Arguments = ('-m tools.verify_isolated_native_reserve --capture "'+
+                $captureFile+'" --candidate "'+$candidatePath+'" --helper "'+
+                $nativeHelper+'" --sha256 '+$nativeHash)
+            $verifyProcess = [Diagnostics.Process]::Start($verifyPsi)
+            try {
+                if (-not $verifyProcess.WaitForExit(20000)) {
+                    $verifyProcess.Kill()
+                    $verifyProcess.WaitForExit()
+                    throw 'Independent native reconstruction timed out'
+                }
+                if ($verifyProcess.ExitCode -ne 0) {
+                    throw 'Independent native consensus reconstruction rejected miner block'
+                }
+            } finally { $verifyProcess.Dispose() }
+            $candidateBlob = $candidate.result.blocktemplate_blob
+            Write-Output 'PASS: XMRig-derived nonce checked by native RandomX and C++ consensus reconstruction'
         }
         $submitRequest = @{
             jsonrpc='2.0'; id='isolated-submit'; method='submit_block';

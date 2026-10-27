@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#08111d">
+<meta name="description" content="ForgeCoin mFRG exchange preview. Trading is not live.">
+<title>mFRG Exchange | ForgeCoin</title>
+<link rel="icon" href="images/forgecoin-logo.png" type="image/png">
+<link rel="stylesheet" href="style.css">
+<style>
+.exchange-wrap{max-width:740px;margin:60px auto 100px}
+.exchange-card{background:#111e2b;border:1px solid #334a60;border-radius:20px;padding:28px;box-shadow:0 22px 65px #0004}
+.exchange-card label{display:block;margin:18px 0 8px;font-weight:700}
+.exchange-card input,.exchange-card select{width:100%;background:#07101b;border:1px solid #45617c;border-radius:10px;color:#f1f7fc;padding:14px;font:inherit}
+.exchange-card input:focus,.exchange-card select:focus{outline:2px solid #3de0d0;outline-offset:2px}
+.exchange-card button{margin-top:20px;width:100%;padding:14px;border:0;border-radius:9px;font:inherit;font-weight:800}
+.exchange-card button:disabled{background:#385066;color:#d4e2ed;cursor:not-allowed}
+.swap-status{background:#1d3041;border:1px solid #48627a;padding:14px;border-radius:10px}
+.swap-results{display:flex;justify-content:space-between;gap:15px;border-top:1px solid #2b4257;margin-top:24px;padding-top:18px}
+.swap-results span{color:#a0afbe}
+.swap-note{color:#a0afbe;font-size:14px}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header"><div class="container nav-wrap">
+<a class="brand" href="index.html"><img class="brand-logo" src="images/forgecoin-logo.png" alt=""><span>FORGE<span class="accent">COIN</span></span></a>
+<nav aria-label="Primary navigation"><a href="index.html">Home</a> &nbsp; <a href="downloads.html">Downloads</a> &nbsp; <a href="current-mainnet.html">Network status</a></nav>
+</div></header>
+<main id="main" class="container exchange-wrap">
+<p class="kicker">SOLANA · MINI FORGE</p>
+<h1>mFRG Exchange</h1>
+<p class="lead">Planned embedded access to mFRG through USDC, SOL and ETH. The interface below is a non-transactional preview. No wallet connection, token sale, or swap is enabled.</p>
+<section class="exchange-card" aria-labelledby="swap-title">
+<h2 id="swap-title">Acquire mFRG</h2>
+<p class="swap-status" role="status"><strong>Trading not enabled.</strong> The official mint, liquidity or treasury-sale contract, and independent launch checks have not been verified or published.</p>
+<label for="pay-asset">You pay</label>
+<select id="pay-asset"><option value="USDC_SOL">USDC — Solana</option><option value="SOL">SOL — Solana</option><option value="ETH">ETH — Ethereum</option><option value="USDC_ETH">USDC — Ethereum</option></select>
+<label for="pay-amount">Amount</label>
+<input id="pay-amount" type="number" inputmode="decimal" min="0" step="any" placeholder="0.00" autocomplete="off">
+<div class="swap-results"><span>You receive</span><strong>mFRG — unavailable</strong></div>
+<p class="swap-note" id="route-note" aria-live="polite"></p>
+<button type="button" disabled aria-disabled="true">Connect wallet — unavailable</button>
+<p class="swap-note">Never send tokens to an address displayed outside an authenticated, audited transaction flow. Do not treat this preview as an offer to sell tokens. Solana token transfers are publicly observable and do not inherit native FRG privacy.</p>
+</section>
+<h2>How trading will work</h2>
+<p><strong>Solana:</strong> supported wallets approve USDC/SOL trades through a verified on-chain liquidity route or a reviewed treasury-sale program. <strong>Ethereum:</strong> users approve an ETH/USDC cross-chain route that delivers mFRG on Solana, with a clear fee and finality disclosure. Quote, minimum received, expiration, recipient and total charges must be displayed before signing.</p>
+<p>Native FRG and the proposed 1:1-backed wFRG wrapper are distinct from the separate miniFORGE mFRG token. See the <a class="text-link" href="https://github.com/tgibbsz32/forgecoin/blob/main/docs/MFRG_EXCHANGE_DESIGN.md">implementation requirements</a> once this feature is merged.</p>
+</main>
+<script>
+(()=>{const selector=document.getElementById('pay-asset');const note=document.getElementById('route-note');const descriptions={
+USDC_SOL:'Planned route: Solana USDC → mFRG. Requires verified mint and available liquidity or audited sale program.',
+SOL:'Planned route: native SOL → mFRG. Requires verified mint and available liquidity or audited sale program.',
+ETH:'Planned route: Ethereum ETH → Solana mFRG. Requires audited cross-chain routing and destination delivery.',
+USDC_ETH:'Planned route: Ethereum USDC → Solana mFRG. Requires audited cross-chain routing and destination delivery.'
+};function update(){note.textContent=descriptions[selector.value]||'Route unavailable.'}selector.addEventListener('change',update);update()})();
+</script>
+</body></html>

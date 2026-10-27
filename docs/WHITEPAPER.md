@@ -137,6 +137,16 @@ FCMP++/CARROT engineering includes authenticated curve-tree databases, membershi
 
 Further planned systems include native cross-chain atomic swaps, collateralized stable-denominated private transfers, independently secured multi-party trading vaults, L2 payment/settlement systems and possible L3 private applications. These are future research items rather than features of the present network. See [the complete future architecture](SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md).
 
+## Planned miniFORGE (mFRG) value-accrual and native FRG staking relationship (not live)
+
+miniFORGE (mFRG) is intended to become the principal **ecosystem value-accrual asset associated with native ForgeCoin (FRG)**. This is a project design objective, **not** a claim that mFRG presently holds the market value of FRG, is collateralized by FRG, has a guaranteed exchange rate, or provides legal ownership of FRG reserves.
+
+**Proposed sequence:** (1) independently validate and launch native FRG proof-of-work mining; (2) separately launch an mFRG SPL presale, subject to legal review, mint verification and operational readiness; (3) observe organic FRG mining participation, liquidity, price discovery and market stability over a meaningful but currently undefined period; (4) only after this evidence exists, design and independently review a mechanism enabling holders to **stake or lock native FRG in connection with mFRG**. The timing, economics and feasibility of this mechanism remain to be determined.
+
+A staking mechanism does **not** automatically transfer FRG value to mFRG: the specification must state whether FRG is deposited into transparent custody, locked by a verifiable protocol, used to back issued mFRG units, earns rewards, supports redemption, or serves another explicit purpose. Any conversion, ratio, backing representation, yield or redemption entitlement would require separate public rules, reserves and security validation; **none is promised or presently active**. Staking must not silently alter native FRG proof-of-work issuance or confuse mFRG with the separately proposed 1:1 native-FRG-backed **wFRG** wrapper.
+
+**Pre-implementation gates:** obtain a market-observation methodology and published activation criteria; define custody and key management, accounting, contract roles, user withdrawal/redemption rules, risks, insolvency handling, independent testing and audits; assess securities, custody, money-transmission and tax treatment before accepting deposits. Solana transactions remain publicly observable despite native FRG's privacy properties.
+
 ## Disclaimer
 
 This document describes software behavior and project intent. It is not a promise of value, investment return, anonymity, uninterrupted operation, or regulatory treatment. Network participants are responsible for evaluating software, operational, legal, and financial risk.

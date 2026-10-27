@@ -43,10 +43,11 @@ imply a backend is accepting shares or sending payments.
   deliberately leaves wallet RPC port **0**, and disables self-select,
   payouts and any option to bypass native proof-of-work checks.
 - Research builds fail closed if the operator enables public interfaces,
-  disables share hashing or enables payouts. In addition, wallet payout
-  execution is compiled out unless a separate `FRG_TESTED_WALLET_PAYOUTS`
-  build macro is explicitly enabled **after** independent review. These
-  guard macros are **not** authorization to remove safety barriers.
+  disables share hashing or enables payouts. The old
+  `FRG_TESTED_WALLET_PAYOUTS` build flag now produces a **fatal compile error**
+  because wallet RPC acknowledgements are not proven blockchain payments.
+  Replace the callback with a durable, chain-confirmed payout reconciler
+  before any production spending. See [ledger and two-node QA](../../docs/POOL_LEDGER_AND_P2P_QA_2026-10-27.md).
 
 **Important:** The original C source still has upstream assumptions in its
 RPC integration, miner authentication, job serialization, LMDB database
@@ -68,7 +69,7 @@ gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
 Tests compile the standalone monetary converter and validate source/config
 gates without starting any pool, daemon, wallet or network listener.
 Windows MSYS2 GCC and Ubuntu Linux GCC have both been used for this
-standalone code. The native ARM64 pool was subsequently built and linked on Oracle against frozen 20261026 source (see [Oracle build evidence](../../docs/ORACLE_BACKEND_BUILD_EVIDENCE_2026-10-27.md)). It has **not** passed end-to-end accepted share/block, mature payout, or reorg-safe wallet reconciliation tests.
+standalone code. The native ARM64 pool was subsequently built and linked on Oracle against frozen 20261026 source (see [Oracle build evidence](../../docs/ORACLE_BACKEND_BUILD_EVIDENCE_2026-10-27.md)). **Genuine XMRig RandomX share acceptance passed** on a disposable offline chain, as did next-block mining difficulty and rejected incorrect-hash shares. Full winning blocks, mature payouts and reorg-safe wallet reconciliation have NOT passed. Later tested source and LMDB ledger fixes are in [ledger and P2P QA](../../docs/POOL_LEDGER_AND_P2P_QA_2026-10-27.md).
 
 ## Build preflight and remaining dependencies
 

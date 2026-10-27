@@ -68,6 +68,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "log.h"
 #include "webui.h"
 #include "frg_currency.h"
+
+/* CRITICAL: transfer_split wallet ACK is not a proven on-chain payout.
+ * Current callback subtracts miner balances immediately after transaction
+ * submission, lacking durable pending-transaction idempotency, destination
+ * matching, confirmation thresholds, reorg rollback and crash recovery.
+ * Fail at compile time if someone attempts to enable wallet spending before
+ * replacing that flow with a reviewed, tested settlement journal.
+ */
+#if defined(FRG_TESTED_WALLET_PAYOUTS)
+#error "Unsafe FRG pool wallet payouts prohibited: implement durable chain-confirmed reconciliation before enabling spending"
+#endif
+
 #include "forkoff.h"
 #include "growbag.h"
 #include "uthash.h"
@@ -861,30 +873,48 @@ balance_add(const char *address, uint64_t amount, MDB_txn *parent)
         if ((rc = mdb_cursor_put(cursor, &key, &new_val, 0)))
         {
             err = mdb_strerror(rc);
-            log_error("%s", err);
+            log_error("Balance insert rejected: %s", err);
+            mdb_cursor_close(cursor);
+            mdb_txn_abort(txn);
+            return rc;
         }
     }
     else if (rc == 0)
     {
         log_trace("Updating existing balance entry");
         uint64_t current_amount = *(uint64_t*)val.mv_data;
-        current_amount += amount;
+        uint64_t updated_amount = 0;
+        if (frg_checked_balance_add(current_amount, amount, &updated_amount))
+        {
+            log_error("Refusing miner balance overflow");
+            mdb_cursor_close(cursor);
+            mdb_txn_abort(txn);
+            return MDB_BAD_VALSIZE;
+        }
+        current_amount = updated_amount;
         MDB_val new_val = {sizeof(current_amount), (void*)&current_amount};
         if ((rc = mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT)))
         {
             err = mdb_strerror(rc);
-            log_error("%s", err);
+            log_error("Balance update rejected: %s", err);
+            mdb_cursor_close(cursor);
+            mdb_txn_abort(txn);
+            return rc;
         }
     }
     else
     {
         err = mdb_strerror(rc);
         log_error("%s", err);
+        mdb_cursor_close(cursor);
         mdb_txn_abort(txn);
         return rc;
     }
 
+    mdb_cursor_close(cursor);
     rc = mdb_txn_commit(txn);
+    if (rc)
+        log_error("Balance credit commit rejected: %s", mdb_strerror(rc));
     return rc;
 }
 
@@ -1032,11 +1062,12 @@ process_blocks(block_t *blocks, size_t count)
             {
                 if (rc != MDB_NOTFOUND)
                 {
-                    err = mdb_strerror(rc);
-                    log_error("Error fetching block at height: %"PRIu64
-                            ", error: %d", ib->height, err);
+                    log_error("Failed to inspect pool block at height %"PRIu64
+                              ": %s; refusing ledger commit",
+                              ib->height, mdb_strerror(rc));
+                    goto rollback_block_ledger;
                 }
-                else if (!found)
+                if (!found)
                     log_trace("No stored block at height: %"PRIu64, ib->height);
                 break;
             }
@@ -1054,7 +1085,11 @@ process_blocks(block_t *blocks, size_t count)
                 log_debug("Orphaned block at height: %"PRIu64, ib->height);
                 nb.status |= BLOCK_ORPHANED;
                 MDB_val new_val = {sizeof(block_t), (void*)&nb};
-                mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT);
+                if ((rc = mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT)))
+                {
+                    log_error("Failed to mark hash-mismatched orphan: %s", mdb_strerror(rc));
+                    goto rollback_block_ledger;
+                }
                 continue;
             }
             if (memcmp(ib->prev_hash, sb->prev_hash, 64))
@@ -1064,7 +1099,11 @@ process_blocks(block_t *blocks, size_t count)
                         "Setting orphaned.\n");
                 nb.status |= BLOCK_ORPHANED;
                 MDB_val new_val = {sizeof(block_t), (void*)&nb};
-                mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT);
+                if ((rc = mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT)))
+                {
+                    log_error("Failed to mark parent-mismatched orphan: %s", mdb_strerror(rc));
+                    goto rollback_block_ledger;
+                }
                 continue;
             }
             if (ib->status & BLOCK_ORPHANED)
@@ -1072,25 +1111,50 @@ process_blocks(block_t *blocks, size_t count)
                 log_debug("Orphaned block at height: %"PRIu64, ib->height);
                 nb.status |= BLOCK_ORPHANED;
                 MDB_val new_val = {sizeof(block_t), (void*)&nb};
-                mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT);
+                if ((rc = mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT)))
+                {
+                    log_error("Failed to mark daemon-reported orphan: %s", mdb_strerror(rc));
+                    goto rollback_block_ledger;
+                }
                 continue;
             }
+            /* Mature block accounting and the UNLOCKED state must commit
+             * together. Never mark a block paid if any nested balance credit,
+             * orphan update or LMDB cursor write failed. An incomplete PPLNS
+             * window stays LOCKED for later review, without partial credit.
+             */
             nb.status |= BLOCK_UNLOCKED;
             nb.reward = ib->reward;
             if (!*config.upstream_host)
-                rc = payout_block(&nb, txn);
-            if (*config.upstream_host || rc == 0)
             {
-                log_debug("Paid out block: %"PRIu64, nb.height);
-                MDB_val new_val = {sizeof(block_t), (void*)&nb};
-                mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT);
+                rc = payout_block(&nb, txn);
+                if (rc)
+                {
+                    log_error("Refusing partial mature block ledger credit at height %"PRIu64
+                              ": %s", nb.height, mdb_strerror(rc));
+                    goto rollback_block_ledger;
+                }
             }
-            else
-                log_trace("%s", mdb_strerror(rc));
+            MDB_val new_val = {sizeof(block_t), (void*)&nb};
+            if ((rc = mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT)))
+            {
+                log_error("Could not persist mature block state: %s", mdb_strerror(rc));
+                goto rollback_block_ledger;
+            }
+            log_debug("Mature block credited in local ledger (not wallet-confirmed): %"PRIu64,
+                      nb.height);
         }
     }
 
+    mdb_cursor_close(cursor);
     rc = mdb_txn_commit(txn);
+    if (rc)
+        log_error("Mature block transaction commit failed: %s", mdb_strerror(rc));
+    return rc;
+
+rollback_block_ledger:
+    mdb_cursor_close(cursor);
+    mdb_txn_abort(txn);
     return rc;
 }
 
@@ -2363,7 +2427,11 @@ send_payments(void)
             else
                 start = stecpy(start, "]}}", end);
         }
-        log_trace(body);
+        /* Do not log full wallet RPC requests or publicly identifiable
+         * payout-address batches. Settlement needs a private audit journal.
+         */
+        log_debug("Prepared private wallet payout batch for %zu recipients",
+                  gbag_used(bag_pay));
         rpc_callback_t *cb = rpc_callback_new(
                 rpc_on_wallet_transferred, bag_pay, rpc_bag_free);
         rpc_wallet_request(pool_base, body, cb);

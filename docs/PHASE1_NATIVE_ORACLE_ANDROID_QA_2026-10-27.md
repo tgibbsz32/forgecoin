@@ -48,6 +48,10 @@ Reproduce on the authorized Oracle QA environment (existing restricted QA wallet
 - Dedicated Oracle `forgecoin-mainnet-20261026.service` was installed and systemd-verified, but is **disabled and inactive**. It references the verified fresh binary, unlike the obsolete October 20 staging service. Its launch preflight correctly rejects absent release authorization/marker. Eleven new launch-gate regression tests pass. The newest gate source with currency-term checks is staged on Oracle but privileged installation remains blocked; the installed gate is the preceding version. See `services/oracle_mainnet/README.md`.
 - Combined local regression results: 11 Oracle release-gate tests, 31 C-pool Python tests, 8 monitor tests, and real XMRig native RandomX accepted-share QA passed. The Windows C# mining release-gate reflection test passed all four scenarios.
 
+## Subsequent payout safety and P2P QA
+
+Additional source and Oracle ARM64 evidence is in [Pool ledger and two-node QA](POOL_LEDGER_AND_P2P_QA_2026-10-27.md): real liblmdb nested-credit and maturity rollback fixture PASS; genuine RandomX acceptance after native re-link; C source now aborts failed local balance/mature-state transactions and rejects overflow. The pool **refuses compilation with the old unsafe wallet-spending activation flag** until a durable chain-confirmed reconciliation journal exists. Two distinct loopback-only FRG daemon instances completed P2P handshake and independently matched the frozen genesis at height 1; no block was mined or broadcast.
+
 ## Remaining public launch gates — not passed yet
 
 1. A genuine, consensus-valid full block discovery and acceptance from native miner and daemon; height-1 synchronization on at least two independently initialized nodes and correct difficulty transition at height 16.

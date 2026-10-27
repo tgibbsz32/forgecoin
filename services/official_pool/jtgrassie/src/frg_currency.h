@@ -56,6 +56,17 @@ frg_parse_amount_atomic(const char *amount, uint64_t *out)
     return 0;
 }
 
+/* Checked integer accounting: a failed credit must not wrap a live miner's
+ * uint64 atomic balance. On overflow, out is left unchanged. */
+static inline int
+frg_checked_balance_add(uint64_t current, uint64_t credit, uint64_t *out)
+{
+    if (out == NULL || credit > UINT64_MAX - current)
+        return -1;
+    *out = current + credit;
+    return 0;
+}
+
 /* Research policy: exactly 1% of each eligible allocated amount, rounded
  * down in atomic units. Avoid floating-point balance/fee drift entirely.
  * Reconciliation across share allocations and orphaned blocks remains a

@@ -1892,6 +1892,13 @@ rpc_on_block_template(const char* data, rpc_callback_t *callback)
     else
         bstack_push(bst, &cand);
 
+    /* The mining template is authoritative for the next job height and
+     * next required target. At genesis, tip difficulty can be 1 while
+     * the first mineable block needs difficulty 500000.
+     */
+    pool_stats.network_difficulty = cand.difficulty;
+    pool_stats.network_hashrate = cand.difficulty / BLOCK_TIME;
+    pool_stats.network_height = cand.height;
     clients_send_job();
 
 done:
@@ -2085,9 +2092,11 @@ rpc_on_last_block_header(const char* data, rpc_callback_t *callback)
     }
 
     top = bstack_top(bsh);
-    pool_stats.network_difficulty = top->difficulty;
-    pool_stats.network_hashrate = top->difficulty / BLOCK_TIME;
-    pool_stats.network_height = top->height;
+    /* The chain tip header is the previously mined block. Its difficulty
+     * can be 1 at genesis while the NEXT template has difficulty 500000.
+     * Publish network mining difficulty/height from an accepted candidate
+     * template, never from the previous canonical block's header.
+     */
     update_pool_hr();
 
     log_info("Fetching new block template");

@@ -34,6 +34,13 @@ class PayoutSafetyContracts(unittest.TestCase):
         self.assertIn("return MDB_NOTFOUND;",fn)
         self.assertIn("mdb_txn_abort(txn);",fn)
 
+    def test_next_block_statistics_use_actual_mining_template(self):
+        template = SRC.split("rpc_on_block_template(const char* data, rpc_callback_t *callback)",1)[1].split("static int\nstartup_scan_round_shares",1)[0]
+        header = SRC.split("rpc_on_last_block_header(const char* data, rpc_callback_t *callback)",1)[1].split("static void\nrpc_on_block_submitted",1)[0]
+        self.assertIn("pool_stats.network_difficulty = cand.difficulty;",template)
+        self.assertIn("pool_stats.network_height = cand.height;",template)
+        self.assertNotIn("pool_stats.network_difficulty = top->difficulty;",header)
+
     def test_mainnet_payout_guard_still_disabled(self):
         self.assertIn("#ifndef FRG_TESTED_WALLET_PAYOUTS",SRC)
         self.assertIn('config.disable_hash_check || !config.disable_payouts',SRC)

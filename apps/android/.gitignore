@@ -1,0 +1,6 @@
+build/
+src/main/res/drawable-nodpi/forgecoin_logo.png
+*.apk
+*.keystore
+*.jks
+local.properties

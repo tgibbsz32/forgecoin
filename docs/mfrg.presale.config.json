@@ -1,0 +1,19 @@
+{
+  "schema": "forgecoin.mfrg.presale.v1",
+  "status": "draft-not-deployed",
+  "network": "solana-mainnet-beta",
+  "token": {"name":"miniFORGE","symbol":"mFRG","program":"spl-token-classic","decimals":6,"mint":null,"supply":50000000,"mintAuthorityPolicy":"multisig-until-audited-final-issuance","freezeAuthorityPolicy":"disclose-and-review-before-issuance"},
+  "fundingAssets": {
+    "USDC_SOL":{"chain":"solana-mainnet-beta","mint":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v","priority":1},
+    "SOL":{"chain":"solana-mainnet-beta","native":true,"priority":2},
+    "ETH":{"chain":"ethereum-mainnet","native":true,"priority":3,"requiresAuditedCrossChainRouting":true}
+  },
+  "tokenAllocations":[
+    {"id":"presale","amount":5000000,"wallet":null,"restricted":true},
+    {"id":"liquidity_reserve","amount":5000000,"wallet":null,"restricted":true},
+    {"id":"future_protocol_staking_distribution","amount":40000000,"wallet":null,"restricted":true}
+  ],
+  "presale":{"enabled":false,"inventory":5000000,"maxGrossUsd":150000,"tiers":[{"tokenQuantity":1000000,"usdPerToken":"0.01"},{"tokenQuantity":1000000,"usdPerToken":"0.02"},{"tokenQuantity":1000000,"usdPerToken":"0.03"},{"tokenQuantity":1000000,"usdPerToken":"0.04"},{"tokenQuantity":1000000,"usdPerToken":"0.05"}],"settlement":"atomic-delivery-or-revert","noPublicDepositAddresses":true,"maxSlippageBps":100,"refundPolicy":"legal-review-required"},
+  "proceeds":{"denomination":"USD","allocationPct":{"dex_liquidity":50,"network_development":20,"infrastructure_security":10,"founders":20},"founderRelease":{"immediateFractionOfFounderShare":"0.5","remainingFraction":"0.5","vestingMonths":6,"start":"settlement-after-compliance-review"}},
+  "launchGates":{"mintOnChainVerified":false,"totalSupplyReconciled":false,"treasuryWalletsVerified":false,"saleProgramAudited":false,"legalReviewCompleted":false,"secureExchangeRateQuotes":false,"webAppTested":false}
+}

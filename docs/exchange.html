@@ -37,21 +37,34 @@
 <label for="pay-asset">You pay</label>
 <select id="pay-asset"><option value="USDC_SOL">USDC — Solana</option><option value="SOL">SOL — Solana</option></select>
 <label for="pay-amount">Amount</label>
-<input id="pay-amount" type="number" inputmode="decimal" min="0" step="any" placeholder="0.00" autocomplete="off">
-<div class="swap-results"><span>You receive</span><strong>mFRG — unavailable</strong></div>
+<input id="pay-amount" type="text" inputmode="decimal" placeholder="1000" autocomplete="off">
+<p class="swap-note">Specify the mFRG quantity to preview the proposed USD-denominated presale price. This does not reflect live inventory.</p><div class="swap-results"><span>Illustrative mFRG quantity</span><strong id="preview-tokens">—</strong></div><div class="swap-results"><span>Illustrative USD cost</span><strong id="preview-cost">—</strong></div><p id="tier-split" class="swap-note" aria-live="polite"></p>
 <p class="swap-note" id="route-note" aria-live="polite"></p>
 <button type="button" disabled aria-disabled="true">Connect wallet — unavailable</button>
 <p class="swap-note">Never send tokens to an address displayed outside an authenticated, audited transaction flow. Do not treat this preview as an offer to sell tokens. Solana token transfers are publicly observable and do not inherit native FRG privacy.</p>
 </section>
 <h2>How trading will work</h2>
 <p><strong>Solana only:</strong> buyers will use supported Solana wallets to pay in native USDC or SOL. Price quotes will be USD-denominated. On-chain presale delivery and SOL conversion are not yet implemented; no funds should be sent.</p>
-<p>Native FRG and the proposed 1:1-backed wFRG wrapper are distinct from the separate miniFORGE mFRG token. See the <a class="text-link" href="https://github.com/tgibbsz32/forgecoin/blob/main/docs/MFRG_EXCHANGE_DESIGN.md">implementation requirements</a> once this feature is merged.</p>
+<p>Native FRG and miniFORGE mFRG are different assets. A future FRG-linked staking or reserve arrangement is proposed, but no separate wFRG token is planned, and no 1:1 backing currently exists. See the <a class="text-link" href="https://github.com/tgibbsz32/forgecoin/blob/main/docs/MFRG_EXCHANGE_DESIGN.md">implementation requirements</a> once this feature is merged.</p>
 <section class="exchange-card" aria-label="Presale tokenomics and disclosures" style="margin-top:22px"><h2>Presale terms — proposed</h2><p><strong>50,000,000 mFRG total planned supply:</strong> 5,000,000 presale (10%); 5,000,000 liquidity reserve (10%); 40,000,000 future staking/protocol/distribution reserve (80%).</p><table style="width:100%;border-collapse:collapse"><caption>Five sequential rounds, one million tokens per round</caption><thead><tr><th scope="col">Round</th><th scope="col">USD / mFRG</th><th scope="col">Gross proceeds</th></tr></thead><tbody><tr><td>1</td><td>$0.01</td><td>$10,000</td></tr><tr><td>2</td><td>$0.02</td><td>$20,000</td></tr><tr><td>3</td><td>$0.03</td><td>$30,000</td></tr><tr><td>4</td><td>$0.04</td><td>$40,000</td></tr><tr><td>5</td><td>$0.05</td><td>$50,000</td></tr></tbody></table><p><strong>Maximum gross proceeds:</strong> $150,000 only if sold out. Proposed budget: 50% DEX liquidity, 20% network development, 10% infrastructure/audits/security, 20% founder compensation. Of the founder share, half is proposed for release following presale settlement and half over six equal monthly installments. Allocations are intended plans subject to a final published policy and legal review, not guaranteed outcomes.</p><p class="swap-note">Speculative digital asset; the entire purchase value may be lost. No guaranteed price, liquidity, yield, native FRG backing or redemption. No presale purchases or deposits are currently authorized. Finality of properly completed transactions is subject to non-waivable legal rights; disclosures do not override consumer, securities, tax or other laws.</p></section></main>
-<script>
-(()=>{const selector=document.getElementById('pay-asset');const note=document.getElementById('route-note');const descriptions={
-USDC_SOL:'Native Solana USDC; exact USD-based ladder. Requires audited atomic settlement before trading.',
-SOL:'Native SOL; an expiring, independently verified conversion quote will be required before trading.'
-
-};function update(){note.textContent=descriptions[selector.value]||'Route unavailable.'}selector.addEventListener('change',update);update()})();
+<script type="module">
+import {quoteTokens,formatUnits} from './mfrg-presale-quote.mjs';
+const selector=document.getElementById('pay-asset');
+const amount=document.getElementById('pay-amount');
+const note=document.getElementById('route-note');
+const tokens=document.getElementById('preview-tokens');
+const cost=document.getElementById('preview-cost');
+const split=document.getElementById('tier-split');
+function render(){
+ note.textContent=selector.value==='SOL'?'SOL amount cannot be estimated without a verified live SOL/USD oracle. USD value only.':'USDC payment preview assumes $1 per native Solana USDC; the actual transaction needs independently validated on-chain settlement.';
+ try {
+  if(!amount.value.trim()){tokens.textContent='—';cost.textContent='—';split.textContent='';return}
+  const q=quoteTokens({amount:amount.value.trim()});
+  tokens.textContent=formatUnits(q.tokenUnits)+' mFRG';
+  cost.textContent='$'+formatUnits(q.paymentMicroUsdc);
+  split.textContent='Assuming zero tokens previously sold: '+q.tiers.map(t=>'Round '+t.round+': '+formatUnits(t.units)+' mFRG at $'+formatUnits(t.price,6)+' per token').join('; ')+'. These are illustrative tiers, not live quotes.';
+ }catch(e){tokens.textContent='Unavailable';cost.textContent='—';split.textContent=e.message}
+}
+selector.addEventListener('change',render);amount.addEventListener('input',render);render();
 </script>
 </body></html>

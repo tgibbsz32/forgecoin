@@ -1,0 +1,65 @@
+# ForgeCoin test wallet: private backup and recovery
+
+This procedure protects a **locally created disposable test wallet**. It has not
+created a wallet, seed phrase, mining rewards, or production wallet. Never
+commit wallet data, password files, encrypted archives, or recovery phrases.
+
+## What is protected
+
+The Windows-only tool `tools/backup_test_wallet.ps1` encrypts the supplied
+ForgeCoin wallet cache, `.keys` file, wallet password and mnemonic recovery
+phrase in a single DPAPI CurrentUser archive. The default output folder is
+`%LOCALAPPDATA%\ForgeCoin\ProtectedWalletBackups` (outside this repository).
+No secrets are printed by the backup script.
+
+**Use only after a real native wallet has been created** and its recovery phrase
+has been verified locally. Run the following in an interactive PowerShell
+session in the checkout, using the actual wallet file locations:
+
+```powershell
+$phrase = Read-Host 'Recovery phrase' -AsSecureString
+$password = Read-Host 'Wallet password' -AsSecureString
+.\tools\backup_test_wallet.ps1 -WalletFile 'C:\PRIVATE\test-wallet' `
+  -KeysFile 'C:\PRIVATE\test-wallet.keys' `
+  -RecoveryPhrase $phrase -WalletPassword $password
+```
+
+Do not put real seeds or wallet passwords directly in a command line, chat,
+GitHub issue, CI variable, source file, or shell-history entry. The original
+wallet remains where it was created; the backup is encrypted and separate.
+
+## Restore wallet files
+
+In the **same Windows user profile** that made the archive, run:
+
+```powershell
+.\tools\restore_test_wallet.ps1 -BackupPath 'C:\PRIVATE\frg-wallet-EXAMPLE.dpapi' `
+  -DestinationDirectory 'C:\PRIVATE\restored-test-wallet'
+```
+
+This decrypts and restores both wallet files and refuses to overwrite any
+existing destination. The mnemonic and password remain encrypted in the backup
+and are deliberately not printed or written out as plaintext by the restore
+command. Wallet software may still require the wallet password to open the
+restored files.
+
+## Essential recovery limitation
+
+**DPAPI CurrentUser is bound to this Windows profile and is not a portable
+disaster-recovery backup.** Profile loss, Windows reinstallation, or
+unrecoverable DPAPI keys can make the archive unusable. Preserve an additional
+independent, offline, securely held copy of the recovery phrase and wallet
+password before depositing or mining any FRG with the address. Never rely only
+on this same-machine archive. A valid recovery phrase should be verified using
+the source-matched ForgeCoin wallet offline before treating it as a backup.
+
+## Test evidence
+
+`tools/test_backup_test_wallet.ps1` exercises encryption, same-profile
+decryption, file restoration, no plaintext credential bytes in the backup,
+and refusal to overwrite existing files using **dummy inputs only**.
+It cleans up its temporary wallet and encrypted archive.
+
+Synthetic XMRig integration uses `synthetic-only` as a login identifier,
+not a payout address or wallet. Its test evidence is always
+`synthetic=1, credited=0`; no real wallet exists from that test.

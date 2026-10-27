@@ -1,5 +1,10 @@
 import unittest
-from model import CapacityExceeded, WorkerRegistry, allocate_reward
+
+if __package__:
+    from .model import CapacityExceeded, WorkerRegistry, allocate_reward
+else:
+    # Preserve direct script execution for the original offline research test.
+    from model import CapacityExceeded, WorkerRegistry, allocate_reward
 
 
 class PoolResearchTests(unittest.TestCase):

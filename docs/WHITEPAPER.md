@@ -129,7 +129,7 @@ ForgeCoin is derived from Monero v0.18.5.1 and CryptoNote code and is distribute
 
 <small>Proposed future upgrades; implementation and timing are not guaranteed.</small>
 
-ForgeCoin's first planned post-launch interoperability step is a **user-backed, 1:1 Solana wFRG bridge**, with audited native FRG deposit accounting, mint/burn, reserve reconciliation and user redemption.
+ForgeCoin's intended Solana ecosystem asset is **miniFORGE (mFRG)**, with a proposed future independently reviewed native FRG staking/locking protocol targeting **1:1 FRG backing** only after public mining and observed price discovery. The presale is not itself FRG-backed and does not imply redemption rights.
 
 A later technical objective is an **FCMP++/CARROT upgrade of the existing ForgeCoin blockchain via a coordinated hard fork**, if independently validated compatibility makes this safe. A separate successor network and voluntary migration plan would be considered only as a fallback. Plans for eventual Solana-wrapper retirement require a usable redemption process.
 
@@ -143,10 +143,13 @@ miniFORGE (mFRG) is intended to become the principal **ecosystem value-accrual a
 
 **Proposed sequence:** (1) independently validate and launch native FRG proof-of-work mining; (2) separately launch an mFRG SPL presale, subject to legal review, mint verification and operational readiness; (3) observe organic FRG mining participation, liquidity, price discovery and market stability over a meaningful but currently undefined period; (4) only after this evidence exists, design and independently review a mechanism enabling holders to **stake or lock native FRG in connection with mFRG**. The timing, economics and feasibility of this mechanism remain to be determined.
 
-A staking mechanism does **not** automatically transfer FRG value to mFRG: the specification must state whether FRG is deposited into transparent custody, locked by a verifiable protocol, used to back issued mFRG units, earns rewards, supports redemption, or serves another explicit purpose. Any conversion, ratio, backing representation, yield or redemption entitlement would require separate public rules, reserves and security validation; **none is promised or presently active**. Staking must not silently alter native FRG proof-of-work issuance or confuse mFRG with the separately proposed 1:1 native-FRG-backed **wFRG** wrapper.
+A staking mechanism does **not** automatically transfer FRG value to mFRG: the specification must state whether FRG is deposited into transparent custody, locked by a verifiable protocol, used to back issued mFRG units, earns rewards, supports redemption, or serves another explicit purpose. Any conversion, ratio, backing representation, yield or redemption entitlement would require separate public rules, reserves and security validation; **none is promised or presently active**. Staking must not silently alter native FRG proof-of-work issuance or infer that mFRG has existing native-FRG backing or guaranteed conversion.
 
 **Pre-implementation gates:** obtain a market-observation methodology and published activation criteria; define custody and key management, accounting, contract roles, user withdrawal/redemption rules, risks, insolvency handling, independent testing and audits; assess securities, custody, money-transmission and tax treatment before accepting deposits. Solana transactions remain publicly observable despite native FRG's privacy properties.
 
 ## Disclaimer
 
 This document describes software behavior and project intent. It is not a promise of value, investment return, anonymity, uninterrupted operation, or regulatory treatment. Network participants are responsible for evaluating software, operational, legal, and financial risk.
+
+
+**Revised mFRG-first policy (October 27, 2026):** No separate wFRG token is currently planned. miniFORGE (mFRG), a distinct Solana SPL asset, is intended to serve as the ecosystem's FRG-linked asset. Following the mFRG presale and a period of native FRG public mining and observed price discovery, a separately audited protocol may allow FRG holders to lock or stake native FRG for mFRG-related rights. The **target is an eventual 1:1 FRG-backed relationship**, but this is a future design goal, not an existing 1 FRG = 1 mFRG redeemability promise. Because mFRG presale tokens may circulate before FRG collateral exists, the project must define how unbacked presale supply, reserves, new issuance, redemption rights and total circulating supply will be reconciled before calling mFRG fully backed. No bridge, staking, 1:1 reserve, conversion or redemption is live; native FRG mining rules are unchanged.

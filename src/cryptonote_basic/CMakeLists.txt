@@ -79,3 +79,12 @@ target_link_libraries(cryptonote_basic
     ${Boost_THREAD_LIBRARY}
   PRIVATE
     ${EXTRA_LIBRARIES})
+
+# Explicit opt-in: offline test tooling must never be included in release builds.
+option(FORGE_BUILD_ISOLATED_POOL_TOOLS "Build offline pool consensus test helper" OFF)
+if(FORGE_BUILD_ISOLATED_POOL_TOOLS)
+  add_executable(forge-isolated-block-reconstruct
+    ${PROJECT_SOURCE_DIR}/services/pool_research/tests/native_block_reconstruct.cpp)
+  target_link_libraries(forge-isolated-block-reconstruct PRIVATE
+    cryptonote_basic common cncrypto)
+endif()

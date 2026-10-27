@@ -1,0 +1,8 @@
+﻿target/
+.anchor/
+node_modules/
+test-ledger/
+.secrets/
+*.local.json
+*.log
+.DS_Store

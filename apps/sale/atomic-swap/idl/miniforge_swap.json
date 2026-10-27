@@ -1,0 +1,1008 @@
+{
+  "address": "5NrwtM49RAn5iQicbod539qxhqYRkV3ZpiBudoUCUGNY",
+  "metadata": {
+    "name": "miniforge_swap",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "DEVNET-ONLY miniFORGE atomic USDC-for-mFRG escrow proof of concept"
+  },
+  "instructions": [
+    {
+      "name": "initialize_sale",
+      "discriminator": [
+        208,
+        103,
+        34,
+        154,
+        179,
+        6,
+        125,
+        208
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "sale_mint"
+        },
+        {
+          "name": "usdc_mint"
+        },
+        {
+          "name": "treasury_owner"
+        },
+        {
+          "name": "treasury_usdc"
+        },
+        {
+          "name": "sale",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  97,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "sale_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "sale"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "sale_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "price_micro_usdc_per_mfrg",
+          "type": "u64"
+        },
+        {
+          "name": "max_buyer_atomic",
+          "type": "u64"
+        },
+        {
+          "name": "start_at",
+          "type": "i64"
+        },
+        {
+          "name": "end_at",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "purchase",
+      "discriminator": [
+        21,
+        93,
+        113,
+        154,
+        193,
+        160,
+        242,
+        168
+      ],
+      "accounts": [
+        {
+          "name": "buyer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "sale_mint",
+          "relations": [
+            "sale"
+          ]
+        },
+        {
+          "name": "usdc_mint",
+          "relations": [
+            "sale"
+          ]
+        },
+        {
+          "name": "sale",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  97,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "sale_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "sale"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "sale_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          },
+          "relations": [
+            "sale"
+          ]
+        },
+        {
+          "name": "buyer_usdc",
+          "writable": true
+        },
+        {
+          "name": "buyer_mfrg",
+          "writable": true
+        },
+        {
+          "name": "treasury_usdc",
+          "writable": true,
+          "relations": [
+            "sale"
+          ]
+        },
+        {
+          "name": "buyer_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  117,
+                  121,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "sale"
+              },
+              {
+                "kind": "account",
+                "path": "buyer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount_atomic",
+          "type": "u64"
+        },
+        {
+          "name": "max_usdc_atomic",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "set_paused",
+      "discriminator": [
+        91,
+        60,
+        125,
+        192,
+        176,
+        225,
+        166,
+        218
+      ],
+      "accounts": [
+        {
+          "name": "sale",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "sale"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "paused",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "set_price",
+      "discriminator": [
+        16,
+        19,
+        182,
+        8,
+        149,
+        83,
+        72,
+        181
+      ],
+      "accounts": [
+        {
+          "name": "sale",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "sale"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "price",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "withdraw_unsold",
+      "discriminator": [
+        6,
+        159,
+        31,
+        233,
+        165,
+        117,
+        226,
+        159
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "sale"
+          ]
+        },
+        {
+          "name": "sale_mint",
+          "relations": [
+            "sale"
+          ]
+        },
+        {
+          "name": "sale",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  97,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "sale_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "sale"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "sale_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          },
+          "relations": [
+            "sale"
+          ]
+        },
+        {
+          "name": "admin_mfrg",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount_atomic",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "BuyerRecord",
+      "discriminator": [
+        107,
+        122,
+        54,
+        31,
+        4,
+        54,
+        209,
+        38
+      ]
+    },
+    {
+      "name": "Sale",
+      "discriminator": [
+        202,
+        64,
+        232,
+        171,
+        178,
+        172,
+        34,
+        183
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "PurchaseCompleted",
+      "discriminator": [
+        166,
+        14,
+        235,
+        151,
+        212,
+        162,
+        21,
+        41
+      ]
+    },
+    {
+      "name": "SaleInitialized",
+      "discriminator": [
+        245,
+        150,
+        119,
+        115,
+        149,
+        109,
+        202,
+        139
+      ]
+    },
+    {
+      "name": "SalePauseChanged",
+      "discriminator": [
+        97,
+        199,
+        242,
+        140,
+        84,
+        57,
+        116,
+        237
+      ]
+    },
+    {
+      "name": "SalePriceChanged",
+      "discriminator": [
+        64,
+        238,
+        223,
+        49,
+        89,
+        5,
+        57,
+        197
+      ]
+    },
+    {
+      "name": "UnsoldWithdrawn",
+      "discriminator": [
+        211,
+        233,
+        172,
+        152,
+        220,
+        162,
+        83,
+        163
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidPrice",
+      "msg": "Invalid unit price"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidBuyerCap",
+      "msg": "Invalid buyer limit"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidSaleWindow",
+      "msg": "Invalid sale timestamps"
+    },
+    {
+      "code": 6003,
+      "name": "SameMint",
+      "msg": "mFRG and USDC mints must differ"
+    },
+    {
+      "code": 6004,
+      "name": "WrongDecimals",
+      "msg": "Both token mints must have six decimals"
+    },
+    {
+      "code": 6005,
+      "name": "Paused",
+      "msg": "Sale is paused"
+    },
+    {
+      "code": 6006,
+      "name": "NotStarted",
+      "msg": "Sale has not started"
+    },
+    {
+      "code": 6007,
+      "name": "Ended",
+      "msg": "Sale has ended"
+    },
+    {
+      "code": 6008,
+      "name": "NotEnded",
+      "msg": "Sale has not ended"
+    },
+    {
+      "code": 6009,
+      "name": "InvalidAmount",
+      "msg": "Purchase quantity must be positive"
+    },
+    {
+      "code": 6010,
+      "name": "CapExceeded",
+      "msg": "5M sale allocation exceeded"
+    },
+    {
+      "code": 6011,
+      "name": "BuyerCapExceeded",
+      "msg": "Buyer cap exceeded"
+    },
+    {
+      "code": 6012,
+      "name": "SlippageExceeded",
+      "msg": "Buyer maximum USDC debit exceeded"
+    },
+    {
+      "code": 6013,
+      "name": "NotEnoughMfrg",
+      "msg": "Escrow lacks mFRG inventory"
+    },
+    {
+      "code": 6014,
+      "name": "NotEnoughUsdc",
+      "msg": "Buyer lacks USDC"
+    },
+    {
+      "code": 6015,
+      "name": "Overflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6016,
+      "name": "UnauthorizedAdmin",
+      "msg": "Only sale administrator is authorized"
+    },
+    {
+      "code": 6017,
+      "name": "WrongMint",
+      "msg": "Wrong mFRG/USDC mint"
+    },
+    {
+      "code": 6018,
+      "name": "WrongVault",
+      "msg": "Wrong escrow account"
+    },
+    {
+      "code": 6019,
+      "name": "WrongTreasury",
+      "msg": "Wrong treasury account"
+    },
+    {
+      "code": 6020,
+      "name": "WrongBuyer",
+      "msg": "Wrong buyer or buyer record"
+    },
+    {
+      "code": 6021,
+      "name": "MustPause",
+      "msg": "Sale must be paused"
+    },
+    {
+      "code": 6022,
+      "name": "PriceLocked",
+      "msg": "Price is locked after sale start"
+    },
+    {
+      "code": 6023,
+      "name": "WrongDevnetMint",
+      "msg": "Unexpected devnet mFRG mint"
+    }
+  ],
+  "types": [
+    {
+      "name": "BuyerRecord",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "buyer",
+            "type": "pubkey"
+          },
+          {
+            "name": "sale",
+            "type": "pubkey"
+          },
+          {
+            "name": "bought",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PurchaseCompleted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "sale",
+            "type": "pubkey"
+          },
+          {
+            "name": "buyer",
+            "type": "pubkey"
+          },
+          {
+            "name": "mfrg_amount",
+            "type": "u64"
+          },
+          {
+            "name": "usdc_amount",
+            "type": "u64"
+          },
+          {
+            "name": "cumulative_sold",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Sale",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "sale_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "usdc_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "treasury_usdc",
+            "type": "pubkey"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "buyer_cap",
+            "type": "u64"
+          },
+          {
+            "name": "start_at",
+            "type": "i64"
+          },
+          {
+            "name": "end_at",
+            "type": "i64"
+          },
+          {
+            "name": "sold",
+            "type": "u64"
+          },
+          {
+            "name": "paused",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SaleInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "sale",
+            "type": "pubkey"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "start_at",
+            "type": "i64"
+          },
+          {
+            "name": "end_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SalePauseChanged",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "sale",
+            "type": "pubkey"
+          },
+          {
+            "name": "paused",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SalePriceChanged",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "sale",
+            "type": "pubkey"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnsoldWithdrawn",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "sale",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ]
+}

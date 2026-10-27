@@ -4,6 +4,10 @@
 
 The sale module is separate from native FRG mining, Oracle pool operations, the explorer and wallet/miner releases. It does not change FRG consensus, mining, payout signing or any treasury.
 
+## New: actual Solana atomic exchange prototype (development-only)
+
+The source under [atomic-swap](atomic-swap/README.md) contains a compiled Anchor/SPL escrow program with on-chain 5M sale cap, exact integer USDC price, per-wallet cap, buyer maximum debit, immutable treasury, admin pause and atomic USDC-payment / mFRG-delivery instructions. In a loopback-only Solana validator using disposable mock USDC/mFRG, the program passed **22 real transaction integration assertions**, including a forced second-transfer failure that rolled back the attempted USDC payment. Rust unit tests passed 5/5. A default devnet-mint-pinned SBF build also succeeded, but its public devnet deployment was blocked because a separate test deployer has zero SOL and a 2 SOL devnet faucet request failed. **No mainnet or public devnet contract, token issuance, production checkout or real payment has been performed.** The hosted website and production status WSGI remain hard-disabled; the swap program is not production-audited.
+
 ## Implemented sources
 
 - docs/miniforge-sale.html, docs/sale.css and docs/sale.js: responsive informational preview with the 50M target supply, planned 5M/5M/40M allocations, checkout stages, public-wallet-address preview and disabled purchase controls. No payment recipient, sender keys, swap function or sale price is embedded.

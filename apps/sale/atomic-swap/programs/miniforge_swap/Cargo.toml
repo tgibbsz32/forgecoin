@@ -1,0 +1,27 @@
+[package]
+name = "miniforge_swap"
+version = "0.1.0"
+edition = "2021"
+description = "DEVNET-ONLY miniFORGE atomic USDC-for-mFRG escrow proof of concept"
+publish = false
+
+[lib]
+name = "miniforge_swap"
+crate-type = ["cdylib", "lib"]
+
+[features]
+default = ["devnet-only"]
+devnet-only = []
+local-mock-mints = []
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+anchor-debug = []
+custom-heap = []
+custom-panic = []
+
+[dependencies]
+anchor-lang = { version = "=0.31.1", features = ["init-if-needed"] }
+anchor-spl = { version = "=0.31.1", features = ["token", "associated_token"] }

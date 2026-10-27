@@ -1,0 +1,16 @@
+{
+  "name": "@forgecoin/miniforge-atomic-swap",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local/development-only atomic sale program with no production activation",
+  "scripts": {
+    "test:unit": "cargo test --workspace",
+    "test:local": "node tests/atomic-local.cjs",
+    "test:static": "node tests/guardrails.cjs"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "0.31.1",
+    "@solana/spl-token": "0.4.13",
+    "@solana/web3.js": "1.98.4"
+  }
+}

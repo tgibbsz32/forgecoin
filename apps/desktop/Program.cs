@@ -122,7 +122,7 @@ namespace ForgeCoinDesktop
             Size = new Size(1040, 760);
             StartPosition = FormStartPosition.CenterScreen;
             Font = new Font("Segoe UI", 10F);
-            BackColor = Color.FromArgb(246, 247, 249);
+            BackColor = Color.FromArgb(234, 243, 253);
 
             Directory.CreateDirectory(appRoot);
             Directory.CreateDirectory(Path.Combine(appRoot, "blockchain"));
@@ -152,9 +152,20 @@ namespace ForgeCoinDesktop
 
         private Control BuildHeader()
         {
-            Panel header = new Panel { Dock = DockStyle.Top, Height = 82, BackColor = Color.FromArgb(28, 32, 42) };
-            Label title = new Label { Text = "FORGECOIN", ForeColor = Color.White, Font = new Font("Segoe UI Semibold", 22F), AutoSize = true, Location = new Point(24, 14) };
-            Label subtitle = new Label { Text = "Phase 3 desktop wallet and node", ForeColor = Color.FromArgb(181, 188, 204), AutoSize = true, Location = new Point(27, 51) };
+            Panel header = new Panel { Dock = DockStyle.Top, Height = 82, BackColor = Color.FromArgb(9, 32, 61) };
+            Label title = new Label { Text = "FORGECOIN", ForeColor = Color.White, Font = new Font("Segoe UI Semibold", 22F), AutoSize = true, Location = new Point(87, 14) };
+            Label subtitle = new Label { Text = "Wallet  /  RandomX Mining  /  Network Explorer", ForeColor = Color.FromArgb(164, 204, 243), AutoSize = true, Location = new Point(89, 52) };
+            string logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "forgecoin-logo.png");
+            if (File.Exists(logoPath))
+            {
+                try
+                {
+                    PictureBox logo = new PictureBox { Location = new Point(18, 10), Size = new Size(62, 62), SizeMode = PictureBoxSizeMode.Zoom };
+                    using (Image loaded = Image.FromFile(logoPath)) logo.Image = new Bitmap(loaded);
+                    header.Controls.Add(logo);
+                }
+                catch (Exception) { /* Missing or invalid artwork must never prevent startup. */ }
+            }
             header.Controls.Add(title);
             header.Controls.Add(subtitle);
             return header;
@@ -773,18 +784,18 @@ namespace ForgeCoinDesktop
 
         private Button PrimaryButton(string text, EventHandler click)
         {
-            Button b = new Button { Text = text, AutoSize = false, Width = 125, Height = 40, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(224, 104, 45), ForeColor = Color.White, Cursor = Cursors.Hand, Font = new Font("Segoe UI Semibold", 10F), Margin = new Padding(5) };
+            Button b = new Button { Text = text, AutoSize = false, Width = 125, Height = 40, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(29, 112, 217), ForeColor = Color.White, Cursor = Cursors.Hand, Font = new Font("Segoe UI Semibold", 10F), Margin = new Padding(5) };
             b.FlatAppearance.BorderSize = 2;
-            b.FlatAppearance.BorderColor = Color.FromArgb(168, 68, 25);
+            b.FlatAppearance.BorderColor = Color.FromArgb(21, 81, 174);
             b.Click += click;
             return b;
         }
 
         private Button SecondaryButton(string text, EventHandler click)
         {
-            Button b = new Button { Text = text, AutoSize = false, Width = 125, Height = 40, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(234, 237, 242), ForeColor = Color.FromArgb(28, 32, 42), Cursor = Cursors.Hand, Font = new Font("Segoe UI Semibold", 10F), Margin = new Padding(5) };
+            Button b = new Button { Text = text, AutoSize = false, Width = 125, Height = 40, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(225, 239, 254), ForeColor = Color.FromArgb(28, 32, 42), Cursor = Cursors.Hand, Font = new Font("Segoe UI Semibold", 10F), Margin = new Padding(5) };
             b.FlatAppearance.BorderSize = 2;
-            b.FlatAppearance.BorderColor = Color.FromArgb(111, 119, 133);
+            b.FlatAppearance.BorderColor = Color.FromArgb(98, 149, 204);
             b.Click += click;
             return b;
         }

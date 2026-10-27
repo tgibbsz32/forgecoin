@@ -4,7 +4,7 @@
 All sockets loopback-only; daemon --offline; disposable QA wallet address;
 RPC and Stratum tests only. Processes are always stopped in finally.
 """
-import json, os, pathlib, re, signal, socket, subprocess, sys, tempfile, time
+import importlib.util, json, os, pathlib, re, signal, socket, subprocess, sys, tempfile, time
 import urllib.error, urllib.request
 
 BASE=pathlib.Path("/home/ubuntu/forgecoin-mainnet-20261026")
@@ -157,6 +157,18 @@ def main():
             assert stats["network_difficulty"]==500000
             assert stats["pool_fee"]==.01
             assert stats["pool_blocks_found"]==0
+            # Verify that the actual native C pool schema is safely consumable by
+            # the live Oracle monitoring collector. Never forward private data.
+            monitor_source=pathlib.Path("/home/ubuntu/forgecoin-monitor/monitor.py")
+            monitor_spec=importlib.util.spec_from_file_location("forgecoin_oracle_monitor",monitor_source)
+            monitor_module=importlib.util.module_from_spec(monitor_spec)
+            monitor_spec.loader.exec_module(monitor_module)
+            normalized=monitor_module.normalized_pool(stats)
+            assert normalized["networkDifficulty"]==500000
+            assert normalized["networkHeight"]==1
+            assert normalized["poolFeePercent"]==1.0
+            assert normalized["poolBlocksFound"]==0
+            print("QA_LIVE_C_POOL_STATS_PARSE_TO_ORACLE_MONITOR: PASS")
             probe=subprocess.run([sys.executable,str(PROBE)],capture_output=True,text=True,timeout=15)
             print(probe.stdout.strip())
             if probe.returncode!=0:
@@ -170,6 +182,7 @@ def main():
                  "daemonGenesis":gen["hash"],"candidateHeight":stats["network_height"],
                  "miningDifficulty":stats["network_difficulty"],
                  "explorerGenesisVerified":True,
+                 "monitorParsesPoolStats":True,
                  "poolFeePercent":stats["pool_fee"]*100,
                  "blocksMined":0,"payoutsEnabled":False,
                  "actualMinerShareTest":"--with-miner" in sys.argv,

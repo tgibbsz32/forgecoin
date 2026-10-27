@@ -1,0 +1,32 @@
+# DO NOT ENABLE without matched release manifest and operator sign-off
+[Unit]
+Description=ForgeCoin FRG 20261026 mainnet full node (launch locked)
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/etc/forgecoin/approved-mainnet-launch.json
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/forgecoin-mainnet-20261026
+ExecStartPre=/usr/bin/python3 -I /opt/forgecoin-ops/verify_launch_gate.py --require-authorized
+ExecStart=/home/ubuntu/forgecoin-mainnet-20261026/build-release/bin/forged --data-dir /home/ubuntu/forgecoin-mainnet-20261026/production-blockchain-20261026 --p2p-bind-ip 0.0.0.0 --p2p-bind-port 39480 --rpc-bind-ip 127.0.0.1 --rpc-bind-port 39481 --zmq-rpc-bind-ip 127.0.0.1 --zmq-rpc-bind-port 39482 --no-igd --non-interactive --check-updates disabled --disable-dns-checkpoints
+Restart=on-failure
+RestartSec=15
+LimitNOFILE=65535
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=9G
+TasksMax=256
+TimeoutStopSec=120
+
+[Install]
+WantedBy=multi-user.target

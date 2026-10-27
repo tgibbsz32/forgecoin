@@ -40,7 +40,13 @@ Reproduce on the authorized Oracle QA environment (existing restricted QA wallet
 - Debug-signed Android QA APK: C:\Users\tgibb\Downloads\ForgeCoin-Android-Monitor-QA-v0.1-20261027.apk
 - SHA256: FD8732AD6046971F307FC0ECDBFC24B664AAAC5C2F7EF082664529366DCA14DD
 - Android API 36.1 emulator smoke: APK installed and MainActivity launched, verified HTTPS GET to Oracle (HTTP 503 while daemon offline), correct offline status, all native FRG wallet functions disabled, no runtime crash. No physical handset tested.
-- Separate Windows QA: ForgeCoin-Solana-Controls-Disabled-20261027.zip. Native FRG prelaunch gate retained; all Solana tab actions greyed out. Not a public release.
+- Updated Windows QA v0.6: `C:\Users\tgibb\Downloads\ForgeCoin-Windows-Prelaunch-QA-v0.6-20261027.zip` (SHA256 `5E44DCE16356235F26B9B0F702A90CF55FAB39CAA017586FA2F86C2E69478425`). Native FRG solo and pool mining buttons are greyed out, as are all Solana wallet controls. The new `apps/desktop/tests/test_release_gate.ps1` passed: editing QA JSON cannot unlock mining; a separate temporary simulated build allows it only with exact identity, release authorization and SHA256-pinned fake native fixture executables; wrong genesis and changed daemon hashes relock it. No miner or wallet was executed by these gate tests. **Not a public release.**
+
+## Additional October 27 verification
+
+- Persistent Oracle monitor's `normalized_pool` function successfully parsed the real native C pool `/stats` output from the complete offline daemon + native wallet RPC + explorer + C pool + pinned XMRig QA run. The harness recorded accepted work difficulty 30 with a QA-only share target of 10; canonical network difficulty remained 500,000. No actual block found.
+- Dedicated Oracle `forgecoin-mainnet-20261026.service` was installed and systemd-verified, but is **disabled and inactive**. It references the verified fresh binary, unlike the obsolete October 20 staging service. Its launch preflight correctly rejects absent release authorization/marker. Eleven new launch-gate regression tests pass. The newest gate source with currency-term checks is staged on Oracle but privileged installation remains blocked; the installed gate is the preceding version. See `services/oracle_mainnet/README.md`.
+- Combined local regression results: 11 Oracle release-gate tests, 31 C-pool Python tests, 8 monitor tests, and real XMRig native RandomX accepted-share QA passed. The Windows C# mining release-gate reflection test passed all four scenarios.
 
 ## Remaining public launch gates — not passed yet
 

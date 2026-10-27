@@ -9,7 +9,7 @@
 - The MinGW runtime DLLs used by that build
 - Optional XMRig 6.26.0 Windows x64 files for the Pool Mining tab
 
-The desktop source is a Windows Forms application in `Program.cs` and `SolanaWalletTab.cs`, plus a Rust Solana devnet wallet helper. The build script compiles both C# files and the Rust helper, verifies and packages all three approved ForgeCoin native executables, and copies the required MinGW runtime libraries. XMRig remains optional; prelaunch mining remains disabled.
+The desktop source is a Windows Forms application in `Program.cs` and `SolanaWalletTab.cs`, plus a Rust Solana devnet wallet helper. **Solo mining and pool mining start buttons are now visibly disabled in every prelaunch QA build.** Their controlled future release paths, three binary SHA pins, real-genesis RPC verification and the safe temporary fixture test are described in [RELEASE-GATE.md](RELEASE-GATE.md). Run `apps/desktop/tests/test_release_gate.ps1` from PowerShell to verify the locked build and test-only release paths without launching a miner. The build script compiles both C# files and the Rust helper, verifies and packages all three approved ForgeCoin native executables, and copies the required MinGW runtime libraries. XMRig remains optional; prelaunch mining remains disabled.
 
 From PowerShell:
 

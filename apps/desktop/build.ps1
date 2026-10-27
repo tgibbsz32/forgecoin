@@ -65,10 +65,18 @@ New-Item -ItemType Directory -Path $BinRoot -Force | Out-Null
     /out:"$OutputRoot\ForgeCoin Desktop.exe" `
     /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll `
     /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll `
-    "$ProjectRoot\Program.cs"
+    "$ProjectRoot\Program.cs" "$ProjectRoot\SolanaWalletTab.cs"
 if ($LASTEXITCODE -ne 0) {
     throw "C# compilation failed with exit code $LASTEXITCODE"
 }
+
+# Build the isolated devnet-only encrypted Solana wallet helper; never substitute an unverified binary.
+$HelperManifest = Join-Path $ProjectRoot 'solana-wallet-helper\Cargo.toml'
+& cargo build --manifest-path $HelperManifest --release --locked
+if ($LASTEXITCODE -ne 0) { throw "Solana helper build failed with exit code $LASTEXITCODE" }
+$HelperBinary = Join-Path $ProjectRoot 'solana-wallet-helper\target\release\solana-wallet-helper.exe'
+if (-not (Test-Path -LiteralPath $HelperBinary)) { throw 'Built Solana wallet helper not found.' }
+Copy-Item -LiteralPath $HelperBinary -Destination (Join-Path $BinRoot 'solana-wallet-helper.exe')
 
 Copy-Item -LiteralPath (Join-Path $ForgeBin 'forged.exe') -Destination $BinRoot
 Copy-Item -LiteralPath (Join-Path $ForgeBin 'forge-wallet-rpc.exe') -Destination $BinRoot
@@ -105,7 +113,7 @@ if (-not [string]::IsNullOrWhiteSpace($XmrigRoot)) {
     Copy-Item -LiteralPath (Join-Path $ProjectRoot 'XMRIG-NOTICE.txt') -Destination $XmrigBin
 }
 
-@('README.txt', 'INSTALL.md', 'VALIDATION.md', 'TREASURY-WALLET.md') | ForEach-Object {
+@('README.txt', 'INSTALL.md', 'VALIDATION.md', 'TREASURY-WALLET.md', 'SOLANA-WALLET-DEVNET.md') | ForEach-Object {
     Copy-Item -LiteralPath (Join-Path $ProjectRoot $_) -Destination $OutputRoot
 }
 Copy-Item -LiteralPath (Join-Path $RepositoryRoot 'LICENSE') -Destination $OutputRoot

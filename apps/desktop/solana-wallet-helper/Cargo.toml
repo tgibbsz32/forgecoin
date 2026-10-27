@@ -1,0 +1,23 @@
+[package]
+name = "forgecoin-solana-wallet-helper"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "solana-wallet-helper"
+path = "src/main.rs"
+
+[dependencies]
+aes-gcm = "0.10"
+argon2 = "0.5"
+bip39 = { version = "2", features = ["rand", "std"] }
+bs58 = "0.5"
+ed25519-dalek = "2"
+hex = "0.4"
+hmac = "0.12"
+rand = "0.8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+zeroize = "1"

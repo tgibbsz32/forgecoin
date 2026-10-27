@@ -3,11 +3,13 @@
 ## Requirements
 
 - Windows with .NET Framework 4.x
-- A completed ForgeCoin Windows build containing `forged.exe` and `forge-wallet-rpc.exe`
+- Rust toolchain (cargo) for the isolated Solana devnet wallet helper; use Cargo.lock and --locked
+- See SOLANA-WALLET-DEVNET.md for the new devnet wallet's limitations and recovery safeguards
+- A completed, hash-verified ForgeCoin prelaunch Windows build containing `forged.exe`, `forge-wallet-rpc.exe` and `forge-wallet-cli.exe`
 - The MinGW runtime DLLs used by that build
 - Optional XMRig 6.26.0 Windows x64 files for the Pool Mining tab
 
-The desktop source is a single Windows Forms application in `Program.cs`. The included build script compiles it with the .NET Framework C# compiler, copies the two ForgeCoin executables and required MinGW runtime libraries, and optionally packages XMRig.
+The desktop source is a Windows Forms application in `Program.cs` and `SolanaWalletTab.cs`, plus a Rust Solana devnet wallet helper. The build script compiles both C# files and the Rust helper, verifies and packages all three approved ForgeCoin native executables, and copies the required MinGW runtime libraries. XMRig remains optional; prelaunch mining remains disabled.
 
 From PowerShell:
 

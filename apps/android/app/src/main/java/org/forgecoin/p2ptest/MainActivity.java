@@ -74,9 +74,13 @@ public class MainActivity extends Activity {
             RadioButton option=new RadioButton(this);
             option.setText(mode); option.setTextColor(WHITE); modes.addView(option);
         }
-        ((RadioButton)modes.getChildAt(2)).setChecked(true); mine.addView(modes);
+        int savedMode=getPreferences(0).getInt("mining_mode",2);
+        ((RadioButton)modes.getChildAt(Math.max(0,Math.min(2,savedMode)))).setChecked(true);
+        modes.setOnCheckedChangeListener((group, id)->{int selected=0;for(int j=0;j<group.getChildCount();j++)if(group.getChildAt(j).getId()==id)selected=j;getPreferences(0).edit().putInt("mining_mode",selected).apply();});
+        for(int j=0;j<modes.getChildCount();j++)modes.getChildAt(j).setId(200+j);
+        mine.addView(modes);
         mine.addView(label("Mining intensity - CPU utilization target",13,WHITE));
-        SeekBar intensity=new SeekBar(this);intensity.setMax(100);intensity.setProgress(35);
+        SeekBar intensity=new SeekBar(this);intensity.setMax(100);intensity.setProgress(getPreferences(0).getInt("intensity",35));
         TextView intensityText=label("35% - balanced",13,CYAN);
         intensity.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
             public void onStartTrackingTouch(SeekBar s){}
@@ -86,10 +90,12 @@ public class MainActivity extends Activity {
                 intensityText.setText(target+"% CPU target - "+(target<=35?"conservative":target<=70?"balanced":"high"));
             }
         });
+        intensityText.setText(intensity.getProgress()+"% CPU target");
         mine.addView(intensity);mine.addView(intensityText);
         Switch background=new Switch(this);
         background.setText("Allow background mining");background.setTextColor(WHITE);
-        background.setChecked(false);mine.addView(background);
+        background.setChecked(getPreferences(0).getBoolean("background_mining",false));
+        background.setOnCheckedChangeListener((view,checked)->getPreferences(0).edit().putBoolean("background_mining",checked).apply());mine.addView(background);
         mine.addView(label("Background mining defaults OFF. The eventual mining service must honor Android notification, battery, thermal and foreground-service limits.",12,MUTED));
         mine.addView(label("Default Oracle endpoint (pending launch)",13,CYAN));
         TextView direct=label("Direct node P2P: 150.136.209.227:39480 (not Stratum)",12,WHITE);

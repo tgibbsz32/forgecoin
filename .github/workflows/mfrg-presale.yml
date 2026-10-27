@@ -1,0 +1,25 @@
+name: mFRG presale math
+on:
+  pull_request:
+    paths:
+      - 'docs/mfrg-presale-quote.mjs'
+      - 'docs/mfrg-presale-quote.test.mjs'
+      - 'services/mfrg-sale/**'
+      - '.github/workflows/mfrg-presale.yml'
+  push:
+    paths:
+      - 'docs/mfrg-presale-quote.mjs'
+      - 'docs/mfrg-presale-quote.test.mjs'
+      - 'services/mfrg-sale/**'
+      - '.github/workflows/mfrg-presale.yml'
+permissions:
+  contents: read
+jobs:
+  quote-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test docs/mfrg-presale-quote.test.mjs services/mfrg-sale/mfrg-quote.test.mjs

@@ -51,3 +51,9 @@ These are **separate, prospective protocols**, not features automatically delive
 ## Release-order discipline
 
 Complete **native L1 wallet/miner -> validated node/pool/explorer -> first Solana wrapper -> researched FCMP++/CARROT in-place upgrade -> optional atomic-swap/private-execution/L2/L3 services**. The FCMP++/CARROT successor is a **future implementation track**, not permission to replace the new-mainnet genesis, generate a second coin supply or abandon redemption for existing owners. See [the main roadmap](../ROADMAP.md) and [governance charter](../governance-charter.md).
+
+## Update: mFRG is separate from wFRG (October 27, 2026)
+
+A **separate miniFORGE / mFRG standard SPL asset** is proposed for Solana mainnet with **50 million target supply** allocated **5 million to a planned future sale/trading treasury**, **5 million to a future liquidity reserve** and **40 million reserved for later distribution**. The 6-decimal devnet mint exists with **zero issued supply**. The real mainnet mint is **not created**, a sale has not launched, the treasuries have no mainnet allocation and no SOL/USDC pool has been deployed. Mainnet issuance awaits fee funding, independent custody/metadata/authority review and on-chain verification. See [miniFORGE issuance and custody](MINIFORGE_SPL_TREASURIES.md).
+
+**Do not confuse mFRG with the existing planned 1:1 deposit-backed wFRG bridge.** An mFRG balance does not represent a locked native FRG reserve or inherit private transaction properties. Any eventual wFRG must use an explicitly different token mint and provable native FRG collateral/mint/burn/redemption mechanics; those protocols remain future, unimplemented systems. The other long-term FCMP++/CARROT, native L1 swaps, L2 and potential L3 tasks in this document remain intended roadmap developments only and require separate technical/security validation.

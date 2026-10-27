@@ -78,3 +78,21 @@ Investigate private DeFi execution, sealed-bid auctions, and privacy-preserving 
 ## Design archive and decisions
 
 The proposed October 24 **55M primary reference / 5M genesis treasury** is withdrawn; it must not be used as launch instructions. The official launch remains L1-first and zero-premine.
+
+## miniFORGE (mFRG) Solana SPL issuance and custody - October 27, 2026
+
+The intended miniFORGE SPL asset is **distinct from native FRG and future 1:1-backed wFRG**. As of this date, the Solana mainnet mFRG token is **not issued**, no sale/trading offer or liquidity pool exists, and mainnet issuance is blocked by **zero mainnet SOL** in the configured wallet. A *devnet-only* mint exists with 6 decimals and zero supply. Standard SPL Token is intended.
+
+- **50,000,000 mFRG total target**, using separate token holdings: **5M (10%)** eventual sale/trading treasury for possible future USDC/token trading, **5M (10%)** future liquidity reserve once FRG develops observed market value, and **40M (80%)** undistributed pending separately approved mechanism.
+- Mainnet token account/mint rent baseline was quoted at approximately **0.00553212 SOL** excluding metadata and transaction expenses. Recommended setup budget: **0.1 mainnet SOL**. This is a funding guideline, not a transaction quote or guarantee. Never send actual SOL to the devnet mint.
+- Before activation, review independent treasury signing arrangements, key backup, operational policies, exact mint address, token metadata, mint authority revocation for a genuine 50M cap, raw base-unit supply/account reconciliation, regulatory conditions of any sale, and visible published risk notices.
+- The native FRG chain retains independent zero-premine Proof-of-Work economics, eight-decimal values and an unlaunched, genesis-frozen release status. mFRG supply is NOT native FRG mining subsidy or backing for the proposed future wFRG bridge.
+- An unreleased Windows desktop development prototype (not merged into the public release) contains Solana wallet creation/import, local encrypted backup/open/recovery controls, mainnet SOL balance query and network-aware mFRG display. Existing tests are not final independent security certification; published release packaging remains blocked by consensus review.
+
+See [miniFORGE treasuries and issuance specification](docs/MINIFORGE_SPL_TREASURIES.md), [future privacy and interoperability architecture](docs/SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md), and [desktop Solana wallet readiness and security](apps/desktop/SOLANA_WALLET_READINESS.md).
+
+## Official pool portal and observer: extended statistics and private worker accounts - October 27, 2026
+
+The proposed public preview includes **57 detailed pool/network/statistics metrics** and **22 additional pool-observer metrics**, with default unavailable status unless an independently verified FRG-native pool stats API reports recent network-correct measurements. Existing probability/earnings calculators remain *illustrative*, not actual account earnings.
+
+The proposed private portal is keyed to a verified **native FRG payout address**, registered worker aliases, and a separately hashed account password. Wallet ownership must be proven with native challenge signatures; knowing an address and worker name does not grant authentication. Account-level 5m/1h/24h hashrate, accepted/rejected/stale shares, worker uptime, per-round reward allocation, immature/unpaid/paid balances, payout confirmation IDs and history are planned. Secure payout **threshold** changes and payout **destination** changes require distinct authorization and independent payout signer controls. No such password interface is live or collecting credentials. Read [pool statistics and account security requirements](docs/POOL_ACCOUNT_STATISTICS_AND_SECURITY.md).

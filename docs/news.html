@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>News & Updates | ForgeCoin</title>
+<style>body{background:#07101b;color:#f1f7fc;font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0}header,main{max-width:860px;margin:auto;padding:24px}a{color:#3de0d0}h1{color:#3de0d0}article{background:#111e2b;border:1px solid #283e53;border-radius:14px;padding:20px;margin:20px 0}time{color:#a0afbe}p{line-height:1.6}</style></head>
+<body><header><a href="./index.html">← ForgeCoin home</a><h1>News & Updates</h1><p>Official project announcements, mirrored in the ForgeCoin Android app.</p></header><main id="updates" aria-live="polite">Loading announcements…</main>
+<script>
+(async()=>{const root=document.getElementById('updates');try{
+const res=await fetch('./news.json',{cache:'no-store'});if(!res.ok)throw Error('Feed unavailable');
+const data=await res.json();root.replaceChildren();
+for(const item of (data.updates||[]).slice(0,50)){
+const article=document.createElement('article'),h=document.createElement('h2'),time=document.createElement('time'),p=document.createElement('p');
+h.textContent=item.title||'Update';time.textContent=item.date||'';p.textContent=item.summary||'';
+article.append(h,time,p);root.append(article);
+}if(!root.children.length)root.textContent='No announcements yet.';
+}catch(e){root.textContent='Announcements temporarily unavailable. Please try again.';}})();
+</script></body></html>

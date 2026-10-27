@@ -73,3 +73,11 @@ set_property(TARGET daemon
   PROPERTY
     OUTPUT_NAME "forged")
 install(TARGETS daemon DESTINATION bin)
+# Opt-in, offline research utility. Excluded from normal builds and installs.
+option(FORGECOIN_BUILD_RESEARCH_ORACLE "Build offline native block serialization oracle" OFF)
+if(FORGECOIN_BUILD_RESEARCH_ORACLE)
+  monero_add_minimal_executable(forgecoin-block-hashing-oracle
+    "${CMAKE_SOURCE_DIR}/tools/native_block_hashing_oracle.cpp")
+  target_link_libraries(forgecoin-block-hashing-oracle
+    PRIVATE cryptonote_basic ringct cncrypto common serialization ${EXTRA_LIBRARIES})
+endif()

@@ -147,6 +147,19 @@ A staking mechanism does **not** automatically transfer FRG value to mFRG: the s
 
 **Pre-implementation gates:** obtain a market-observation methodology and published activation criteria; define custody and key management, accounting, contract roles, user withdrawal/redemption rules, risks, insolvency handling, independent testing and audits; assess securities, custody, money-transmission and tax treatment before accepting deposits. Solana transactions remain publicly observable despite native FRG's privacy properties.
 
+
+## Proposed future development commitment — mFRG staking and protocol collateral (October 27, 2026)
+
+**Committed roadmap direction; proposed implementations, not deployed features or guaranteed outcomes.** ForgeCoin intends for miniFORGE (mFRG), a separate Solana SPL asset, to become the ecosystem's staking and protocol-collateral asset linked to native mined FRG. This supersedes the proposal to launch a separate wFRG token. The following development workstreams are planned, subject to security, feasibility, governance and legal review:
+
+1. **FRG staking with mFRG rewards:** after the native chain and mFRG presale have launched and FRG has undergone a meaningful period of mining and independent price discovery, design a voluntary, verifiable FRG lock/stake facility and distribute bounded mFRG allocations under published eligibility, accounting, and withdrawal rules. Staking does not alter native RandomX proof of work.
+2. **mFRG collateral for cross-chain settlement:** evaluate mFRG security bonds for bridge operators and independently verified cross-chain swap/settlement roles, with enforceable penalties for objectively provable misconduct, transparent reserve requirements, and an explicit failure-recovery process.
+3. **mFRG collateral for future L2/L3:** research use of mFRG in optional settlement-operator bonds and higher-layer financial protocols where collateral serves a real security function; do not require mFRG for ordinary L1 transfers, mining, or base privacy.
+4. **Protocol governance:** evaluate clearly limited mFRG governance participation for the services backed by mFRG, without overriding native FRG consensus or miner/security governance.
+5. **FRG reserve relationship:** investigate whether mFRG can develop a verifiable reserve connection to native FRG. **There is no current 1:1 FRG redemption promise, guaranteed peg, collateral coverage, staking yield, or right to a reserve.** The circulating presale supply and FRG reserve needs must be reconciled before any backing claim.
+
+Fundamental **FCMP++/CARROT privacy upgrades must remain available without mFRG ownership**. Native FRG should continue operating if Solana, mFRG, or any future cross-chain mechanism is unavailable. Exact schedules, amounts, staking rewards, custody, slashing, contracts, audits and economics remain future specifications; none is operational or guaranteed.
+
 ## Disclaimer
 
 This document describes software behavior and project intent. It is not a promise of value, investment return, anonymity, uninterrupted operation, or regulatory treatment. Network participants are responsible for evaluating software, operational, legal, and financial risk.

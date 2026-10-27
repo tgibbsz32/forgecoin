@@ -122,7 +122,7 @@ namespace ForgeCoinDesktop
             Size = new Size(1040, 760);
             StartPosition = FormStartPosition.CenterScreen;
             Font = new Font("Segoe UI", 10F);
-            BackColor = Color.FromArgb(246, 247, 249);
+            BackColor = Color.FromArgb(234, 243, 253);
 
             Directory.CreateDirectory(appRoot);
             Directory.CreateDirectory(Path.Combine(appRoot, "blockchain"));
@@ -152,9 +152,20 @@ namespace ForgeCoinDesktop
 
         private Control BuildHeader()
         {
-            Panel header = new Panel { Dock = DockStyle.Top, Height = 82, BackColor = Color.FromArgb(28, 32, 42) };
-            Label title = new Label { Text = "FORGECOIN", ForeColor = Color.White, Font = new Font("Segoe UI Semibold", 22F), AutoSize = true, Location = new Point(24, 14) };
-            Label subtitle = new Label { Text = "Phase 3 desktop wallet and node", ForeColor = Color.FromArgb(181, 188, 204), AutoSize = true, Location = new Point(27, 51) };
+            Panel header = new Panel { Dock = DockStyle.Top, Height = 82, BackColor = Color.FromArgb(9, 32, 61) };
+            Label title = new Label { Text = "FORGECOIN", ForeColor = Color.White, Font = new Font("Segoe UI Semibold", 22F), AutoSize = true, Location = new Point(87, 14) };
+            Label subtitle = new Label { Text = "Wallet  /  RandomX Mining  /  Network Explorer", ForeColor = Color.FromArgb(164, 204, 243), AutoSize = true, Location = new Point(89, 52) };
+            string logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "forgecoin-logo.png");
+            if (File.Exists(logoPath))
+            {
+                try
+                {
+                    PictureBox logo = new PictureBox { Location = new Point(18, 10), Size = new Size(62, 62), SizeMode = PictureBoxSizeMode.Zoom };
+                    using (Image loaded = Image.FromFile(logoPath)) logo.Image = new Bitmap(loaded);
+                    header.Controls.Add(logo);
+                }
+                catch (Exception) { /* Missing or invalid artwork must never prevent startup. */ }
+            }
             header.Controls.Add(title);
             header.Controls.Add(subtitle);
             return header;
@@ -450,7 +461,7 @@ namespace ForgeCoinDesktop
         {
             try
             {
-                IDictionary info = Rpc("http://127.0.0.1:19481/json_rpc", "get_info", new Dictionary<string, object>());
+                IDictionary info = Rpc("http://127.0.0.1:39481/json_rpc", "get_info", new Dictionary<string, object>());
                 long height = info.Contains("height") ? ToLong(info["height"]) : 0;
                 double difficulty = info.Contains("difficulty") ? Convert.ToDouble(info["difficulty"], CultureInfo.InvariantCulture) : 0;
                 double target = info.Contains("target") ? Math.Max(1, Convert.ToDouble(info["target"], CultureInfo.InvariantCulture)) : 120;
@@ -468,7 +479,7 @@ namespace ForgeCoinDesktop
                 if (height <= 0) return;
                 long end = height - 1;
                 long start = Math.Max(0, end - 9);
-                IDictionary range = Rpc("http://127.0.0.1:19481/json_rpc", "get_block_headers_range", new Dictionary<string, object> { { "start_height", start }, { "end_height", end } });
+                IDictionary range = Rpc("http://127.0.0.1:39481/json_rpc", "get_block_headers_range", new Dictionary<string, object> { { "start_height", start }, { "end_height", end } });
                 IEnumerable headers = range.Contains("headers") ? range["headers"] as IEnumerable : null;
                 if (headers == null) return;
                 List<IDictionary> ordered = new List<IDictionary>();
@@ -538,10 +549,10 @@ namespace ForgeCoinDesktop
 
         private void ShowExplorerBlock(IDictionary<string, object> parameters)
         {
-            IDictionary result = Rpc("http://127.0.0.1:19481/json_rpc", "get_block", parameters);
+            IDictionary result = Rpc("http://127.0.0.1:39481/json_rpc", "get_block", parameters);
             IDictionary header = result.Contains("block_header") ? result["block_header"] as IDictionary : null;
             if (header == null) throw new InvalidOperationException("The local node did not return that block.");
-            IDictionary info = Rpc("http://127.0.0.1:19481/json_rpc", "get_info", new Dictionary<string, object>());
+            IDictionary info = Rpc("http://127.0.0.1:39481/json_rpc", "get_info", new Dictionary<string, object>());
             long chainHeight = info.Contains("height") ? ToLong(info["height"]) : 0;
             long blockHeight = header.Contains("height") ? ToLong(header["height"]) : 0;
             long timestamp = header.Contains("timestamp") ? ToLong(header["timestamp"]) : 0;
@@ -578,7 +589,7 @@ namespace ForgeCoinDesktop
         private void ShowExplorerTransaction(string hash)
         {
             ArrayList hashes = new ArrayList { hash };
-            IDictionary result = RestRpc("http://127.0.0.1:19481/get_transactions", new Dictionary<string, object> { { "txs_hashes", hashes }, { "decode_as_json", true }, { "prune", true } });
+            IDictionary result = RestRpc("http://127.0.0.1:39481/get_transactions", new Dictionary<string, object> { { "txs_hashes", hashes }, { "decode_as_json", true }, { "prune", true } });
             IEnumerable txs = result.Contains("txs") ? result["txs"] as IEnumerable : null;
             IDictionary tx = null;
             if (txs != null) foreach (object item in txs) { tx = item as IDictionary; if (tx != null) break; }
@@ -587,7 +598,7 @@ namespace ForgeCoinDesktop
             bool inPool = tx.Contains("in_pool") && Convert.ToBoolean(tx["in_pool"], CultureInfo.InvariantCulture);
             long blockHeight = tx.Contains("block_height") ? ToLong(tx["block_height"]) : 0;
             long timestamp = tx.Contains("block_timestamp") ? ToLong(tx["block_timestamp"]) : 0;
-            IDictionary info = Rpc("http://127.0.0.1:19481/json_rpc", "get_info", new Dictionary<string, object>());
+            IDictionary info = Rpc("http://127.0.0.1:39481/json_rpc", "get_info", new Dictionary<string, object>());
             long chainHeight = info.Contains("height") ? ToLong(info["height"]) : 0;
             long confirmations = inPool ? 0 : Math.Max(0, chainHeight - blockHeight);
             long fee = 0;
@@ -773,18 +784,18 @@ namespace ForgeCoinDesktop
 
         private Button PrimaryButton(string text, EventHandler click)
         {
-            Button b = new Button { Text = text, AutoSize = false, Width = 125, Height = 40, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(224, 104, 45), ForeColor = Color.White, Cursor = Cursors.Hand, Font = new Font("Segoe UI Semibold", 10F), Margin = new Padding(5) };
+            Button b = new Button { Text = text, AutoSize = false, Width = 125, Height = 40, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(29, 112, 217), ForeColor = Color.White, Cursor = Cursors.Hand, Font = new Font("Segoe UI Semibold", 10F), Margin = new Padding(5) };
             b.FlatAppearance.BorderSize = 2;
-            b.FlatAppearance.BorderColor = Color.FromArgb(168, 68, 25);
+            b.FlatAppearance.BorderColor = Color.FromArgb(21, 81, 174);
             b.Click += click;
             return b;
         }
 
         private Button SecondaryButton(string text, EventHandler click)
         {
-            Button b = new Button { Text = text, AutoSize = false, Width = 125, Height = 40, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(234, 237, 242), ForeColor = Color.FromArgb(28, 32, 42), Cursor = Cursors.Hand, Font = new Font("Segoe UI Semibold", 10F), Margin = new Padding(5) };
+            Button b = new Button { Text = text, AutoSize = false, Width = 125, Height = 40, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(225, 239, 254), ForeColor = Color.FromArgb(28, 32, 42), Cursor = Cursors.Hand, Font = new Font("Segoe UI Semibold", 10F), Margin = new Padding(5) };
             b.FlatAppearance.BorderSize = 2;
-            b.FlatAppearance.BorderColor = Color.FromArgb(111, 119, 133);
+            b.FlatAppearance.BorderColor = Color.FromArgb(98, 149, 204);
             b.Click += click;
             return b;
         }
@@ -815,8 +826,8 @@ namespace ForgeCoinDesktop
             if (!File.Exists(exe)) { ShowError("The ForgeCoin daemon is missing from the bin folder."); return; }
             List<string> args = new List<string> {
                 "--data-dir", Quote(Path.Combine(appRoot, "blockchain")),
-                "--p2p-bind-ip", "0.0.0.0", "--p2p-bind-port", "19480",
-                "--rpc-bind-ip", "127.0.0.1", "--rpc-bind-port", "19481",
+                "--p2p-bind-ip", "0.0.0.0", "--p2p-bind-port", "39480",
+                "--rpc-bind-ip", "127.0.0.1", "--rpc-bind-port", "39481",
                 "--no-igd", "--no-zmq", "--check-updates", "disabled",
                 "--disable-dns-checkpoints", "--non-interactive", "--log-level", "1"
             };
@@ -842,7 +853,7 @@ namespace ForgeCoinDesktop
         private void StopNode(object sender, EventArgs e)
         {
             if (!IsRunning(daemon)) { SetNodeStopped(); return; }
-            try { Rpc("http://127.0.0.1:19481/json_rpc", "stop_daemon", new Dictionary<string, object>()); } catch { }
+            try { Rpc("http://127.0.0.1:39481/json_rpc", "stop_daemon", new Dictionary<string, object>()); } catch { }
             WaitThenKill(daemon);
             daemon = null;
             SetNodeStopped();
@@ -862,8 +873,8 @@ namespace ForgeCoinDesktop
             {
                 try
                 {
-                    IDictionary result = Rpc("http://127.0.0.1:19481/json_rpc", "get_info", new Dictionary<string, object>());
-                    IDictionary header = Rpc("http://127.0.0.1:19481/json_rpc", "get_last_block_header", new Dictionary<string, object>());
+                    IDictionary result = Rpc("http://127.0.0.1:39481/json_rpc", "get_info", new Dictionary<string, object>());
+                    IDictionary header = Rpc("http://127.0.0.1:39481/json_rpc", "get_last_block_header", new Dictionary<string, object>());
                     PostUi(delegate
                     {
                         long height = ToLong(result["height"]);
@@ -896,7 +907,7 @@ namespace ForgeCoinDesktop
             if (!File.Exists(exe)) throw new FileNotFoundException("The ForgeCoin wallet service is missing.", exe);
             string args = "--wallet-dir " + Quote(Path.Combine(appRoot, "wallets")) +
                 " --rpc-bind-ip 127.0.0.1 --rpc-bind-port 19482 --disable-rpc-login" +
-                " --daemon-address 127.0.0.1:19481 --trusted-daemon" +
+                " --daemon-address 127.0.0.1:39481 --trusted-daemon" +
                 " --shared-ringdb-dir " + Quote(Path.Combine(appRoot, "ringdb")) +
                 " --log-file " + Quote(Path.Combine(appRoot, "logs", "wallet-rpc.log"));
             walletRpc = StartCaptured(exe, args, "WALLET");
@@ -1156,7 +1167,7 @@ namespace ForgeCoinDesktop
                     { "do_background_mining", false },
                     { "ignore_battery", true }
                 };
-                RestRpc("http://127.0.0.1:19481/start_mining", request);
+                RestRpc("http://127.0.0.1:39481/start_mining", request);
                 miningState.Text = "Mining"; miningState.BackColor = Color.FromArgb(53, 145, 92);
                 miningDetailLabel.Text = "Miner monitor: starting RandomX workers…";
                 startMiningButton.Enabled = false; stopMiningButton.Enabled = true;
@@ -1167,7 +1178,7 @@ namespace ForgeCoinDesktop
 
         private void StopMining(object sender, EventArgs e)
         {
-            try { RestRpc("http://127.0.0.1:19481/stop_mining", new Dictionary<string, object>()); } catch (Exception ex) { ShowError(ex.Message); }
+            try { RestRpc("http://127.0.0.1:39481/stop_mining", new Dictionary<string, object>()); } catch (Exception ex) { ShowError(ex.Message); }
             miningState.Text = "Stopped"; miningState.BackColor = Color.FromArgb(110, 118, 130);
             hashRateValue.Text = "0"; miningThreadsValue.Text = "0";
             miningDetailLabel.Text = "Miner monitor: stopped at " + DateTime.Now.ToString("HH:mm:ss");
@@ -1193,8 +1204,8 @@ namespace ForgeCoinDesktop
             {
                 try
                 {
-                    IDictionary status = RestRpc("http://127.0.0.1:19481/mining_status", new Dictionary<string, object>());
-                    IDictionary info = Rpc("http://127.0.0.1:19481/json_rpc", "get_info", new Dictionary<string, object>());
+                    IDictionary status = RestRpc("http://127.0.0.1:39481/mining_status", new Dictionary<string, object>());
+                    IDictionary info = Rpc("http://127.0.0.1:39481/json_rpc", "get_info", new Dictionary<string, object>());
                     PostUi(delegate
                     {
                         bool active = status.Contains("active") && Convert.ToBoolean(status["active"], CultureInfo.InvariantCulture);
@@ -1247,7 +1258,7 @@ namespace ForgeCoinDesktop
                 List<string> args = new List<string> {
                     "-a", "rx/0", "-o", Quote(url), "-u", Quote(user), "-p", Quote(pass.Length == 0 ? "x" : pass),
                     "-t", Decimal.ToInt32(poolThreads.Value).ToString(CultureInfo.InvariantCulture), "--keepalive",
-                    "--http-host", "127.0.0.1", "--http-port", "19483", "--no-color", "--print-time", "5"
+                    "--http-host", "127.0.0.1", "--http-port", "39483", "--no-color", "--print-time", "5"
                 };
                 if (worker.Length > 0) { args.Add("--rig-id"); args.Add(Quote(worker)); }
                 poolLogBox.Clear();
@@ -1297,7 +1308,7 @@ namespace ForgeCoinDesktop
             {
                 try
                 {
-                    IDictionary summary = HttpGetJson("http://127.0.0.1:19483/2/summary");
+                    IDictionary summary = HttpGetJson("http://127.0.0.1:39483/2/summary");
                     PostUi(delegate
                     {
                         IDictionary hashrate = summary.Contains("hashrate") ? summary["hashrate"] as IDictionary : null;

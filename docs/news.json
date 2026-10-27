@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "updates": [
+    {
+      "id": "2026-10-27-android-development",
+      "date": "2026-10-27",
+      "title": "ForgeCoin Android development update",
+      "summary": "The Android miner and wallet interface is in development. Wallet creation, restoration, and RandomX mining are not yet enabled. Mainnet activation remains pending validation.",
+      "url": "https://tgibbsz32.github.io/forgecoin/news.html"
+    }
+  ]
+}

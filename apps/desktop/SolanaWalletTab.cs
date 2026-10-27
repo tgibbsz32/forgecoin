@@ -17,6 +17,8 @@ namespace ForgeCoinDesktop
     internal sealed partial class MainForm
     {
         private const string SolanaRpcEndpoint = "https://api.devnet.solana.com";
+        // Release gate: remove only after security and lifecycle review.
+        private static readonly bool SolanaWalletEnabled = false;
         private readonly JavaScriptSerializer solanaJson = new JavaScriptSerializer();
         private readonly string solanaWalletDirectory =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ForgeCoin", "solana-devnet-v1");
@@ -37,7 +39,7 @@ namespace ForgeCoinDesktop
             };
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             panel.Controls.Add(new Label {
-                Text = "Solana wallet (DEVNET ONLY) - separate from native ForgeCoin keys",
+                Text = "Solana wallet - COMING SOON (all controls disabled)",
                 ForeColor = Color.DarkRed, Font = new Font("Segoe UI Semibold", 11F), AutoSize = true,
                 Margin = new Padding(0, 0, 0, 12)
             }, 0, 0);
@@ -118,7 +120,22 @@ namespace ForgeCoinDesktop
             }, 0, 6);
             tab.Controls.Add(panel);
             LockSolanaWallet();
+            if (!SolanaWalletEnabled)
+            {
+                DisableSolanaInputTree(panel);
+                solanaState.Text = "Coming soon - Solana wallet is disabled until a verified release.";
+            }
             return tab;
+        }
+
+        private static void DisableSolanaInputTree(Control parent)
+        {
+            foreach (Control child in parent.Controls)
+            {
+                if (child is Button || child is TextBox || child is ComboBox || child is NumericUpDown)
+                    child.Enabled = false;
+                DisableSolanaInputTree(child);
+            }
         }
 
         private static Button SolanaButton(string text, EventHandler handler)
@@ -133,6 +150,20 @@ namespace ForgeCoinDesktop
         }
         private void SetSolanaControls()
         {
+            if (!SolanaWalletEnabled)
+            {
+                solanaCreateButton.Enabled = false;
+                solanaRestoreButton.Enabled = false;
+                solanaUnlockButton.Enabled = false;
+                solanaRevealButton.Enabled = false;
+                solanaBackupButton.Enabled = false;
+                solanaImportButton.Enabled = false;
+                solanaCloseButton.Enabled = false;
+                solanaRefreshButton.Enabled = false;
+                solanaNameBox.Enabled = false;
+                solanaPasswordBox.Enabled = false;
+                return;
+            }
             bool unlocked = !String.IsNullOrEmpty(solanaPublicAddress);
             solanaCreateButton.Enabled = !solanaBusy;
             solanaRestoreButton.Enabled = !solanaBusy;
@@ -166,6 +197,7 @@ namespace ForgeCoinDesktop
         }
         private void RestoreSolanaWords(object sender, EventArgs e)
         {
+            if (!SolanaWalletEnabled) return;
             using (Form dialog = new Form { Text = "Restore a Solana devnet wallet", Width = 670, Height = 230, StartPosition = FormStartPosition.CenterParent })
             {
                 Label notice = new Label { Text = "Enter your separate Solana BIP39 recovery phrase. Do not use native FRG words.", Dock = DockStyle.Top, Height = 45, Padding = new Padding(12) };
@@ -183,6 +215,7 @@ namespace ForgeCoinDesktop
         }
         private void StartSolanaWalletOperation(string operation, string words)
         {
+            if (!SolanaWalletEnabled) return;
             if (solanaBusy) return;
             string path;
             try { path = operation == "reveal" ? solanaCurrentVault : ValidateSolanaVaultPath(); }
@@ -266,6 +299,7 @@ namespace ForgeCoinDesktop
         }
         private void BackupSolanaWallet(object sender, EventArgs e)
         {
+            if (!SolanaWalletEnabled) return;
             if (String.IsNullOrEmpty(solanaCurrentVault)) return;
             using (SaveFileDialog dlg = new SaveFileDialog { FileName = "solana-encrypted-backup.wallet.json",
                 Filter = "Encrypted wallet JSON (*.json)|*.json", OverwritePrompt = true }) {
@@ -278,6 +312,7 @@ namespace ForgeCoinDesktop
         }
         private void ImportSolanaWallet(object sender, EventArgs e)
         {
+            if (!SolanaWalletEnabled) return;
             string destination;
             try { destination = ValidateSolanaVaultPath(); }
             catch (Exception ex) { MessageBox.Show(this, ex.Message, "Import failed"); return; }
@@ -345,6 +380,7 @@ namespace ForgeCoinDesktop
         }
         private void RefreshSolanaBalances(object sender, EventArgs e)
         {
+            if (!SolanaWalletEnabled) return;
             if (String.IsNullOrEmpty(solanaPublicAddress) || solanaBusy) return;
             string address = solanaPublicAddress;
             string frgMint = solanaFrgMintBox.Text.Trim(), usdcMint = solanaUsdcMintBox.Text.Trim();

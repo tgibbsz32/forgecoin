@@ -1,0 +1,27 @@
+[Unit]
+Description=ForgeCoin native-mainnet read-only status monitor (no mining/payouts)
+After=network.target
+
+[Service]
+Type=simple
+User=nobody
+Group=nogroup
+WorkingDirectory=/opt/forgecoin-monitor
+ExecStart=/usr/bin/python3 -I /opt/forgecoin-monitor/monitor.py --port 19810
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryMax=96M
+TasksMax=32
+
+[Install]
+WantedBy=multi-user.target

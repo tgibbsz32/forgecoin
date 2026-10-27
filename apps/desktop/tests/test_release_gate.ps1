@@ -24,7 +24,7 @@ function Build([string]$dir,[string]$name,[string]$source) {
 function WidgetState([string]$exe) {
     # Separate process unloads the inspected executable before temp cleanup.
     $probe=Join-Path $work 'probe.ps1'
-    $answer = & "$PSHOME\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $probe -Exe $exe
+    $answer = & "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $probe -Exe $exe
     Assert ($LASTEXITCODE -eq 0) "isolated reflection probe"
     $parts = ([string]$answer).Trim().Split(',')
     Assert ($parts.Count -eq 2) "reflection output"

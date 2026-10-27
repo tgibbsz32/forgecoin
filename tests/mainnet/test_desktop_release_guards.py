@@ -24,8 +24,18 @@ class DesktopPrelaunchGuards(unittest.TestCase):
  def test_wallet_creation_available_but_both_mining_modes_locked(self):
   c=src("apps/desktop/Program.cs")
   t=src("apps/desktop-tauri/src-tauri/src/engine.rs")
-  for x in ("New mainnet has not launched. Solo mining","New mainnet has not launched. Pool mining","private void CreateWallet","wallets-mainnet-20261026"):
+  for x in ("private void CreateWallet","wallets-mainnet-20261026",
+            "private static readonly bool BuildPermitsPublicMining = false;",
+            "startMiningButton.Enabled = publicMiningRelease;",
+            "startPoolButton.Enabled = publicMiningRelease;",
+            "if (!publicMiningRelease)",
+            "CheckLiveMiningIdentity();",
+            "VerifyReleaseBinary(",
+            "get_block_header_by_height",
+            "windows_release_binaries_sha256"):
    self.assertIn(x,c)
+  self.assertIn("release_authorized",c)
+  self.assertIn("stage",c)
   for x in ("Fresh mainnet has not launched: solo mining","Fresh mainnet has not launched: pool mining","wallets-mainnet-20261026"):
    self.assertIn(x,t)
  def test_case_insensitive_windows_crypto_assembler(self):

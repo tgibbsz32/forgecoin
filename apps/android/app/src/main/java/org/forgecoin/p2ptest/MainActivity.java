@@ -6,6 +6,10 @@ import android.content.*;
 import android.graphics.*;
 import android.graphics.drawable.*;
 import android.net.Uri;
+import org.json.*;
+import java.net.*;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import android.view.*;
 import android.widget.*;
 
@@ -15,6 +19,34 @@ public class MainActivity extends Activity {
     private static final int WHITE=Color.rgb(241,247,252), MUTED=Color.rgb(160,175,190);
     private final Handler handler=new Handler(Looper.getMainLooper());
     private TextView status,logs;
+    private LinearLayout newsItems;
+    private static final String NEWS_URL="https://tgibbsz32.github.io/forgecoin/news.json";
+    private void loadNews(){
+        if(newsItems==null)return;
+        newsItems.removeAllViews();newsItems.addView(label("Loading website announcements...",13,MUTED));
+        new Thread(()->{
+            try{
+                HttpURLConnection con=(HttpURLConnection)new URL(NEWS_URL).openConnection();
+                con.setConnectTimeout(6000);con.setReadTimeout(6000);con.setRequestProperty("Accept","application/json");
+                if(con.getResponseCode()!=200)throw new IOException("HTTP "+con.getResponseCode());
+                ByteArrayOutputStream out=new ByteArrayOutputStream();
+                try(InputStream in=con.getInputStream()){
+                    byte[] buf=new byte[4096];int n;while((n=in.read(buf))!=-1){out.write(buf,0,n);if(out.size()>131072)throw new IOException("Feed too large");}
+                }finally{con.disconnect();}
+                JSONArray items=new JSONObject(out.toString("UTF-8")).getJSONArray("updates");
+                handler.post(()->{
+                    if(newsItems==null)return;newsItems.removeAllViews();
+                    if(items.length()==0)newsItems.addView(label("No announcements yet.",13,MUTED));
+                    for(int i=0;i<Math.min(items.length(),20);i++){
+                        JSONObject item=items.optJSONObject(i);if(item==null)continue;
+                        String title=item.optString("title","Update"),date=item.optString("date",""),summary=item.optString("summary",""),url=item.optString("url","");
+                        newsItems.addView(label(date+"  |  "+title,15,CYAN));newsItems.addView(label(summary,13,WHITE));
+                        if(url.startsWith("https://tgibbsz32.github.io/forgecoin/"))link("Read more",url,newsItems);
+                    }
+                });
+            }catch(Exception ex){handler.post(()->{if(newsItems!=null){newsItems.removeAllViews();newsItems.addView(label("News unavailable. Check your connection or open the website.",13,MUTED));link("Open ForgeCoin news","https://tgibbsz32.github.io/forgecoin/news.html",newsItems);}});}
+        }).start();
+    }
     private final Runnable refresh=new Runnable(){public void run(){
         if(status!=null)status.setText(NodeService.status);
         if(logs!=null)logs.setText(NodeService.logText());
@@ -74,6 +106,11 @@ public class MainActivity extends Activity {
         link("Pool dashboard", "https://tgibbsz32.github.io/forgecoin/pool.html",explore);
         link("Pool observer / statistics", "https://tgibbsz32.github.io/forgecoin/pool-observer.html",explore);
         link("Block explorer (staging)", "https://150.136.209.227/",explore);
+        LinearLayout news=panel(root);news.addView(label("NEWS & UPDATES",17,CYAN));
+        news.addView(label("Official announcements synced from the ForgeCoin website.",13,MUTED));
+        newsItems=new LinearLayout(this);newsItems.setOrientation(1);news.addView(newsItems);
+        button("Refresh news",true,news,()->loadNews());
+        loadNews();
         LinearLayout node=panel(root);node.addView(label("NODE DIAGNOSTICS",17,CYAN));
         node.addView(label("Legacy ARM64 daemon is not certified for the October 26 mainnet. Remote node startup is disabled.",13,MUTED));
         status=label("Stopped",13,WHITE);node.addView(status);

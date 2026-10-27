@@ -41,7 +41,7 @@ New-Item -ItemType Directory -Path $BinRoot -Force | Out-Null
     /out:"$OutputRoot\ForgeCoin Desktop.exe" `
     /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll `
     /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll `
-    "$ProjectRoot\Program.cs"
+    "$ProjectRoot\Program.cs" "$ProjectRoot\SolanaWallet.cs" "$ProjectRoot\SolanaVault.cs"
 if ($LASTEXITCODE -ne 0) {
     throw "C# compilation failed with exit code $LASTEXITCODE"
 }

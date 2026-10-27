@@ -114,6 +114,42 @@ Stratum block reconstruction, network-difficulty mining under production
 conditions, or pool reward accounting. The test deliberately uses difficulty 1
 and does not demonstrate useful mining work or financial settlement.
 
+## Coinbase-reserve-modified native block acceptance
+
+A subsequent independent offline-chain run used
+`services/pool_research/reserved_candidate.py` and
+`tools/build_isolated_reserved_candidate.py` to modify the native
+block-header nonce to `01020304` and the eight miner-transaction
+reserved bytes to `1122334455667788`. The reconstruction independently
+recomputed the null-RCT v2 coinbase transaction hash and the single-leaf
+CryptoNote transaction-tree root. The helper deliberately **rejects**
+templates other than an empty height-1/difficulty-1 block; this is not
+a production multi-transaction reconstruction implementation.
+
+The source-matched `forged.exe` was launched with `--offline`, a
+new empty chain directory and private loopback-only ports
+**49880/49881/49882**. The daemon's `submit_block` returned
+`status=OK`; height advanced from 1 to 2 and the canonical
+height-1 block hash was:
+
+```text
+27f5348d1132d89450d04946aaec8ef9176b4c93f751661bbdb0dfcdf41e749f
+```
+
+The wrapper terminated the daemon and reported no ongoing test service.
+Separately, `tools/verify_isolated_reserved_randomx.py` loaded
+the private captured template and candidate, independently
+reconstructed the same hashing blob and used the native persistent
+RandomX worker to validate the network difficulty-1 threshold.
+The offline research suite passed **106 tests** with **4 skipped**.
+No pool credits, wallet sends, public mining, or production RPC were used.
+
+**Important limitation:** this verifies a fresh, empty *disposable*
+chain's reserve-modified block. It is not a submitted XMRig worker
+block, does not validate multiple coinbase/other transaction tree
+leaves, does not test production network difficulty, and does not
+prove real pool reward maturity or payout correctness.
+
 ## Outstanding gates
 
 The **critical next feature** is mapping a miner-specific Stratum nonce

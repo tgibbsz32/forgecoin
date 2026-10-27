@@ -6,12 +6,14 @@ param(
     [Parameter(Mandatory=$true)][string]$AddressFile,
     [switch]$SubmitUnmodifiedBlock,
     [switch]$SubmitModifiedNonceBlock,
+    [switch]$SubmitModifiedReservedBlock,
     [ValidateRange(1024,65532)][int]$PortBase = 49580,
     [string]$BaseDirectory = (Join-Path $env:LOCALAPPDATA 'ForgeCoin\IsolatedTemplateCaptures')
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-if ($SubmitUnmodifiedBlock -and $SubmitModifiedNonceBlock) {
+if (($SubmitUnmodifiedBlock -and ($SubmitModifiedNonceBlock -or $SubmitModifiedReservedBlock)) -or
+    ($SubmitModifiedNonceBlock -and $SubmitModifiedReservedBlock)) {
     throw 'Select exactly one isolated candidate submission mode'
 }
 if ([IO.Path]::GetFileName($DaemonExecutable) -ne 'forged.exe') {
@@ -71,21 +73,31 @@ try {
     }
     [IO.File]::WriteAllText($captureFile,($capture | ConvertTo-Json -Depth 8 -Compress),
         (New-Object Text.UTF8Encoding($false)))
-    if ($SubmitUnmodifiedBlock -or $SubmitModifiedNonceBlock) {
+    if ($SubmitUnmodifiedBlock -or $SubmitModifiedNonceBlock -or $SubmitModifiedReservedBlock) {
         # This tests only isolated daemon block acceptance.
         # It is NOT a miner-discovered block or Stratum pool submission.
         if ([int64]$capture.result.difficulty -ne 1 -or [int64]$capture.result.height -ne 1) {
             throw 'Block acceptance test requires isolated height 1 and difficulty 1'
         }
         $candidateBlob = $capture.result.blocktemplate_blob
-        if ($SubmitModifiedNonceBlock) {
-            $candidatePath = Join-Path $root 'nonce-modified-candidate.json'
+        if ($SubmitModifiedNonceBlock -or $SubmitModifiedReservedBlock) {
+            $reservedMode = [bool]$SubmitModifiedReservedBlock
+            $candidatePath = Join-Path $root $(if ($reservedMode) {
+                'reserved-modified-candidate.json'
+            } else {
+                'nonce-modified-candidate.json'
+            })
+            $module = if ($reservedMode) {
+                'tools.build_isolated_reserved_candidate'
+            } else {
+                'tools.build_isolated_nonce_candidate'
+            }
             $helper = New-Object Diagnostics.ProcessStartInfo
             $helper.FileName = (Get-Command py.exe -ErrorAction Stop).Source
             $helper.WorkingDirectory = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
             $helper.UseShellExecute = $false
             $helper.CreateNoWindow = $true
-            $helper.Arguments = ('-m tools.build_isolated_nonce_candidate --capture "'+
+            $helper.Arguments = ('-m '+$module+' --capture "'+
                 $captureFile+'" --output "'+$candidatePath+'" --nonce 01020304')
             $helperProcess = [Diagnostics.Process]::Start($helper)
             try {
@@ -95,14 +107,22 @@ try {
                     throw 'Offline candidate generation timed out'
                 }
                 if ($helperProcess.ExitCode -ne 0) {
-                    throw 'Offline nonce candidate builder failed'
+                    throw 'Offline candidate builder failed'
                 }
             } finally { $helperProcess.Dispose() }
             $candidate = Get-Content -LiteralPath $candidatePath -Raw | ConvertFrom-Json
             $candidateBlob = $candidate.result.blocktemplate_blob
             if ($candidateBlob -eq $capture.result.blocktemplate_blob -or
                 $candidate.result.nonce_hex -ne '01020304') {
-                throw 'Header-only candidate was not modified as required'
+                throw 'Candidate was not modified as required'
+            }
+            if ($reservedMode) {
+                if ($candidate.result.reserve_hex -ne '1122334455667788' -or
+                    $candidate.result.blockhashing_blob -eq $capture.result.blockhashing_blob -or
+                    $candidateBlob.Substring(2*[int]$capture.result.reserved_offset,16) -ne
+                    $candidate.result.reserve_hex) {
+                    throw 'Reserved coinbase change and tree root not both present'
+                }
             }
         }
         $submitRequest = @{

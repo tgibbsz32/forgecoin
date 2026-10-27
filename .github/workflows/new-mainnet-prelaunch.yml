@@ -53,9 +53,15 @@ jobs:
           # option-like input in PowerShell on GitHub's Windows runner.
           # Pass explicit absolute Windows paths for source and output.
           $source = Join-Path $env:GITHUB_WORKSPACE 'apps\desktop\Program.cs'
+          $solana = Join-Path $env:GITHUB_WORKSPACE 'apps\desktop\SolanaWalletTab.cs'
           $output = Join-Path $env:RUNNER_TEMP 'ForgeCoin-NewMainnet-Prelaunch-GUI.exe'
           if (-not (Test-Path -LiteralPath $source)) { throw 'Windows desktop source missing from checkout' }
-          & $compiler /nologo /target:winexe /optimize+ /platform:anycpu /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll "/out:$output" "$source"
+          if (-not (Test-Path -LiteralPath $solana)) { throw 'Solana UI source missing from checkout' }
+          & $compiler /nologo /target:winexe /optimize+ /platform:anycpu /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll "/out:$output" "$source" "$solana"
           if ($LASTEXITCODE -ne 0) { throw 'C# GUI compile failed' }
           if (-not (Test-Path "$env:RUNNER_TEMP\ForgeCoin-NewMainnet-Prelaunch-GUI.exe")) { throw 'Compiled GUI missing' }
           Write-Output 'PASS: prelaunch GUI compiles without starting a node, miner or wallet'
+      - name: Verify prelaunch GUI mining cannot be unlocked by editing JSON
+        shell: pwsh
+        run: |
+          & "$env:GITHUB_WORKSPACE\apps\desktop\tests\test_release_gate.ps1"

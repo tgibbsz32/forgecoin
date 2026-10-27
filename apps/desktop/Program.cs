@@ -25,11 +25,16 @@ namespace ForgeCoinDesktop
         }
     }
 
-    internal sealed class MainForm : Form
+    internal sealed partial class MainForm : Form
     {
         private const decimal AtomicUnits = 100000000m;
+        private const string FrozenGenesisHash = "4bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c";
+        // A production mining build must explicitly opt in through a reviewed,
+        // recompiled release; editing a JSON file in the QA kit is insufficient.
+        private static readonly bool BuildPermitsPublicMining = false;
+        private readonly bool publicMiningRelease;
         private readonly string appRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ForgeCoin");
-        private readonly string binRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin");
+        private readonly string binRoot = Path.Combine(Path.GetDirectoryName(typeof(MainForm).Assembly.Location), "bin");
         private readonly JavaScriptSerializer json = new JavaScriptSerializer();
         private readonly System.Windows.Forms.Timer refreshTimer = new System.Windows.Forms.Timer();
         private readonly System.Windows.Forms.Timer miningTimer = new System.Windows.Forms.Timer();
@@ -128,6 +133,7 @@ namespace ForgeCoinDesktop
             Font = new Font("Segoe UI", 10F);
             BackColor = Color.FromArgb(246, 247, 249);
 
+            publicMiningRelease = VerifyPackagedMiningRelease();
             Directory.CreateDirectory(appRoot);
             Directory.CreateDirectory(Path.Combine(appRoot, "blockchain-mainnet-20261026"));
             Directory.CreateDirectory(Path.Combine(appRoot, "wallets-mainnet-20261026"));
@@ -158,7 +164,7 @@ namespace ForgeCoinDesktop
         {
             Panel header = new Panel { Dock = DockStyle.Top, Height = 82, BackColor = Color.FromArgb(28, 32, 42) };
             Label title = new Label { Text = "FORGECOIN", ForeColor = Color.White, Font = new Font("Segoe UI Semibold", 22F), AutoSize = true, Location = new Point(24, 14) };
-            Label subtitle = new Label { Text = "20261026 genesis-frozen wallet — PRELAUNCH, mining disabled", ForeColor = Color.FromArgb(181, 188, 204), AutoSize = true, Location = new Point(27, 51) };
+            Label subtitle = new Label { Text = publicMiningRelease ? "20261026 FRG mainnet — verified release build" : "20261026 genesis-frozen wallet — PRELAUNCH, mining disabled", ForeColor = Color.FromArgb(181, 188, 204), AutoSize = true, Location = new Point(27, 51) };
             header.Controls.Add(title);
             header.Controls.Add(subtitle);
             return header;
@@ -169,6 +175,7 @@ namespace ForgeCoinDesktop
             TabControl tabs = new TabControl { Dock = DockStyle.Fill, Padding = new Point(18, 8) };
             tabs.TabPages.Add(BuildNodeTab());
             tabs.TabPages.Add(BuildWalletTab());
+            tabs.TabPages.Add(BuildSolanaTab());
             tabs.TabPages.Add(BuildAddressesTab());
             tabs.TabPages.Add(BuildExplorerTab());
             tabs.TabPages.Add(BuildMiningTab());
@@ -681,6 +688,7 @@ namespace ForgeCoinDesktop
             miningThreads = new NumericUpDown { Minimum = 1, Maximum = Math.Max(1, Environment.ProcessorCount), Value = Math.Max(1, Environment.ProcessorCount / 2), Dock = DockStyle.Fill, Margin = new Padding(4, 12, 8, 10) };
             controls.Controls.Add(miningThreads, 1, 0);
             startMiningButton = PrimaryButton("Start Mining", StartMining);
+            startMiningButton.Enabled = publicMiningRelease;
             stopMiningButton = SecondaryButton("Stop", StopMining);
             stopMiningButton.Enabled = false;
             miningState = Badge("Stopped", Color.FromArgb(110, 118, 130));
@@ -759,6 +767,7 @@ namespace ForgeCoinDesktop
             poolThreads = new NumericUpDown { Minimum = 1, Maximum = Math.Max(1, Environment.ProcessorCount), Value = Math.Max(1, Environment.ProcessorCount / 2), Dock = DockStyle.Fill, Margin = new Padding(4, 12, 8, 10) };
             controls.Controls.Add(poolThreads, 1, 0);
             startPoolButton = PrimaryButton("Start Pool", StartPoolMining);
+            startPoolButton.Enabled = publicMiningRelease;
             stopPoolButton = SecondaryButton("Stop", StopPoolMining);
             stopPoolButton.Enabled = false;
             poolState = Badge("Stopped", Color.FromArgb(110, 118, 130));
@@ -1243,10 +1252,87 @@ namespace ForgeCoinDesktop
             catch (Exception ex) { ShowError(ex.Message); }
         }
 
+        private bool VerifyPackagedMiningRelease()
+        {
+            // This is deliberately false in all QA builds. A reviewed public
+            // release must opt in at build time AND carry a manifest with
+            // explicitly pinned final native executables.
+            if (!BuildPermitsPublicMining) return false;
+            try
+            {
+                string manifest = Path.Combine(Path.GetDirectoryName(typeof(MainForm).Assembly.Location), "mainnet.identity.json");
+                IDictionary info = json.DeserializeObject(File.ReadAllText(manifest, Encoding.UTF8)) as IDictionary;
+                if (info == null || !info.Contains("release_authorized")
+                    || !(info["release_authorized"] is bool) || !(bool)info["release_authorized"]
+                    || Convert.ToString(info["stage"]) != "released"
+                    || Convert.ToString(info["chain"]) != "forgecoin-mainnet"
+                    || Convert.ToString(info["genesis_hash"]) != FrozenGenesisHash
+                    || ToLong(info["genesis_nonce"]) != 20261026)
+                    return false;
+                IDictionary ports = info["ports"] as IDictionary;
+                IDictionary mining = info["mining"] as IDictionary;
+                IDictionary pool = info["pool"] as IDictionary;
+                IDictionary currency = info["currency"] as IDictionary;
+                IDictionary binaries = info["windows_release_binaries_sha256"] as IDictionary;
+                if (ports == null || mining == null || pool == null || currency == null || binaries == null)
+                    return false;
+                if (ToLong(ports["p2p"]) != 39480 || ToLong(ports["daemon_rpc"]) != 39481
+                    || ToLong(mining["starting_difficulty"]) != 500000
+                    || ToLong(mining["difficulty_floor"]) != 400000
+                    || ToLong(mining["target_seconds"]) != 120
+                    || Convert.ToString(mining["algorithm"]) != "RandomX"
+                    || ToLong(currency["decimals"]) != 8
+                    || Convert.ToString(pool["operator_fee_fraction"]) != "0.01")
+                    return false;
+                return VerifyReleaseBinary("forged.exe", Convert.ToString(binaries["forged.exe"]))
+                    && VerifyReleaseBinary("forge-wallet-rpc.exe", Convert.ToString(binaries["forge-wallet-rpc.exe"]))
+                    && VerifyReleaseBinary("forge-wallet-cli.exe", Convert.ToString(binaries["forge-wallet-cli.exe"]));
+            }
+            catch { return false; }
+        }
+
+        private bool VerifyReleaseBinary(string fileName, string sha256)
+        {
+            if (string.IsNullOrEmpty(sha256) || sha256.Length != 64) return false;
+            string fullPath = Path.Combine(binRoot, fileName);
+            if (!File.Exists(fullPath)) return false;
+            using (SHA256 hash = SHA256.Create())
+            using (FileStream stream = File.OpenRead(fullPath))
+            {
+                string actual = BitConverter.ToString(hash.ComputeHash(stream)).Replace("-", "");
+                return string.Equals(actual, sha256, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        private void CheckLiveMiningIdentity()
+        {
+            if (!IsRunning(daemon)) throw new InvalidOperationException("Start the ForgeCoin node first.");
+            IDictionary state = Rpc("http://127.0.0.1:39481/json_rpc", "get_info", new Dictionary<string, object>());
+            IDictionary genesis = Rpc("http://127.0.0.1:39481/json_rpc", "get_block_header_by_height",
+                new Dictionary<string, object> { { "height", 0 } });
+            IDictionary header = genesis.Contains("block_header") ? genesis["block_header"] as IDictionary : null;
+            if (Convert.ToString(state["nettype"]) != "mainnet"
+                || ToLong(state["height"]) < 1
+                || header == null
+                || Convert.ToString(header["hash"]) != FrozenGenesisHash
+                || ToLong(header["nonce"]) != 20261026
+                || ToLong(header["height"]) != 0)
+                throw new InvalidOperationException("The local node is not the verified 20261026 FRG mainnet. Mining refused.");
+        }
+
         private void StartMining(object sender, EventArgs e)
         {
-            ShowError("New mainnet has not launched. Solo mining is locked until the genesis and consensus release are approved.");
-            return;
+            if (!publicMiningRelease)
+            {
+                ShowError("This is a prelaunch QA wallet. Mining requires a separately compiled and verified ForgeCoin public release.");
+                return;
+            }
+            try
+            {
+                CheckLiveMiningIdentity();
+                StartMiningAfterLaunch(sender, e);
+            }
+            catch (Exception ex) { ShowError(ex.Message); }
         }
 
         private void StartMiningAfterLaunch(object sender, EventArgs e)
@@ -1291,7 +1377,7 @@ namespace ForgeCoinDesktop
                 miningRewardValue.Text = "—"; miningTargetValue.Text = "—"; miningBlocksFoundValue.Text = minedBlocksSession.ToString(CultureInfo.InvariantCulture);
                 miningNodeDetailLabel.Text = "Node monitor: stopped • Start online for peers or use Offline Bootstrap Mining.";
                 miningDetailLabel.Text = "Miner monitor: stopped";
-                startMiningButton.Enabled = true; stopMiningButton.Enabled = false;
+                startMiningButton.Enabled = publicMiningRelease; stopMiningButton.Enabled = false;
                 return;
             }
             if (Interlocked.Exchange(ref miningRefreshInFlight, 1) != 0) return;
@@ -1322,7 +1408,7 @@ namespace ForgeCoinDesktop
                         miningBlockHeightValue.Text = Math.Max(0, chainHeight - 1).ToString("N0", CultureInfo.InvariantCulture);
                         miningState.Text = active ? "Mining" : "Stopped";
                         miningState.BackColor = active ? Color.FromArgb(53, 145, 92) : Color.FromArgb(110, 118, 130);
-                        startMiningButton.Enabled = !active; stopMiningButton.Enabled = active;
+                        startMiningButton.Enabled = publicMiningRelease && !active; stopMiningButton.Enabled = active;
                         string payout = status.Contains("address") ? Shorten(Convert.ToString(status["address"]), 18) : Shorten(fallbackPayout, 18);
                         miningNodeDetailLabel.Text = "Node monitor: " + (offline ? "OFFLINE BOOTSTRAP" : (synchronized ? "ONLINE / synchronized" : "ONLINE / waiting for peer")) + " • Block " + Math.Max(0, chainHeight - 1) + " • Peers " + peers;
                         miningDetailLabel.Text = "Miner monitor: " + (active ? "ACTIVE" : "stopped") + " • " + FormatRate(speed) + " • Payout " + payout + " • Updated " + DateTime.Now.ToString("HH:mm:ss");
@@ -1339,8 +1425,12 @@ namespace ForgeCoinDesktop
 
         private void StartPoolMining(object sender, EventArgs e)
         {
-            ShowError("New mainnet has not launched. Pool mining remains disabled until launch approval.");
-            return;
+            if (!publicMiningRelease)
+            {
+                ShowError("This is a prelaunch QA wallet. Pool mining requires a separately reviewed ForgeCoin public release.");
+                return;
+            }
+            StartPoolMiningAfterLaunch(sender, e);
         }
 
         private void StartPoolMiningAfterLaunch(object sender, EventArgs e)
@@ -1379,7 +1469,7 @@ namespace ForgeCoinDesktop
             poolMiner = null;
             poolState.Text = "Stopped"; poolState.BackColor = Color.FromArgb(110, 118, 130);
             poolDetailLabel.Text = "Pool miner status: stopped at " + DateTime.Now.ToString("HH:mm:ss");
-            startPoolButton.Enabled = true; stopPoolButton.Enabled = false;
+            startPoolButton.Enabled = publicMiningRelease; stopPoolButton.Enabled = false;
         }
 
         private Process StartPoolCaptured(string exe, string args)

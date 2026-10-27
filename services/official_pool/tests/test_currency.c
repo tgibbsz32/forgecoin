@@ -67,6 +67,17 @@ int main(void)
     assert(frg_pool_fee_atomic(UINT64_C(199)) == 1);
     assert(frg_pool_fee_atomic(UINT64_C(100000000)) == UINT64_C(1000000));
     assert(frg_pool_fee_atomic(UINT64_MAX) == UINT64_MAX / 100);
-    puts("PASS: FRG exact 8-decimal parser, overflow and integer 1% fee (40 checks)");
+    uint64_t checked = UINT64_C(0);
+    assert(frg_checked_balance_add(UINT64_C(0), UINT64_C(0), &checked) == 0 && checked == 0);
+    assert(frg_checked_balance_add(UINT64_C(100), UINT64_C(99), &checked) == 0 && checked == 199);
+    assert(frg_checked_balance_add(UINT64_MAX - UINT64_C(1), UINT64_C(1), &checked) == 0
+           && checked == UINT64_MAX);
+    checked = UINT64_C(1234567);
+    assert(frg_checked_balance_add(UINT64_MAX, UINT64_C(1), &checked) == -1
+           && checked == UINT64_C(1234567));
+    assert(frg_checked_balance_add(UINT64_MAX - UINT64_C(2), UINT64_C(3), &checked) == -1
+           && checked == UINT64_C(1234567));
+    assert(frg_checked_balance_add(UINT64_C(5), UINT64_C(1), NULL) == -1);
+    puts("PASS: FRG exact 8-decimal parser, 1% fee and checked balance arithmetic (46+ checks)");
     return 0;
 }

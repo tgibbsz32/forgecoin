@@ -1,5 +1,11 @@
 # ForgeCoin pool preparation website
 
+## Verified Oracle deployment update (October 27, 2026)
+
+The live /pool/ path on Oracle preserves the existing 57-metric detailed pool and Pool Observer preview, not a replacement with this directory's redesigned index.html. The reviewed network-monitor.js was added to that existing page, backed by the persistent user-level forgecoin-monitor service over same-origin HTTPS GET /pool/api/monitor. When the 20261026 daemon is offline the monitor returns HTTP 503 and all unavailable values remain unavailable; pool/worker/payout fields have no live authoritative backend. Oracle public /pool/ and JS each returned HTTP 200 with TLS verified. The read-only monitor, shared frontend and genesis-only explorer passed the isolated QA described in docs/PHASE1_NATIVE_ORACLE_ANDROID_QA_2026-10-27.md. No public Stratum, miner login, fee payouts or user-account service has been enabled.
+
+The account.html, statistics.html and redesigned dashboard assets in this source directory are staging previews; they are not a substitute for a working authenticated pool account backend.
+
 Static HTML and CSS intended for the existing Oracle VM at `/pool/`. This is
 a readiness page, not a pool server or live dashboard. It makes no API calls,
 contains no analytics, and uses only local assets and system fonts.

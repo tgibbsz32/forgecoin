@@ -22,6 +22,7 @@ jobs:
         with:
           sparse-checkout: |
             services/official_pool/
+            config/mainnet.identity.json
             src/cryptonote_config.h
             .github/workflows/pool-native-static-link-ci.yml
             .github/workflows/pool-native-arm64-link-ci.yml

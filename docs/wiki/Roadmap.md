@@ -1,6 +1,6 @@
 # ForgeCoin roadmap and acceptance gates
 
-**Plan as of 2026-10-25.** Roadmap entries describe **proposed work**, not commitments or released capabilities. Detailed policy authority remains with [owner decisions](../OWNER_POLICY_DECISIONS_2026-10-24.md), [ROADMAP.md](../../ROADMAP.md) and consensus code validated for a *specific build*.
+**Plan updated 2026-10-27.** Roadmap entries describe **proposed work**, not commitments or released capabilities. Detailed policy authority remains with [owner decisions](../OWNER_POLICY_DECISIONS_2026-10-24.md), [ROADMAP.md](../../ROADMAP.md) and consensus code validated for a *specific build*.
 
 ## Principles and economic decisions
 
@@ -51,9 +51,9 @@
 
 Native FRG liquidity/swaps → optional user-deposit-backed, redeemable cross-chain FRG representation → privacy applications and native governance bonds. Each requires its own protocol, economic, legal and security analysis; no bridged assets, yield or Solana reward issuance are committed.
 
-## Intended next-stage technology: wrapper first, FCMP++ later
+## Intended next-stage technology: independent SPL mFRG, FCMP++ and later L1/L2/L3
 
-After the native FRG L1 launch, prioritize a **1:1 reserve-backed Solana wFRG bridge with secure mint/burn and user redemption**. Subsequently, research an **in-place FCMP++/CARROT hard fork** on the existing chain: incrementally updated curve-tree storage, consensus proof verification, legacy wallet/output compatibility, mempool revalidation and a dedicated FCMP++ stressnet. A separate blockchain and voluntary migration mechanism would be a contingency only if an in-place fork cannot be made safe.
+After native FRG L1 release validation, pursue a separately issued legacy Solana **mFRG SPL token: 50,000,000 allocation, including 5,000,000 reserved for potential USDC trading/sale and 45,000,000 for future distribution**. This token is not FRG-backed, not automatically redeemable and has not been minted. A future separate 1:1 native FRG wrapper may be researched only with independent custody and redemption proofs. Subsequently, research an **in-place FCMP++/CARROT hard fork** on the existing chain: curve-tree storage, consensus proof verification, legacy wallet/output compatibility, mempool revalidation and an isolated stressnet. A separate blockchain and voluntary migration would be a contingency only if in-place upgrades are unsafe. *All future upgrades are proposals, not guaranteed.*
 
 Longer-term implementation candidates include cross-chain atomic swaps, reserve-backed synthetic stable assets, TSS/MPC-secured private block trading and optional routing fees, L2 payment/settlement, and L3 private-market applications. Their cryptography, financial controls, and execution mechanisms need independent validation; they are **not currently supported**. [Full engineering intentions](../SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md).
 

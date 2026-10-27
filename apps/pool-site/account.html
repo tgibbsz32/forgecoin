@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark">
+<title>ForgeCoin Pool — My account (coming soon)</title><meta name="description" content="Planned address-based miner accounts and secure payouts. All account controls are disabled until launch.">
+<link rel="icon" href="images/forgecoin-logo.png"><link rel="stylesheet" href="statistics.css"></head>
+<body><div class="stats-shell">
+<header class="stats-header"><a href="index.html" class="stats-brand">FORGE<span>COIN</span> / POOL</a><nav><a href="index.html">Preparation</a><a href="dashboard.html">Overview</a><a href="statistics.html">Detailed stats</a><a href="account.html" aria-current="page">My account</a></nav></header>
+<main><p class="stats-tag">ADDRESS-BASED POOL ACCOUNTS · COMING SOON</p><h1>My mining account</h1>
+<p class="stats-alert" role="status"><strong>All account actions are disabled.</strong> The 20261026 FRG mainnet has not launched; no login, worker passwords, payout updates, mining shares or balances can be accepted. Never enter a native FRG seed, spend key, view key or wallet password into a pool site.</p>
+<section class="stats-section"><h2>Sign in with your mining address</h2>
+<form><label>Native FRG public receiving address<br><input type="text" autocomplete="off" placeholder="Wallet address (disabled)" disabled aria-disabled="true"></label>
+<label>Pool account password (not your wallet password)<br><input type="password" autocomplete="off" placeholder="Account authentication unavailable" disabled aria-disabled="true"></label>
+<p><button type="button" disabled aria-disabled="true">Sign in — coming soon</button> <button type="button" disabled aria-disabled="true">Create account — coming soon</button> <button type="button" disabled aria-disabled="true">Recover access — coming soon</button></p></form>
+<p>Security architecture: account identity is linked to a validated native FRG public address through a verifiable challenge; separate salted password hashes, session expiry, rate-limited login and CSRF protections are required. Wallet seeds and private keys are never needed.</p></section>
+<section class="stats-section"><h2>My workers</h2>
+<dl class="stats-grid"><div class="stats-metric"><dt>Active workers</dt><dd>Unavailable</dd></div><div class="stats-metric"><dt>Total personal hashrate</dt><dd>Unavailable</dd></div><div class="stats-metric"><dt>Accepted/rejected/stale shares</dt><dd>Unavailable</dd></div><div class="stats-metric"><dt>Worker earnings and round effort</dt><dd>Unavailable</dd></div></dl>
+<p><button type="button" disabled aria-disabled="true">Add or rename worker — coming soon</button> <button type="button" disabled aria-disabled="true">Rotate worker password — coming soon</button> <button type="button" disabled aria-disabled="true">Disable worker — coming soon</button></p>
+<p>Future worker credentials must be separate from account credentials, bound to the owner's verified receiving address, rate-limited and revocable.</p></section>
+<section class="stats-section"><h2>Private payouts and preferences</h2><dl class="stats-grid">
+<div class="stats-metric"><dt>Confirmed payouts</dt><dd>Unavailable</dd></div><div class="stats-metric"><dt>Immature rewards</dt><dd>Unavailable</dd></div><div class="stats-metric"><dt>Pending payout balance</dt><dd>Unavailable</dd></div><div class="stats-metric"><dt>Minimum payout threshold</dt><dd>Not configured</dd></div><div class="stats-metric"><dt>Last payout transaction</dt><dd>Unavailable</dd></div><div class="stats-metric"><dt>Payout schedule</dt><dd>Not configured</dd></div></dl>
+<p><button type="button" disabled aria-disabled="true">Change payout address — coming soon</button> <button type="button" disabled aria-disabled="true">Change payout threshold — coming soon</button> <button type="button" disabled aria-disabled="true">Export payout history — coming soon</button></p>
+<p>Payout changes must require reauthentication and explicit challenge verification, network-prefix validation, audit logs and account notifications. No settings changes are accepted through this static website.</p></section>
+<p class="stats-fine">Implementation proposal, not a production service. Private per-miner records will be available only through an authenticated service backed by the reviewed native pool ledger. A static website cannot safely authenticate wallets or change payout addresses.</p>
+</main><footer>ForgeCoin · Native FRG account preview · No login backend / no payout execution</footer></div></body></html>

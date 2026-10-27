@@ -1,0 +1,20 @@
+[Unit]
+Description=ForgeCoin native-mainnet read-only monitoring (launch-locked)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ubuntu/forgecoin-monitor
+ExecStart=/usr/bin/python3 -I /home/ubuntu/forgecoin-monitor/monitor.py --port 19810
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=false
+PrivateTmp=true
+MemoryMax=128M
+TasksMax=32
+UMask=0077
+
+[Install]
+WantedBy=default.target

@@ -74,6 +74,10 @@ public class MainActivity extends Activity {
         link("Pool dashboard", "https://tgibbsz32.github.io/forgecoin/pool.html",explore);
         link("Pool observer / statistics", "https://tgibbsz32.github.io/forgecoin/pool-observer.html",explore);
         link("Block explorer (staging)", "https://150.136.209.227/",explore);
+        LinearLayout partners=panel(root);
+        partners.addView(label("PARTNER OFFERS",17,CYAN));
+        partners.addView(label("Advertisement: ForgeCoin may earn a commission from purchases made through partner links. No offers are active unless listed on the website.",12,MUTED));
+        link("View partner offers", "https://tgibbsz32.github.io/forgecoin/#affiliate-offers",partners);
         LinearLayout node=panel(root);node.addView(label("NODE DIAGNOSTICS",17,CYAN));
         node.addView(label("Legacy ARM64 daemon is not certified for the October 26 mainnet. Remote node startup is disabled.",13,MUTED));
         status=label("Stopped",13,WHITE);node.addView(status);

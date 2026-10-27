@@ -85,4 +85,8 @@ if (-not [string]::IsNullOrWhiteSpace($XmrigRoot)) {
 }
 Copy-Item -LiteralPath (Join-Path $RepositoryRoot 'LICENSE') -Destination $OutputRoot
 
+$LogoPath = Join-Path $RepositoryRoot "docs\images\forgecoin-logo.png"
+if (Test-Path -LiteralPath $LogoPath) {
+    Copy-Item -LiteralPath $LogoPath -Destination (Join-Path $OutputRoot "forgecoin-logo.png")
+}
 Write-Host "Built $OutputRoot"

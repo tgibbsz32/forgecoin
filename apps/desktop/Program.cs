@@ -24,7 +24,7 @@ namespace ForgeCoinDesktop
         }
     }
 
-    internal sealed class MainForm : Form
+    internal sealed partial class MainForm : Form
     {
         private const decimal AtomicUnits = 100000000m;
         private readonly string appRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ForgeCoin");
@@ -142,12 +142,14 @@ namespace ForgeCoinDesktop
             {
                 RefreshNode();
                 if (walletOpen) RefreshWallet();
+                if (!String.IsNullOrEmpty(solCurrentAddress)) RefreshSolanaBalances();
             };
             refreshTimer.Start();
             miningTimer.Interval = 1000;
             miningTimer.Tick += delegate { RefreshMining(); RefreshPoolMining(); };
             miningTimer.Start();
             FormClosing += OnClosing;
+            FormClosed += delegate { SolanaLock(); };
         }
 
         private Control BuildHeader()
@@ -165,6 +167,7 @@ namespace ForgeCoinDesktop
             TabControl tabs = new TabControl { Dock = DockStyle.Fill, Padding = new Point(18, 8) };
             tabs.TabPages.Add(BuildNodeTab());
             tabs.TabPages.Add(BuildWalletTab());
+            tabs.TabPages.Add(BuildSolanaTab());
             tabs.TabPages.Add(BuildAddressesTab());
             tabs.TabPages.Add(BuildExplorerTab());
             tabs.TabPages.Add(BuildMiningTab());

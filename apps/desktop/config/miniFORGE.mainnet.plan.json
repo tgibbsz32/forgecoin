@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "name": "miniFORGE",
+  "symbol": "mFRG",
+  "network": "mainnet-beta",
+  "token_program": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+  "decimals": 6,
+  "target_supply_ui": "50000000",
+  "target_supply_atomic": "50000000000000",
+  "allocations": [
+    {
+      "id": "sale-treasury",
+      "purpose": "future sale/trading against USDC or other tokens",
+      "tokens_ui": "5000000",
+      "amount_atomic": "5000000000000",
+      "account_address": null,
+      "custody_authority": null
+    },
+    {
+      "id": "liquidity-reserve",
+      "purpose": "future liquidity after FRG develops market value; not yet deployed",
+      "tokens_ui": "5000000",
+      "amount_atomic": "5000000000000",
+      "account_address": null,
+      "custody_authority": null
+    },
+    {
+      "id": "distribution-reserve",
+      "purpose": "future distribution mechanism not yet selected",
+      "tokens_ui": "40000000",
+      "amount_atomic": "40000000000000",
+      "account_address": null,
+      "custody_authority": null
+    }
+  ],
+  "mainnet_fee_payer_observed": "2xLoLobNEk39Vne4FhG91i2j14Pxq75M4RAt4Pvwrk26",
+  "mainnet_fee_payer_balance_at_preflight_sol": "0",
+  "network_mint_address": null,
+  "metadata_status": "not_created",
+  "mint_authority_status": "not_created",
+  "fixed_cap_enforced": false,
+  "allocation_completed": false,
+  "mainnet_status": "BLOCKED_FEE_PAYER_HAS_ZERO_SOL",
+  "requires_unique_token_accounts": true,
+  "treasury_and_reserve_must_be_reviewed_before_issuing": true,
+  "note": "Devnet mint 9HuHPHPeWZBtRJmhsne17pVzUkFYMf9Rg1ZwdH45ebkw is not a mainnet mint. Do not use it for mainnet asset displays. No token transfer, mint, or production release is authorized by this plan."
+}

@@ -1,0 +1,13 @@
+﻿{
+    "name":  "miniFORGE",
+    "symbol":  "mFRG",
+    "network":  "devnet",
+    "rpc":  "https://api.devnet.solana.com",
+    "mint":  "9HuHPHPeWZBtRJmhsne17pVzUkFYMf9Rg1ZwdH45ebkw",
+    "decimals":  6,
+    "status":  "development-only-mint-supply-zero",
+    "productionReady":  false,
+    "mainnetMint":  "",
+    "treasuryDevnetAccount":  "C5o4cgeT9HJe1v4xoYgBZWS59CUzQ1S3FGyuYZ9dbRGy",
+    "reserveDevnetAccount":  "2c9AfdrfBeT1a3De6DEaUJoT8YvvFSs25bz53nWV7Jsj"
+}

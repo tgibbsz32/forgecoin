@@ -67,8 +67,36 @@ public class MainActivity extends Activity {
         button("Receive / send FRG — unavailable",false,wallet,null);
         LinearLayout mine=panel(root);mine.addView(label("RANDOMX MINING",17,CYAN));
         mine.addView(label("Solo and pool mining must use verified ARM64 RandomX executables and the frozen FRG chain identity.",13,WHITE));
-        button("Start solo mining — unavailable",false,mine,null);
-        button("Start pool mining — unavailable",false,mine,null);
+        mine.addView(label("Mining mode",13,WHITE));
+        RadioGroup modes=new RadioGroup(this);
+        modes.setOrientation(RadioGroup.VERTICAL);
+        for(String mode:new String[]{"Solo (local node)","Solo via pool (dedicated port pending)","Pool (shared PPLNS)"}) {
+            RadioButton option=new RadioButton(this);
+            option.setText(mode); option.setTextColor(WHITE); modes.addView(option);
+        }
+        ((RadioButton)modes.getChildAt(2)).setChecked(true); mine.addView(modes);
+        mine.addView(label("Mining intensity — CPU utilization target",13,WHITE));
+        SeekBar intensity=new SeekBar(this);intensity.setMax(100);intensity.setProgress(35);
+        TextView intensityText=label("35% — balanced",13,CYAN);
+        intensity.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+            public void onStartTrackingTouch(SeekBar s){}
+            public void onStopTrackingTouch(SeekBar s){}
+            public void onProgressChanged(SeekBar s,int value,boolean user){
+                int target=Math.max(5,value);
+                intensityText.setText(target+"% CPU target — "+(target<=35?"conservative":target<=70?"balanced":"high"));
+            }
+        });
+        mine.addView(intensity);mine.addView(intensityText);
+        Switch background=new Switch(this);
+        background.setText("Allow background mining");background.setTextColor(WHITE);
+        background.setChecked(false);mine.addView(background);
+        mine.addView(label("Background mining defaults OFF. The eventual mining service must honor Android notification, battery, thermal and foreground-service limits.",12,MUTED));
+        mine.addView(label("Default Oracle endpoint (pending launch)",13,CYAN));
+        TextView direct=label("Direct node P2P: 150.136.209.227:39480 (not Stratum)",12,WHITE);
+        mine.addView(direct);
+        mine.addView(label("Shared pool: Oracle address reserved; Stratum port not yet verified.",12,MUTED));
+        mine.addView(label("Solo-pool: separate Stratum port must be deployed and tested.",12,MUTED));
+        button("Start mining — unavailable until ARM64 validation",false,mine,null);
         LinearLayout explore=panel(root);explore.addView(label("BLOCK EXPLORER & POOL STATS",17,CYAN));
         explore.addView(label("Read-only web tools. Statistics must be treated as unavailable until the production network and pool are validated.",13,MUTED));
         link("Pool dashboard", "https://tgibbsz32.github.io/forgecoin/pool.html",explore);

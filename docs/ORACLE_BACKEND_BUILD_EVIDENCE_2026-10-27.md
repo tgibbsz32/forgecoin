@@ -9,6 +9,7 @@
 - jtgrassie-derived ForgeCoin native C pool **compiled and linked** on Oracle aarch64 against that exact source/build. Binary: services/official_pool/jtgrassie/build/release/forgecoin-pool. SHA256: 3b5bc62675413a4514faff0f1b4dde87f63f1796001c831c51d764a08dace69c.
 - Native pool source-contract tests on Oracle: **20 passed**.
 - Isolated QA daemon: started under a 24-second timeout with --offline and P2P/RPC bound to 127.0.0.1, unique fresh database, no mining; checked using the repo's read-only tools/verify_mainnet.py. Identity matches nonce 20261026 and genesis 4bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c, height=1, launch_authorized=false.
+- Read-only get_block_template probe against the same offline QA chain succeeded: template height 1, difficulty 500000, expected_reward_atomic 2384185222, RandomX seed hash present, 134-byte serialized block template. No share, block, transaction, miner or pool was submitted. Script: tools/probe_mainnet_template_readonly.py.
 - The QA daemon then timed out; public forgecoin and new-mainnet-staging services remain inactive. Existing public explorer and nginx remain active. No mainnet mining port is listening.
 - Read-only monitoring Python module: **8 tests passed** on Windows. Files were copied to Oracle home for staging but the systemd installation was blocked; no monitor service was started.
 

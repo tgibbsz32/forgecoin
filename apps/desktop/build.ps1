@@ -5,10 +5,15 @@ param(
 
     [string]$MingwBin = 'C:\msys64\mingw64\bin',
     [string]$XmrigRoot,
-    [string]$OutputRoot
+    [string]$OutputRoot,
+
+    [switch]$AllowUnverifiedDevelopmentBuild
 )
 
 $ErrorActionPreference = 'Stop'
+if (-not $AllowUnverifiedDevelopmentBuild) {
+    throw 'PUBLIC RELEASE BLOCKED: final mainnet binary identity, mining and wallet tests are not approved. Use -AllowUnverifiedDevelopmentBuild only for local testing; never distribute such builds as mainnet-ready.'
+}
 $ProjectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepositoryRoot = (Resolve-Path (Join-Path $ProjectRoot '..\..')).Path
 
@@ -89,4 +94,5 @@ $LogoPath = Join-Path $RepositoryRoot "docs\images\forgecoin-logo.png"
 if (Test-Path -LiteralPath $LogoPath) {
     Copy-Item -LiteralPath $LogoPath -Destination (Join-Path $OutputRoot "forgecoin-logo.png")
 }
-Write-Host "Built $OutputRoot"
+Set-Content -LiteralPath (Join-Path $OutputRoot "DEVELOPMENT-BUILD-NOT-FOR-PUBLIC-MAINNET.txt") -Value "Unverified development build. Not approved for mainnet mining or public release. Solana/mFRG functionality disabled."
+Write-Host "Built unverified development package: $OutputRoot"

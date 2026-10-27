@@ -63,6 +63,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "bstack.h"
 #include "util.h"
 #include "xmr.h"
+#include "frg_transfer_receipt.h"
+#include "frg_pplns_money.h"
 #include "log.h"
 #include "webui.h"
 #include "frg_currency.h"
@@ -938,9 +940,12 @@ payout_block(block_t *block, MDB_txn *parent)
             break;
 
         share_t *share = (share_t*)val.mv_data;
-        uint64_t amount = floor((double)share->difficulty /
-            ((double)block->difficulty * config.share_mul) * block->reward);
-        if (total_paid + amount > block->reward)
+        /* Exact integer-only PPLNS distribution at verified multiplier 2.0.
+         * A 128-bit intermediate prevents precision loss and overflow.
+         */
+        uint64_t amount = frg_pplns_share_reward_atomic(
+            share->difficulty, block->difficulty, block->reward);
+        if (amount > block->reward - total_paid)
             amount = block->reward - total_paid;
         total_paid += amount;
         uint64_t fee = frg_pool_fee_atomic(amount);
@@ -951,6 +956,9 @@ payout_block(block_t *block, MDB_txn *parent)
             {
                 err = mdb_strerror(rc);
                 log_error("Error adding pool fee balance: %s", err);
+                mdb_cursor_close(cursor);
+                mdb_txn_abort(txn);
+                return rc;
             }
         }
         if (amount == 0)
@@ -965,6 +973,16 @@ payout_block(block_t *block, MDB_txn *parent)
         }
     }
 
+    if (total_paid != block->reward)
+    {
+        log_error("Incomplete PPLNS block accounting: allocated %" PRIu64
+                  " of %" PRIu64 " atomic units; refusing to unlock block",
+                  total_paid, block->reward);
+        mdb_cursor_close(cursor);
+        mdb_txn_abort(txn);
+        return MDB_NOTFOUND;
+    }
+    mdb_cursor_close(cursor);
     rc = mdb_txn_commit(txn);
     return rc;
 }
@@ -2137,21 +2155,19 @@ rpc_on_block_submitted(const char* data, rpc_callback_t *callback)
 static void
 rpc_on_wallet_transferred(const char* data, rpc_callback_t *callback)
 {
-    log_trace("Transfer response: \n%s", data);
+    /* Do not log wallet RPC response or imply a payout was confirmed here.
+     * transfer_split success only means the wallet returned a transaction ID;
+     * confirmation and canonical status require independent reconciliation.
+     * Critically, NEVER debit a miner's LMDB balance on a failed RPC.
+     */
     json_object *root = json_tokener_parse(data);
-    JSON_GET_OR_WARN(result, root, json_type_object);
-    json_object *error = NULL;
-    json_object_object_get_ex(root, "error", &error);
-    if (error)
+    if (!frg_transfer_receipt_valid(root))
     {
-        JSON_GET_OR_WARN(code, error, json_type_object);
-        JSON_GET_OR_WARN(message, error, json_type_string);
-        int ec = json_object_get_int(code);
-        const char *em = json_object_get_string(message);
-        log_error("Error (%d) with wallet transfer: %s", ec, em);
+        log_error("Rejected wallet transfer response; retaining all miner balances for reconciliation");
+        if (root) json_object_put(root);
+        return;
     }
-    else
-        log_info("Payout transfer successful");
+    log_info("Wallet submitted transfer transaction IDs; confirmation still pending");
 
     int rc = 0;
     char *err = NULL;
@@ -2187,8 +2203,10 @@ rpc_on_wallet_transferred(const char* data, rpc_callback_t *callback)
                 log_error("%s", err);
             }
             else
-                log_error("Payment made to non-existent address");
-            continue;
+                log_error("Payment address is missing from miner balances");
+            mdb_cursor_close(cursor);
+            mdb_txn_abort(txn);
+            goto cleanup;
         }
         uint64_t current_amount = *(uint64_t*)val.mv_data;
 
@@ -2198,38 +2216,28 @@ rpc_on_wallet_transferred(const char* data, rpc_callback_t *callback)
         }
         else
         {
-            log_error("Payment was more than balance: %"PRIu64" > %"PRIu64,
-                      p->amount, current_amount);
-            current_amount = 0;
+            log_error("Payment exceeded available miner balance; ledger transaction rejected");
+            mdb_cursor_close(cursor);
+            mdb_txn_abort(txn);
+            goto cleanup;
         }
 
-        if (error)
-        {
-            log_warn("Error seen on transfer for %s with amount %"PRIu64,
-                    p->address, p->amount);
-        }
         MDB_val new_val = {sizeof(current_amount), (void*)&current_amount};
         if ((rc = mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT)))
         {
             err = mdb_strerror(rc);
             log_error("%s", err);
+            mdb_cursor_close(cursor);
+            mdb_txn_abort(txn);
+            goto cleanup;
         }
     }
-    if ((rc = mdb_txn_commit(txn)))
-    {
-        err = mdb_strerror(rc);
-        log_error("Error committing updated balance(s): %s", err);
-        mdb_txn_abort(txn);
-        goto cleanup;
-    }
+    mdb_cursor_close(cursor);
 
-    /* Now store payment info */
-    if ((rc = pdb_txn_begin(env, NULL, 0, &txn)))
-    {
-        err = mdb_strerror(rc);
-        log_error("%s", err);
-        goto cleanup;
-    }
+    /* Both balance debits and payout history must commit in a single
+     * LMDB transaction: reject partial local ledger updates.
+     * On-chain confirmation/transaction-id reconciliation remains a separate gate.
+     */
     if ((rc = mdb_cursor_open(txn, db_payments, &cursor)))
     {
         err = mdb_strerror(rc);
@@ -2248,14 +2256,16 @@ rpc_on_wallet_transferred(const char* data, rpc_callback_t *callback)
         {
             err = mdb_strerror(rc);
             log_error("Error putting payment: %s", err);
-            continue;
+            mdb_cursor_close(cursor);
+            mdb_txn_abort(txn);
+            goto cleanup;
         }
     }
+    mdb_cursor_close(cursor);
     if ((rc = mdb_txn_commit(txn)))
     {
         err = mdb_strerror(rc);
-        log_error("Error committing payment: %s", err);
-        mdb_txn_abort(txn);
+        log_error("Atomic balance/payment ledger commit failed: %s", err);
         goto cleanup;
     }
 
@@ -4181,9 +4191,9 @@ read_config(const char *config_file)
         exit(-1);
     }
 #endif
-    if (config.pool_fee != 0.01)
+    if (config.pool_fee != 0.01 || config.share_mul != 2.0)
     {
-        log_fatal("FRG research fork requires an exact 1%% fee setting");
+        log_fatal("FRG research fork requires exact 1%% fee and 2.0 PPLNS share multiplier");
         exit(-1);
     }
     if (!config.pool_wallet[0])

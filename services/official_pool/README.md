@@ -31,20 +31,15 @@ imply a backend is accepting shares or sending payments.
   signs, whitespace, exponent notation, invalid precision and overflow.
 - Normalizes the original `/stats` miner-balance numeric JSON emission to
   exactly eight decimal places using integer division and modulus.
-- Calculates the proposed **1% operator deduction** as `amount / 100` for
-  each eligible allocated share; the exact fee remains a proposed policy,
-  not proof of correct PPLNS/reorg behavior. The research config rejects
-  fee settings other than `0.01`.
-- Uses FRG's mainnet address prefix **90** and two-minute target, instead
-  of retaining Monero's prefix 18. Independent address parsing tests are
-  still needed.
+- Calculates the proposed **1% operator deduction** as integer `amount / 100` per eligible allocated share, rounded down to the atomic unit. Separate balances credit the frozen native FRG operator-fee address in `pool-fee-wallet`. The pool reward wallet must be distinct; solo miners pay no pool fee. See [operator fee and custody checks](../../docs/POOL_OPERATOR_FEE_2026-10-27.md). The launch-disabled config rejects fee settings other than `0.01`.
+- Uses FRG's **frozen 20261026 mainnet address prefix 190** and a 120-second block target instead of retaining Monero's prefix 18. Pool source-contract tests check this prefix, while end-to-end address validation remains a release gate.
 - Changes the build binary to `forgecoin-pool`; requires the explicit
   `FORGECOIN_ROOT` source location, optionally `FORGECOIN_BUILD_ROOT`.
   The pool's original Makefile still refers internally to Monero library
   names because ForgeCoin is a Monero fork; that naming is **not** proof of
   a valid build against current FRG.
 - Research config binds the Stratum and statistics sockets to **127.0.0.1**,
-  avoids an embedded third-party pool wallet, uses FRG daemon RPC port 19481,
+  avoids an embedded third-party pool wallet, uses frozen FRG daemon RPC port **39481**,
   deliberately leaves wallet RPC port **0**, and disables self-select,
   payouts and any option to bypass native proof-of-work checks.
 - Research builds fail closed if the operator enables public interfaces,
@@ -73,8 +68,7 @@ gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
 Tests compile the standalone monetary converter and validate source/config
 gates without starting any pool, daemon, wallet or network listener.
 Windows MSYS2 GCC and Ubuntu Linux GCC have both been used for this
-standalone code. The full upstream C/C++ pool has **not** been compiled or
-linked in this step.
+standalone code. The native ARM64 pool was subsequently built and linked on Oracle against frozen 20261026 source (see [Oracle build evidence](../../docs/ORACLE_BACKEND_BUILD_EVIDENCE_2026-10-27.md)). It has **not** passed end-to-end accepted share/block, mature payout, or reorg-safe wallet reconciliation tests.
 
 ## Build preflight and remaining dependencies
 

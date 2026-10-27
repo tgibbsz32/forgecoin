@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.secret
+*.wallet
+*.backup

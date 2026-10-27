@@ -180,7 +180,27 @@ namespace ForgeCoinDesktop
             tabs.TabPages.Add(BuildExplorerTab());
             tabs.TabPages.Add(BuildMiningTab());
             tabs.TabPages.Add(BuildPoolMiningTab());
+            tabs.TabPages.Add(BuildSolanaComingSoonTab());
             return tabs;
+        }
+
+        // Intentionally non-operational: public builds must not create keys, sign,
+        // query balances, or attempt Solana network transfers.
+        private TabPage BuildSolanaComingSoonTab()
+        {
+            TabPage page = new TabPage("Solana / mFRG") { BackColor = Color.FromArgb(234, 243, 253) };
+            TableLayoutPanel layout = new TableLayoutPanel { Dock = DockStyle.Top, Padding = new Padding(24), ColumnCount = 1, RowCount = 6, AutoSize = true };
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            layout.Controls.Add(new Label { Text = "SOLANA & miniFORGE — FUTURE RELEASE", AutoSize = true, Font = new Font("Segoe UI Semibold", 17F), ForeColor = Color.FromArgb(24, 67, 119), Margin = new Padding(0, 0, 0, 15) });
+            layout.Controls.Add(new Label { Text = "Not available in this release. Native FRG mining and wallet operations are separate from Solana.", AutoSize = true, MaximumSize = new Size(750, 0), ForeColor = Color.FromArgb(71, 93, 119), Margin = new Padding(0, 0, 0, 22) });
+            foreach (string label in new string[] { "Create or import Solana wallet", "View SOL and mFRG balances", "Send SOL or mFRG", "Stake FRG for mFRG" })
+            {
+                Button unavailable = new Button { Text = label + "   •   Unavailable", Width = 370, Height = 43, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(211, 220, 231), ForeColor = Color.FromArgb(107, 120, 135), Enabled = false, Margin = new Padding(0, 0, 0, 8) };
+                unavailable.FlatAppearance.BorderColor = Color.FromArgb(177, 190, 206);
+                layout.Controls.Add(unavailable);
+            }
+            page.Controls.Add(layout);
+            return page;
         }
 
         private TabPage BuildNodeTab()

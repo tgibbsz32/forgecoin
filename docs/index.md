@@ -1,6 +1,6 @@
 # ForgeCoin documentation and current project direction
 
-[Homepage](index.html) | [miniFORGE tokenomics](miniforge-tokenomics.html) | [miniFORGE lifetime policy](MFRG_LIFETIME_TOKENOMICS_500M.md) | [Sale readiness](miniforge-sale.html) | [Native FRG mainnet](CURRENT_MAINNET.md) | [Whitepaper](WHITEPAPER.md) | [Roadmap](../ROADMAP.md)
+[Homepage](index.html) | [miniFORGE tokenomics](miniforge-tokenomics.html) | [miniFORGE lifetime policy](MFRG_LIFETIME_TOKENOMICS_500M.md) | [Treasury and founder vesting readiness](MFRG_TREASURY_VESTING_IMPLEMENTATION.md) | [Sale readiness](miniforge-sale.html) | [Native FRG mainnet](CURRENT_MAINNET.md) | [Whitepaper](WHITEPAPER.md) | [Roadmap](../ROADMAP.md)
 
 **October 28, 2026 policy:** The separate Solana miniFORGE asset is now **500,000,000 mFRG target fixed supply**, split across nine non-overlapping budgets including **50M mFRG (10%) proposed cryptocurrency-fundraising inventory**, **15M (3%) unlocked founder tokens at launch**, and **15M (3%) deferred team-labeled allocation beneficially owned by the same founder**, vesting 625k monthly in months 13–36.
 

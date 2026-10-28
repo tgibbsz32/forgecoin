@@ -1,0 +1,22 @@
+name: mFRG Step 26 offline SQLite restore drill
+on:
+  pull_request:
+    paths:
+      - 'tools/mfrg_sqlite_recovery_drill.py'
+      - 'tools/test_mfrg_sqlite_recovery_drill.py'
+      - '.github/workflows/mfrg-sqlite-recovery.yml'
+      - 'docs/handoffs/MFRG_500M_STEP_26_SQLITE_RECOVERY_2026-10-28.md'
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  recovery-drill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/test_mfrg_sqlite_recovery_drill.py
+      - run: python3 -m pip install 'cryptography>=43,<47'
+      - run: python3 tools/test_mfrg_signed_challenge_issuer.py
+      - run: python3 tools/test_mfrg_integrated_challenge_verifier.py

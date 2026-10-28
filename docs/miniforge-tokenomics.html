@@ -2,81 +2,77 @@
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#081421">
-<meta name="description" content="Explore miniFORGE (mFRG) tokenomics: 5 million proposed for an initial sale, 5 million in a post-sale liquidity/staking treasury, and 40 million in a future issuance and development treasury.">
-<title>miniFORGE Tokenomics &amp; Treasury Plan | ForgeCoin</title>
+<meta name="description" content="Official proposed miniFORGE 500 million mFRG lifetime tokenomics: nine treasuries, 6% founder allocation, staged crypto exchanges, staking rewards, liquidity and long-term budgets.">
+<title>miniFORGE Tokenomics — 500M Lifetime Allocation | ForgeCoin</title>
 <link rel="icon" href="images/forgecoin-logo.png"><link rel="stylesheet" href="sale.css">
-</head><body>
-<a class="skip" href="#main">Skip to miniFORGE tokenomics</a>
-<header class="header"><div class="wrap nav">
- <a class="brand" href="index.html" aria-label="Go to ForgeCoin home"><img src="images/forgecoin-logo.png" width="40" height="40" alt=""><span>FORGE<span class="accent">COIN</span><small>miniFORGE tokenomics</small></span></a>
- <nav aria-label="Page navigation"><a href="#allocation">Allocations</a><a href="#timeline">When assets move</a><a href="#governance">Governance</a><a href="miniforge-sale.html">mFRG Sale</a><a class="nav-back" href="index.html">Home</a></nav>
-</div></header>
+<style>
+.tokenomics-table{overflow-x:auto;border:1px solid #34475b;border-radius:18px;margin:22px 0}
+.tokenomics-table table{border-collapse:collapse;width:100%;min-width:620px;color:#edf5ff;font-size:.96rem}
+.tokenomics-table th,.tokenomics-table td{padding:13px 16px;border-bottom:1px solid #34475b;text-align:left}
+.tokenomics-table thead{background:#152b3a}
+.tokenomics-table th:nth-child(n+2),.tokenomics-table td:nth-child(n+2){text-align:right}
+.tokenomics-table tbody tr:last-child{font-weight:700;background:#172a39}
+.policy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}
+.policy-card{background:#122536;border:1px solid #365066;border-radius:14px;padding:20px}
+.policy-card h3{margin:0 0 10px;color:#77e5ea}.policy-card p{margin:0}
+.policy-paragraph{max-width:900px;line-height:1.7}.notes{font-size:.94rem;line-height:1.7}
+</style></head><body>
+<header class="site-header"><div class="wrap header-inner"><a class="brand" href="index.html" aria-label="ForgeCoin home"><img src="images/forgecoin-logo.png" width="40" height="40" alt=""><span>FORGE<span class="accent">COIN</span><small>miniFORGE / mFRG</small></span></a>
+<nav aria-label="Page navigation"><a href="#allocation">Allocations</a><a href="#timeline">Lifetime releases</a><a href="#staking">Staking design</a><a href="#treasuries">Treasuries</a><a href="miniforge-sale.html">Sale status</a><a class="nav-back" href="index.html">Home</a></nav></div></header>
 <main id="main">
-<section class="announcement" role="status"><div class="wrap banner"><span class="status-dot" aria-hidden="true"></span><div>
-<strong>Proposed allocations - not verified minted funds.</strong> The mFRG sale is not currently open and no staking or liquidity program is active.
-<span class="muted-banner">Never send tokens to an address from unofficial messages or screenshots.</span>
-</div></div></section>
-
-<section class="hero wrap"><div>
- <div class="eyebrow"><span class="line"></span> Token structure and stewardship</div>
- <h1>miniFORGE.<br><span class="gradient">An accountable treasury plan.</span></h1>
- <p class="lead">A separate standard Solana SPL token, designed with a total target of <strong>50 million mFRG</strong>. The initial 5M mFRG sale, separate 5M mFRG post-sale liquidity/staking treasury and 40M mFRG future issuance/development treasury have different purposes and approval needs.</p>
- <div class="hero-actions"><a class="button prominent" href="miniforge-sale.html">View upcoming mFRG sale</a><a class="button outline" href="#allocation">Read allocations</a></div>
- <p class="fineprint">mFRG is not native FRG. It is not a wrapped version of native FRG, is not exchangeable for FRG at a fixed rate and does not imply private Solana transfers, share ownership or guaranteed returns.</p>
-</div><div class="token-showcase" aria-label="Proposed mFRG supply">
- <div class="token-ring"><img src="images/forgecoin-logo.png" width="172" height="172" alt="ForgeCoin project logo"><span class="ring-caption">mFRG</span></div>
- <div class="symbol-row"><strong>50,000,000</strong><span>Total proposed mFRG supply</span></div>
- <div class="divider"></div>
- <div class="token-meta"><span>Program</span><strong>Standard Solana SPL</strong></div>
- <div class="token-meta"><span>Decimals</span><strong>6</strong></div>
- <div class="token-meta"><span>Solana mainnet mint</span><strong class="offline">Not verified issued</strong></div>
- <div class="token-meta"><span>Sale status</span><strong class="offline">Not open</strong></div>
-</div></section>
-<section class="statistics" aria-label="Allocation numbers"><div class="wrap figure-grid">
- <div><span>Initial sale</span><strong>5,000,000 <em>mFRG</em></strong></div>
- <div><span>Post-sale liquidity/staking</span><strong>5,000,000 <em>mFRG</em></strong></div>
- <div><span>Future issuance and development</span><strong>40,000,000 <em>mFRG</em></strong></div>
- <div><span>Total planned</span><strong>50,000,000 <em>mFRG</em></strong></div>
-</div></section>
-
-<section class="section wrap" id="allocation"><div class="section-intro"><div class="eyebrow">01 / Supply allocation</div>
-<h2>5M for sale.<br><span class="gradient">45M held for the next phases.</span></h2>
-<p>These are three distinct token allocations. The initial sale's 5M mFRG is not counted again in the separate 5M post-sale liquidity/staking treasury.</p></div>
-<div class="allocation-bar" role="img" aria-label="10 percent sale, 10 percent post-sale liquidity/staking, 80 percent future issuance and development"><span class="seg sale" title="10 percent sale"></span><span class="seg liquidity" title="10 percent liquidity/staking"></span><span class="seg later" title="80 percent future issuance/development"></span></div>
-<div class="allocation-grid">
- <article class="allocation-card"><div class="card-label"><span class="dot sale-dot"></span> Sale inventory <small>10%</small></div>
- <strong>5,000,000</strong><div class="symbol-suffix">mFRG</div>
- <p>Reserved for the proposed first public sale, considering Solana USDC as the initial payment asset. Buyer eligibility, price, dates, treasury custody, delivery and legal review must be approved first.</p><span class="chip">Sale not open</span></article>
- <article class="allocation-card"><div class="card-label"><span class="dot liquidity-dot"></span> Post-sale liquidity/staking <small>10%</small></div>
- <strong>5,000,000</strong><div class="symbol-suffix">mFRG</div>
- <p>After the initial sale, a different 5M mFRG allocation is intended to sit in a treasury for liquidity and potential staking uses. There is no approved pool, reward mechanism, yield, deposit scheme or withdrawal contract today.</p><span class="chip">Treasury pending</span></article>
- <article class="allocation-card"><div class="card-label"><span class="dot later-dot"></span> Future issuance and development <small>80%</small></div>
- <strong>40,000,000</strong><div class="symbol-suffix">mFRG</div>
- <p>Held for later approved releases and network development. Future issuance means phased distribution of reserved mFRG within the 50M target, not additional minting beyond it. Spending/release rules are not selected.</p><span class="chip">Reserve policies pending</span></article>
-</div></section>
-
-<section class="section dark-section" id="timeline"><div class="wrap">
- <div class="section-intro"><div class="eyebrow">02 / Sequencing</div><h2>Before, during and <span class="gradient">after the sale.</span></h2>
- <p>No execution date is set. This section explains intended order and the controls that are missing.</p></div>
- <div class="gate-grid">
- <div class="gate"><span class="gate-num">01</span><div><h3>Before any sale</h3><p>Verify mainnet mint, exact 50M supply target, 5M/5M/40M token accounts, custody, approvals, sale legality, final price/terms and buyer receipt protection.</p></div><span>Pending</span></div>
- <div class="gate"><span class="gate-num">02</span><div><h3>5M initial sale</h3><p>Distribute only authorized sale inventory against approved payment assets, using independently validated delivery and accurate receipts. No sale is open now.</p></div><span>Not started</span></div>
- <div class="gate"><span class="gate-num">03</span><div><h3>Before the sale concludes</h3><p>Select and publish the governance rules that will protect future treasuries, conflict-of-interest decisions and release approvals. No seat or voting model is preselected.</p></div><span>Open design</span></div>
- <div class="gate"><span class="gate-num">04</span><div><h3>After the sale</h3><p>Govern the separate 5M liquidity/staking and 40M future issuance/development reserves under reviewed controls, custody, disclosure and independently approved release procedures.</p></div><span>Future</span></div>
- </div>
-</div></section>
-
-<section class="section wrap" id="governance"><div class="section-intro"><div class="eyebrow">03 / Governance</div>
-<h2>Decide the rules <span class="gradient">before money moves further.</span></h2>
-<p>The governance solution will be developed before the proposed mFRG sale concludes. Model, voting eligibility, treasury signers, spending restrictions, oversight, audits, public disclosure and dispute procedures are not yet finalized. There is no active mFRG voting entitlement, staking reward or claim against native FRG holdings.</p>
-<p>USDC sale proceeds are separate from the proposed <em>5M mFRG token liquidity/staking allocation</em>. Any planned use of proceeds will need independent public disclosure and approval.</p>
-<div class="hero-actions"><a class="button outline" href="community.html">Governance information</a><a class="button outline" href="https://github.com/tgibbsz32/forgecoin/blob/main/docs/MINIFORGE_SPL_TREASURIES.md">Technical allocation document</a></div>
-</div></section>
-
-<section class="section dark-section"><div class="wrap"><div class="section-intro"><div class="eyebrow">04 / Important limits</div>
-<h2>Plans are not <span class="gradient">live balances.</span></h2>
-<p>All token quantities describe proposals. No Solana mainnet mint address, verified token ownership, price, return, liquidity pool or public sale is established by this page. A true 50M fixed cap requires completed supply reconciliation and appropriately revoked mint authority. Solana transactions are public, and native FRG mainnet release remains separately gated.</p>
-<p><a class="button prominent" href="miniforge-sale.html">See the sale-information page</a></p></div></div></section>
-</main>
-<footer class="wrap" style="padding:2.5rem 0"><p><a href="index.html">ForgeCoin Home</a> · <a href="miniforge-sale.html">miniFORGE sale</a> · <a href="community.html">Governance</a> · <a href="https://github.com/tgibbsz32/forgecoin">GitHub</a></p><p>Project information only. No offer of securities, yield, return, guaranteed liquidity or funds collection.</p></footer>
+<section class="announcement"><div class="wrap"><strong>Policy updated October 28, 2026.</strong> This is a planning document. No verified mainnet mFRG issuance, approved sale, live staking contract, liquidity pool, or investment return exists. Do not send funds to any address claiming to sell mFRG.</div></section>
+<section class="hero"><div class="wrap hero-grid"><div><div class="eyebrow">Lifetime tokenomics · 30-year framework</div>
+<h1>miniFORGE.<br><span class="gradient">500 million, allocated transparently.</span></h1>
+<p class="lead">A distinct Solana SPL asset with a proposed fixed total supply of <strong>500,000,000 mFRG</strong>. Nine non-overlapping allocations reserve capital for early crypto-denominated distributions, network services, ecosystem growth, liquidity, participation rewards and security.</p>
+<p class="fineprint">The founder is the beneficial owner of both founder allocations: <strong>3% (15M) unlocked immediately at launch</strong> and <strong>3% (15M) designated as team allocation, vesting 625,000 monthly in months 13–36</strong>. The full founder-beneficial allocation is 6%.</p>
+<div class="hero-actions"><a class="button prominent" href="MFRG_LIFETIME_TOKENOMICS_500M.md">Read full policy</a><a class="button outline" href="miniforge-sale.html">Sale readiness</a></div></div>
+<div class="token-showcase"><div class="token-ring"><img src="images/forgecoin-logo.png" width="172" height="172" alt="ForgeCoin logo"><span class="ring-caption">mFRG</span></div>
+<div class="symbol-row"><strong>500,000,000</strong><span>Total intended fixed mFRG supply</span></div>
+<div class="token-meta"><span>Native FRG</span><strong>Separate mined asset</strong></div>
+<div class="token-meta"><span>Sale status</span><strong class="offline">Not open</strong></div></div></div></section>
+<section class="section wrap" id="allocation"><div class="section-intro"><div class="eyebrow">01 / Fixed supply allocation</div><h2>Every token has<br><span class="gradient">one assigned purpose.</span></h2><p>All figures are token allocations, not verified balances or dollar-valued funds.</p></div>
+<div class="tokenomics-table"><table><thead><tr><th>Purpose</th><th>mFRG</th><th>Share</th></tr></thead><tbody>
+<tr><td>Crypto-denominated fundraising inventory</td><td>50,000,000</td><td>10%</td></tr>
+<tr><td>Long-term operations/development treasury</td><td>100,000,000</td><td>20%</td></tr>
+<tr><td>Ecosystem adoption and grants</td><td>100,000,000</td><td>20%</td></tr>
+<tr><td>Staking/participation rewards (finite)</td><td>85,000,000</td><td>17%</td></tr>
+<tr><td>Liquidity and market integration</td><td>60,000,000</td><td>12%</td></tr>
+<tr><td>Engineering, audits, security</td><td>65,000,000</td><td>13%</td></tr>
+<tr><td><strong>Founder — immediately liquid</strong></td><td>15,000,000</td><td>3%</td></tr>
+<tr><td><strong>Founder-beneficial team label — vested</strong></td><td>15,000,000</td><td>3%</td></tr>
+<tr><td>Emergency contingency</td><td>10,000,000</td><td>2%</td></tr>
+<tr><td>Total intended supply</td><td>500,000,000</td><td>100%</td></tr>
+</tbody></table></div>
+<p class="notes">The 30M founder-beneficial total is not independent-team ownership. At launch 15M is freely transferable; another 15M is proposed to be locked and released monthly from month 13 through month 36. Founder compensation from any sale proceeds is additional and subject to disclosure and budget approval.</p></section>
+<section class="section wrap" id="timeline"><div class="section-intro"><div class="eyebrow">02 / Release ceilings</div><h2>Long-term reserves.<br><span class="gradient">Gradual authorization.</span></h2>
+<p>The table is a maximum release schedule, not guaranteed circulation. Unused balances remain under custody.</p></div>
+<div class="tokenomics-table"><table><thead><tr><th>Milestone</th><th>Newly authorized</th><th>Cumulative</th></tr></thead><tbody>
+<tr><td>Year 1</td><td>74,000,000</td><td>74,000,000</td></tr>
+<tr><td>Years 2–3</td><td>95,000,000</td><td>169,000,000</td></tr>
+<tr><td>Years 4–10</td><td>117,000,000</td><td>286,000,000</td></tr>
+<tr><td>Years 11–20</td><td>113,000,000</td><td>399,000,000</td></tr>
+<tr><td>Years 21–30</td><td>101,000,000</td><td>500,000,000</td></tr>
+</tbody></table></div>
+<p class="policy-paragraph">The 50M mFRG fundraising inventory is spread across a 5M launch pilot, 15M additional in year 1, 20M in years 2–3, and 10M in years 4–10. Crypto received from trades is a different asset and is held in a separate proceeds treasury. No pricing, buyer eligibility, crypto payment address or legally authorized sale has been announced.</p></section>
+<section class="section wrap" id="staking"><div class="section-intro"><div class="eyebrow">03 / Participation</div><h2>Finite incentives.<br><span class="gradient">No guaranteed yield.</span></h2>
+<p>Proposed mFRG staking is not yet deployed and would not secure native FRG proof-of-work consensus.</p></div>
+<div class="tokenomics-table"><table><thead><tr><th>Lock period</th><th>Reward weight</th><th>Withdrawal</th></tr></thead><tbody>
+<tr><td>30 days</td><td>1.00×</td><td>7-day cooldown after maturity</td></tr>
+<tr><td>90 days</td><td>1.10×</td><td>7-day cooldown after maturity</td></tr>
+<tr><td>180 days</td><td>1.20×</td><td>7-day cooldown after maturity</td></tr>
+<tr><td>365 days</td><td>1.40×</td><td>7-day cooldown after maturity</td></tr>
+</tbody></table></div>
+<p class="policy-paragraph">Proposed rewards use a capped <strong>85M mFRG</strong> reserve (3M year 1, 10M years 2–3, 25M years 4–10, 25M years 11–20, 22M years 21–30). Weekly claims release only accrued rewards. Each funded epoch distributes proportionally to time-weighted eligible stake; neither token-denominated returns nor fiat purchasing power is guaranteed. Any contract needs independent audit and legal review.</p></section>
+<section class="section wrap" id="treasuries"><div class="section-intro"><div class="eyebrow">04 / Custody and usage</div><h2>Separated ledgers.<br><span class="gradient">Verifiable controls.</span></h2></div>
+<div class="policy-grid">
+<article class="policy-card"><h3>Development &amp; audits</h3><p>100M operations and 65M engineering/security, spent against budgets and verified milestones. Proposed 3-of-5 multisignature approval; not active.</p></article>
+<article class="policy-card"><h3>Ecosystem grants</h3><p>100M earmarked for merchant tools, wallet infrastructure and community development, released against documented milestones.</p></article>
+<article class="policy-card"><h3>Liquidity</h3><p>60M mFRG reserved for prospective mFRG/USDC and mFRG/SOL pools. Matching assets, slippage, impermanent loss and withdrawal control require review.</p></article>
+<article class="policy-card"><h3>Founder &amp; emergency</h3><p>15M founder liquid at launch, 15M founder vesting, and 10M emergency restricted reserve. Beneficial owners and authorized signers must be public.</p></article>
+<article class="policy-card"><h3>External-asset proceeds</h3><p>USDC, SOL or other coins exchanged for mFRG belong to a separately controlled treasury and require accounting, security, tax and compliance review.</p></article>
+<article class="policy-card"><h3>Privacy-chain connection</h3><p>Native FRG and Solana mFRG are distinct. No 10:1 peg or automatic FRG backing; future market-based swaps and separate wrapped-FRG designs need audits.</p></article>
+</div>
+<p class="notes">Possible services: merchant checkout, hosted nodes, mining analytics and APIs. An optional 10% burn of **mFRG received from specified paid-service fees** is a proposal, not a transfer tax or a price promise. Native FRG's 50M primary emission is <strong>not a hard cap</strong> under its documented continuing tail reward.</p>
+<p><a class="button prominent" href="MFRG_LIFETIME_TOKENOMICS_500M.md">Full tokenomics, emissions distinction, custody policies and release gates</a></p></section>
+</main><footer class="wrap" style="padding:2.5rem 0"><p><a href="index.html">ForgeCoin Home</a> · <a href="miniforge-sale.html">Sale readiness</a> · <a href="WHITEPAPER.md">Whitepaper</a> · <a href="https://github.com/tgibbsz32/forgecoin">GitHub</a></p><p>Informational plans only. No approved sale, yield, token valuation, deployment or verified mint address.</p></footer>
 </body></html>

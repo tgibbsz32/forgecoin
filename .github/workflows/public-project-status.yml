@@ -1,0 +1,27 @@
+name: Public project status documentation checks
+on:
+  pull_request:
+    paths:
+      - 'docs/project-status.html'
+      - 'docs/index.html'
+      - 'docs/miniforge-sale.html'
+      - 'docs/miniforge-tokenomics.html'
+      - 'docs/index.md'
+      - 'README.md'
+      - 'ROADMAP.md'
+      - 'tools/test_public_project_status.py'
+      - '.github/workflows/public-project-status.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/project-status.html'
+      - 'tools/test_public_project_status.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/test_public_project_status.py

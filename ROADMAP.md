@@ -1,5 +1,8 @@
 # ForgeCoin development roadmap
 
+**Current milestone (October 28): mFRG pre-deployment readiness.** No Solana mainnet mFRG mint exists yet. Prepare and audit fixed-supply issuance, nine treasuries, signer controls, reproducible simulations and explicit deployment approval before any token transaction. Steps 17–34 are offline and opt-in evidence tooling, not deployed mint verification. [Unified project status](docs/project-status.html).
+
+
 **Updated October 27, 2026. Proposed future upgrades and their timing are not guaranteed.**
 [Current native mainnet release status](docs/CURRENT_MAINNET.md) | [miniFORGE sale information](docs/miniforge-sale.html) | [mFRG treasury controls](docs/MINIFORGE_SPL_TREASURIES.md)
 

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#081421">
+<meta name="description" content="ForgeCoin project development status: native RandomX FRG prelaunch, proposed 500 million miniFORGE mFRG Solana token pre-deployment, wallet, mining pool, and future roadmap.">
+<title>Project Status &amp; Development | ForgeCoin</title>
+<link rel="icon" href="images/forgecoin-logo.png"><link rel="stylesheet" href="sale.css">
+<style>
+.status-layout{max-width:1060px;margin:auto;padding:32px 22px 70px}.status-lead{font-size:1.15rem;line-height:1.7;max-width:850px}
+.status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;margin:26px 0}
+.status-card{background:#122536;border:1px solid #365066;border-radius:14px;padding:22px}
+.status-card h2,.status-card h3{color:#77e5ea;margin-top:0}.status-card p,.status-layout p,.status-layout li{line-height:1.7}
+.status-label{display:inline-block;padding:5px 10px;border:1px solid #6683a0;border-radius:999px;font-size:.85rem;margin-bottom:14px}
+.status-layout a{color:#84e5ec}.status-layout section{margin:34px 0}
+.status-table{width:100%;border-collapse:collapse}.status-table th,.status-table td{text-align:left;padding:13px;border-bottom:1px solid #34475b;vertical-align:top}
+</style></head>
+<body><header class="site-header"><div class="wrap header-inner"><a class="brand" href="index.html"><img src="images/forgecoin-logo.png" alt="" width="40" height="40"><span>FORGE<span class="accent">COIN</span></span></a><nav aria-label="Site"><a href="index.html">Home</a><a href="miniforge-tokenomics.html">mFRG tokenomics</a><a href="miniforge-sale.html">Sale status</a><a href="downloads.html">Downloads</a></nav></div></header>
+<main class="status-layout">
+<p class="status-label">Project development update · October 28, 2026</p>
+<h1>ForgeCoin network and miniFORGE: project status</h1>
+<p class="status-lead">ForgeCoin is developing two <strong>independent</strong> assets: native privacy-oriented CPU-mined <strong>FRG</strong>, and a separately planned Solana SPL utility token <strong>miniFORGE (mFRG)</strong>. Both are in controlled development. This page distinguishes verified software progress from unlaunched production features.</p>
+<div class="status-grid">
+<article class="status-card"><span class="status-label">Native chain · prelaunch</span><h2>FRG network</h2><p>Monero-derived privacy chain, RandomX CPU mining and approximately two-minute target blocks. Planned Windows wallet/miner, Android wallet/mining features, official pool, explorer and worker statistics are subject to native validation and public release gates. Do not mistake development interfaces for a launched public network.</p><p><a href="current-mainnet.html">Native chain status</a> · <a href="mining.html">Mining information</a></p></article>
+<article class="status-card"><span class="status-label">Solana · pre-deployment</span><h2>miniFORGE (mFRG)</h2><p>Planned fixed supply of <strong>500,000,000 mFRG</strong> at six decimals, across nine specified allocations. The Solana mainnet mint has <strong>not yet been deployed</strong>. No live mint address, presale, staking service, swap, liquidity pool or distribution is authorized.</p><p><a href="miniforge-tokenomics.html">Full 500M allocation</a> · <a href="miniforge-sale.html">Sale readiness</a></p></article>
+</div>
+<section><h2>Planned miniFORGE allocation</h2>
+<table class="status-table"><thead><tr><th>Purpose</th><th>mFRG</th><th>Share</th></tr></thead><tbody>
+<tr><td>Lifetime fundraising inventory (initial pilot: up to 5M)</td><td>50,000,000</td><td>10%</td></tr>
+<tr><td>Network operations</td><td>100,000,000</td><td>20%</td></tr>
+<tr><td>Ecosystem adoption</td><td>100,000,000</td><td>20%</td></tr>
+<tr><td>Staking / participation rewards</td><td>85,000,000</td><td>17%</td></tr>
+<tr><td>Liquidity</td><td>60,000,000</td><td>12%</td></tr>
+<tr><td>Engineering and security</td><td>65,000,000</td><td>13%</td></tr>
+<tr><td>Founder unrestricted allocation</td><td>15,000,000</td><td>3%</td></tr>
+<tr><td>Founder-beneficial, team-labeled vesting (625,000/month, months 13–36)</td><td>15,000,000</td><td>3%</td></tr>
+<tr><td>Emergency</td><td>10,000,000</td><td>2%</td></tr>
+<tr><th>Total planned</th><th>500,000,000</th><th>100%</th></tr>
+</tbody></table>
+<p>The two founder-related categories have the <strong>same beneficial owner</strong>: 30M mFRG combined, or 6%. Allocations describe policy intentions; no actual mint balances or deployed vesting accounts are implied.</p></section>
+<section><h2>Development progress versus production readiness</h2>
+<ul><li><strong>Engineering:</strong> offline mint-history analysis, account reconciliation, Ed25519 attestations, challenge replay controls, ledger backup/restoration, signed checkpoints and reviewer quorum tests have been developed in GitHub.</li>
+<li><strong>Next deployment phase:</strong> finalize mainnet mint authority and treasury policies, obtain security review, simulate and test deployment, then request explicit owner approval before creating any Solana mainnet token.</li>
+<li><strong>Native FRG:</strong> validate live RandomX solo/pool acceptance, payouts, wallet restoration, network identity and mobile/desktop release packages before announcing public mining.</li>
+<li><strong>Website and applications:</strong> the site, wallet/miner interfaces, pool statistics, explorer and planned news/updates are separate development tracks; presence of an interface does not imply live functionality.</li></ul></section>
+<section><h2>Longer-term proposals</h2><p>Research proposals include FCMP++ full-chain anonymity, CARROT addressing, improved zero-knowledge privacy, Solana interoperability and future FRG-to-mFRG participation mechanisms. These may require consensus changes or hard forks. <strong>Future upgrades are proposed, not guaranteed or active.</strong></p></section>
+<section><h2>Important availability notice</h2><p>miniFORGE is not currently offered for sale. Do not send SOL, USDC or FRG to any address claiming to accept mFRG payments. mFRG is <strong>not</strong> wrapped FRG, not redeemable for native FRG at a fixed ratio, and does not inherit native FRG transaction privacy. No investment returns, exchange listing, date or price is guaranteed.</p>
+<p><a href="https://github.com/tgibbsz32/forgecoin">Source code and project updates on GitHub</a> · <a href="miniforge-tokenomics.html">Detailed allocation and vesting</a></p></section></main></body></html>

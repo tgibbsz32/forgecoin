@@ -1,5 +1,7 @@
 # ForgeCoin
 
+> **October 28 update:** Native FRG remains prelaunch. The separate **500,000,000 mFRG Solana token is planned but not yet deployed**. Current work focuses on deployment preflight, security and treasury controls, and native mining/wallet/pool validation. [Unified project status](docs/project-status.html). No live mFRG sale, staking or mint.
+
 > **Current mainnet specification:** [October 26 frozen identity, tokenomics and release status](docs/CURRENT_MAINNET.md). Public launch is not authorized.
 
 ![ForgeCoin mark](docs/images/forgecoin-logo.png)

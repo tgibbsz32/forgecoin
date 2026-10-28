@@ -1,5 +1,8 @@
 # ForgeCoin
 
+> **Adopted mFRG pilot sale planning figures (October 28, 2026):** 5M mFRG in five equal rounds at $0.08/$0.10/$0.12/$0.14/$0.16, yielding a **maximum $600,000 gross** if fully subscribed. Intended 80% project / 20% founder proceeds allocation ($120,000 founder total, half immediately and half over six months). These figures are **not an active offering, promised proceeds or permission to receive funds**. See [fixed pilot pricing and all nine token allocations](PILOT_PRICE_AND_USE_OF_PROCEEDS.md).
+
+
 > **October 28 update:** Native FRG remains prelaunch. The separate **500,000,000 mFRG Solana token is planned but not yet deployed**. Current work focuses on deployment preflight, security and treasury controls, and native mining/wallet/pool validation. [Unified project status](docs/project-status.html). No live mFRG sale, staking or mint.
 
 > **Current mainnet specification:** [October 26 frozen identity, tokenomics and release status](docs/CURRENT_MAINNET.md). Public launch is not authorized.

@@ -1,5 +1,8 @@
 # ForgeCoin development roadmap
 
+> **Adopted mFRG pilot sale planning figures (October 28, 2026):** 5M mFRG in five equal rounds at $0.08/$0.10/$0.12/$0.14/$0.16, yielding a **maximum $600,000 gross** if fully subscribed. Intended 80% project / 20% founder proceeds allocation ($120,000 founder total, half immediately and half over six months). These figures are **not an active offering, promised proceeds or permission to receive funds**. See [fixed pilot pricing and all nine token allocations](PILOT_PRICE_AND_USE_OF_PROCEEDS.md).
+
+
 **Current milestone (October 28): mFRG pre-deployment readiness.** No Solana mainnet mFRG mint exists yet. Prepare and audit fixed-supply issuance, nine treasuries, signer controls, reproducible simulations and explicit deployment approval before any token transaction. Steps 17–34 are offline and opt-in evidence tooling, not deployed mint verification. [Unified project status](docs/project-status.html).
 
 

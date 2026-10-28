@@ -1,0 +1,22 @@
+name: mFRG Step 21 replay session tests
+on:
+  pull_request:
+    paths:
+      - 'tools/verify_mfrg_challenge_session.py'
+      - 'tools/test_verify_mfrg_challenge_session.py'
+      - '.github/workflows/mfrg-challenge-session.yml'
+      - 'docs/handoffs/MFRG_500M_STEP_21_REPLAY_SESSION_2026-10-28.md'
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-session-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install 'cryptography>=43,<47'
+      - run: python3 tools/test_verify_mfrg_challenge_session.py
+      - run: python3 tools/test_verify_mfrg_control_challenges.py

@@ -1,0 +1,41 @@
+name: mFRG offline owner-purpose attestation tests
+on:
+  pull_request:
+    paths:
+      - 'tools/verify_mfrg_purpose_attestations.cjs'
+      - 'tools/test_verify_mfrg_purpose_attestations.cjs'
+      - 'docs/MFRG_OWNER_PURPOSE_ATTESTATIONS.md'
+      - 'docs/mfrg-owner-attestation.template.json'
+      - 'docs/index.md'
+      - 'docs/handoffs/MFRG_500M_STEP_13_OWNER_PURPOSE_ATTESTATIONS_2026-10-28.md'
+      - '.github/workflows/mfrg-owner-purpose-attestations.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/verify_mfrg_purpose_attestations.cjs'
+      - 'tools/test_verify_mfrg_purpose_attestations.cjs'
+      - 'docs/MFRG_OWNER_PURPOSE_ATTESTATIONS.md'
+      - 'docs/mfrg-owner-attestation.template.json'
+      - 'docs/index.md'
+      - 'docs/handoffs/MFRG_500M_STEP_13_OWNER_PURPOSE_ATTESTATIONS_2026-10-28.md'
+      - '.github/workflows/mfrg-owner-purpose-attestations.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-consent-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify 24 synthetic signed-consent and custody guard cases
+        run: node --test tools/test_verify_mfrg_purpose_attestations.cjs
+      - name: Verify offline token-account inventory
+        run: python3 tools/test_reconcile_mfrg_token_accounts.py
+      - name: Verify 500M policy and disabled sale
+        run: python3 tools/test_mfrg_policy.py
+      - name: Verify 9 treasury allocation templates and deferred-founder vesting
+        run: python3 tools/test_mfrg_treasury_vesting_preflight.py

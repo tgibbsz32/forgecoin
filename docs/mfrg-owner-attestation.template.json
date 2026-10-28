@@ -1,0 +1,25 @@
+{
+  "schema": "mfrg-purpose-attestations-v1",
+  "network": "mainnet-beta",
+  "mint": null,
+  "claims": [],
+  "note": "NONTRANSACTIONAL ONLY. Mainnet mint unknown and claims empty by design. Sign using trusted wallet; never share private key. Do not treat signed claims as beneficial ownership or verified chain state.",
+  "example_claim_fields": {
+    "purpose": null,
+    "token_account": null,
+    "token_owner": null,
+    "amount_atomic": null,
+    "nonce": null,
+    "issued_utc": null,
+    "expires_utc": null,
+    "signature_base64": null
+  },
+  "production": {
+    "owner_authenticated": false,
+    "mint_authenticated": false,
+    "holders_verified": false,
+    "treasury_funded": false,
+    "sale_enabled": false,
+    "transfers_authorized": false
+  }
+}

@@ -1,0 +1,21 @@
+name: mFRG Step 30 signed reviewer quorum
+on:
+  pull_request:
+    paths:
+      - 'tools/mfrg_signed_review_quorum.py'
+      - 'tools/test_mfrg_signed_review_quorum.py'
+      - '.github/workflows/mfrg-signed-review-quorum.yml'
+      - 'docs/handoffs/MFRG_500M_STEP_30_SIGNED_REVIEW_QUORUM_2026-10-28.md'
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install 'cryptography>=43,<47'
+      - run: python3 tools/test_mfrg_signed_review_quorum.py
+      - run: python3 tools/test_mfrg_checkpoint_review_export.py

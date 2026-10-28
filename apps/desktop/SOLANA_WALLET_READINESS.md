@@ -8,7 +8,7 @@
 - Create local Solana wallet with a reviewable official Solana CLI (solana-keygen.exe), extract a 12-word BIP39 recovery phrase, save a new password-encrypted vault without overwriting an existing wallet.
 - Open an existing encrypted vault using its password; lock UI state, copy the public receiving address; import a separate Solana CLI JSON keypair and store it encrypted in a local vault; export and reimport an encrypted backup; reveal the stored mnemonic only after password re-entry and a disclosure warning.
 - Encryption format: PBKDF2-HMAC-SHA256 at 300,000 iterations, separate AES-256-CBC and HMAC-SHA256 keys, random 32-byte salt/16-byte IV and encrypt-then-MAC integrity, with key-material handling limitations of managed strings. Backup format named forgecoin-solana-aes256-hmac-v1; password minimum 12 characters. This is not a substitute for audited custody software.
-- Display account SOL balance in 9-decimal units on Solana mainnet or devnet; query account-owned SPL token accounts using the exact configured mint; sum raw token amounts as decimals. The only existing mFRG mint is on **devnet**, with zero issued supply as of October 27. On mainnet, display explicitly "Not issued on mainnet" until a newly verified production mint config exists.
+- Display account SOL balance in 9-decimal units on Solana mainnet or devnet; query account-owned SPL token accounts using the exact configured mint; sum raw token amounts as decimals. The project has a documented **devnet** test mint (with zero issued supply in the October 27 preflight). A Solana **mainnet** mFRG mint and authority state have not been independently verified in this repository. The application displays **"Mainnet mint unconfigured"** until a separately verified production mint config exists; this does **not** assert no mainnet token exists.
 - Use read-only Solana JSON-RPC for balances; private keypair/seed remain local, never uploaded to RPC. No Solana token transaction signing or swaps are currently implemented.
 
 ## Release blockers and security review
@@ -25,8 +25,31 @@
 
 October 27: 16/16 actual WinForms + encrypted-vault smoke checks passed for creation, address parity, wrong password, integrity rejection, encrypted restore, lock/reopen, mainnet placeholder and temporary-file removal. Evidence is local outputs/41-solana-vault-gui-smoke.txt. A passing smoke test does not certify wallet custody security.
 
-## miniFORGE issuance
+## miniFORGE 500M intended issuance — planning only (October 28, 2026)
 
-The target is **50 million standard SPL mFRG**, 6 decimals: 5m future sale/trading, 5m future liquidity, 40m later distribution. The Solana **mainnet mint does not exist yet**; the currently configured signer has 0 mainnet SOL. A recommended funding budget is 0.1 mainnet SOL, sufficient margin over the quoted ~0.00553212 SOL minimal rent for one mint and three token accounts, excluding metadata and fees. See docs/MINIFORGE_SPL_TREASURIES.md.
+The current approved **project tokenomics plan**, which is not proof of on-chain issuance, is **500,000,000 mFRG**, standard SPL Token, 6 decimals. The nine allocations are:
 
-Never commit/export a real wallet JSON, mnemonic, vault backup, account password or RPC credential to a public repository or issue a public release solely on the strength of these QA results.
+| Allocation | Tokens | Share |
+| --- | ---: | ---: |
+| Crypto-denominated fundraising (5M pilot, 15M remainder year 1, 20M years 2–3, 10M years 4–10) | 50,000,000 | 10% |
+| Operations and development | 100,000,000 | 20% |
+| Ecosystem adoption and grants | 100,000,000 | 20% |
+| Finite staking/participation rewards | 85,000,000 | 17% |
+| Liquidity | 60,000,000 | 12% |
+| Engineering/security | 65,000,000 | 13% |
+| **Founder immediately unlocked** | **15,000,000** | **3%** |
+| **Team-labeled allocation beneficially owned by founder; monthly vesting in months 13–36** | **15,000,000** | **3%** |
+| Emergency | 10,000,000 | 2% |
+| **Total** | **500,000,000** | **100%** |
+
+**Both 3% buckets belong beneficially to the founder** (30M total, 6%). The deferred allocation is **625,000 mFRG per month for 24 months**. Do not describe it as independent team ownership.
+
+The **non-transactional planning file** `config/miniFORGE.mainnet.plan.json` uses schema version 2 with 9 buckets, a 500M target and 6-decimal atomic integer accounting. All mint, sale, distribution, liquidity and staking permissions are **false** and all proposed account addresses are **null**. The existing app **does not use that file to decide which mainnet mint to display**: the display logic reads a different file, `config/miniFORGE.mainnet.json`, and requires a verified mainnet mint, `network = mainnet-beta`, and `productionReady = true`. Do not invent or ship this production file before verification. The devnet mint can never be substituted on mainnet.
+
+Earlier October 27 CLI preflight noted a test fee payer with 0 SOL; the balance is **historical, not a current on-chain observation**. No mainnet SPL supply, authority ownership or account funding was independently established in this document.
+
+Before production issuance, independently verify any existing mainnet mint, total supply, mint/freeze authorities, token program, token metadata, signer controls and final vesting plans. If a mint's authority was revoked below the intended 500M, increasing supply on that mint is impossible and requires an explicitly disclosed migration instead. Do not automatically create a new mint or transfer funds from a planning update.
+
+The related **checkout prototype PR #122** was drafted for old 5M inventory and a USDC-only payment flow, and **must be audited and reconciled separately** before its logic can be merged into any distribution backend. Cryptocurrency swaps can still create securities, tax, money-transmission and sanctions obligations; the public sale remains disabled.
+
+See [canonical tokenomics](../../docs/MFRG_LIFETIME_TOKENOMICS_500M.md), [technical sale gates](../../docs/MINIFORGE_SALE_MECHANISM.md), and [native FRG release state](../../docs/CURRENT_MAINNET.md).

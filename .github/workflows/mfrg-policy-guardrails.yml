@@ -1,0 +1,36 @@
+name: miniFORGE tokenomics policy guardrails
+on:
+  pull_request:
+    paths:
+      - 'apps/desktop/config/miniFORGE.mainnet.plan.json'
+      - 'apps/desktop/SolanaWallet.cs'
+      - 'apps/desktop/SOLANA_WALLET_READINESS.md'
+      - 'docs/MFRG_LIFETIME_TOKENOMICS_500M.md'
+      - 'docs/sale-status.json'
+      - 'docs/sale.js'
+      - 'docs/miniforge-sale.html'
+      - 'tools/test_mfrg_policy.py'
+      - '.github/workflows/mfrg-policy-guardrails.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/desktop/config/miniFORGE.mainnet.plan.json'
+      - 'apps/desktop/SolanaWallet.cs'
+      - 'apps/desktop/SOLANA_WALLET_READINESS.md'
+      - 'docs/MFRG_LIFETIME_TOKENOMICS_500M.md'
+      - 'docs/sale-status.json'
+      - 'docs/sale.js'
+      - 'docs/miniforge-sale.html'
+      - 'tools/test_mfrg_policy.py'
+      - '.github/workflows/mfrg-policy-guardrails.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-tokenomics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate policy accounting and disabled-sale safety
+        run: python3 tools/test_mfrg_policy.py

@@ -1,47 +1,221 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "configuration_type": "NON_TRANSACTIONAL_PLANNING_DATA_ONLY",
+  "policy_date": "2026-10-28",
+  "policy_document": "docs/MFRG_LIFETIME_TOKENOMICS_500M.md",
   "name": "miniFORGE",
   "symbol": "mFRG",
   "network": "mainnet-beta",
   "token_program": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   "decimals": 6,
-  "target_supply_ui": "50000000",
-  "target_supply_atomic": "50000000000000",
+  "target_supply_ui": "500000000",
+  "target_supply_atomic": "500000000000000",
+  "is_issuance_authorized": false,
+  "is_sale_authorized": false,
+  "is_staking_authorized": false,
+  "is_liquidity_authorized": false,
   "allocations": [
     {
-      "id": "sale-treasury",
-      "purpose": "future sale/trading against USDC or other tokens",
-      "tokens_ui": "5000000",
-      "amount_atomic": "5000000000000",
+      "id": "fundraising",
+      "purpose": "Crypto-denominated mFRG distributions; NOT open",
+      "tokens_ui": "50000000",
+      "amount_atomic": "50000000000000",
+      "release_ceiling_by_period_mfrg": {
+        "year_1": 20000000,
+        "years_2_3": 20000000,
+        "years_4_10": 10000000,
+        "years_11_20": 0,
+        "years_21_30": 0
+      },
       "account_address": null,
       "custody_authority": null
     },
     {
-      "id": "liquidity-reserve",
-      "purpose": "future liquidity after FRG develops market value; not yet deployed",
-      "tokens_ui": "5000000",
-      "amount_atomic": "5000000000000",
+      "id": "operations",
+      "purpose": "Long-term operation and development treasury",
+      "tokens_ui": "100000000",
+      "amount_atomic": "100000000000000",
+      "release_ceiling_by_period_mfrg": {
+        "year_1": 3000000,
+        "years_2_3": 9000000,
+        "years_4_10": 20000000,
+        "years_11_20": 32000000,
+        "years_21_30": 36000000
+      },
       "account_address": null,
       "custody_authority": null
     },
     {
-      "id": "distribution-reserve",
-      "purpose": "future distribution mechanism not yet selected",
-      "tokens_ui": "40000000",
-      "amount_atomic": "40000000000000",
+      "id": "ecosystem",
+      "purpose": "Milestone-based grants and adoption",
+      "tokens_ui": "100000000",
+      "amount_atomic": "100000000000000",
+      "release_ceiling_by_period_mfrg": {
+        "year_1": 5000000,
+        "years_2_3": 15000000,
+        "years_4_10": 30000000,
+        "years_11_20": 28000000,
+        "years_21_30": 22000000
+      },
+      "account_address": null,
+      "custody_authority": null
+    },
+    {
+      "id": "staking",
+      "purpose": "Finite participation rewards; not PoW security, not live",
+      "tokens_ui": "85000000",
+      "amount_atomic": "85000000000000",
+      "release_ceiling_by_period_mfrg": {
+        "year_1": 3000000,
+        "years_2_3": 10000000,
+        "years_4_10": 25000000,
+        "years_11_20": 25000000,
+        "years_21_30": 22000000
+      },
+      "account_address": null,
+      "custody_authority": null
+    },
+    {
+      "id": "liquidity",
+      "purpose": "Treasury-controlled liquidity; needs separately acquired quote assets",
+      "tokens_ui": "60000000",
+      "amount_atomic": "60000000000000",
+      "release_ceiling_by_period_mfrg": {
+        "year_1": 20000000,
+        "years_2_3": 12000000,
+        "years_4_10": 12000000,
+        "years_11_20": 10000000,
+        "years_21_30": 6000000
+      },
+      "account_address": null,
+      "custody_authority": null
+    },
+    {
+      "id": "engineering_security",
+      "purpose": "Engineering, privacy R&D, audits, security",
+      "tokens_ui": "65000000",
+      "amount_atomic": "65000000000000",
+      "release_ceiling_by_period_mfrg": {
+        "year_1": 8000000,
+        "years_2_3": 14000000,
+        "years_4_10": 18000000,
+        "years_11_20": 15000000,
+        "years_21_30": 10000000
+      },
+      "account_address": null,
+      "custody_authority": null
+    },
+    {
+      "id": "founder_immediate",
+      "purpose": "Direct founder beneficial holding; 3 percent freely unlocked at token launch",
+      "tokens_ui": "15000000",
+      "amount_atomic": "15000000000000",
+      "release_ceiling_by_period_mfrg": {
+        "year_1": 15000000,
+        "years_2_3": 0,
+        "years_4_10": 0,
+        "years_11_20": 0,
+        "years_21_30": 0
+      },
+      "account_address": null,
+      "custody_authority": null
+    },
+    {
+      "id": "founder_deferred_team_label",
+      "purpose": "Team-labeled allocation beneficially owned by SAME founder; 3 percent months 13-36",
+      "tokens_ui": "15000000",
+      "amount_atomic": "15000000000000",
+      "release_ceiling_by_period_mfrg": {
+        "year_1": 0,
+        "years_2_3": 15000000,
+        "years_4_10": 0,
+        "years_11_20": 0,
+        "years_21_30": 0
+      },
+      "account_address": null,
+      "custody_authority": null
+    },
+    {
+      "id": "emergency",
+      "purpose": "Restricted critical incident contingency reserve",
+      "tokens_ui": "10000000",
+      "amount_atomic": "10000000000000",
+      "release_ceiling_by_period_mfrg": {
+        "year_1": 0,
+        "years_2_3": 0,
+        "years_4_10": 2000000,
+        "years_11_20": 3000000,
+        "years_21_30": 5000000
+      },
       "account_address": null,
       "custody_authority": null
     }
   ],
+  "release_schedule_total_by_period_mfrg": {
+    "year_1": 74000000,
+    "years_2_3": 95000000,
+    "years_4_10": 117000000,
+    "years_11_20": 113000000,
+    "years_21_30": 101000000
+  },
+  "founder": {
+    "beneficial_owner": "founder (both 3% allocations)",
+    "total_tokens_ui": "30000000",
+    "immediate_id": "founder_immediate",
+    "deferred_id": "founder_deferred_team_label",
+    "monthly_vesting_first_month": 13,
+    "monthly_vesting_last_month": 36,
+    "monthly_tokens_ui": "625000",
+    "monthly_amount_atomic": "625000000000",
+    "monthly_cliff_note": "No unlocks months 1-12; 24 equal monthly unlocks starting month 13"
+  },
+  "fundraising": {
+    "total_inventory_ui": "50000000",
+    "pilot_inventory_ui": "5000000",
+    "additional_year_1_ui": "15000000",
+    "years_2_3_ui": "20000000",
+    "years_4_10_ui": "10000000",
+    "approved_consideration_assets": [],
+    "proposed_consideration_assets": [
+      "Solana USDC",
+      "SOL"
+    ],
+    "price": null,
+    "sale_start": null,
+    "sale_end": null,
+    "checkout_enabled": false
+  },
+  "staking_policy_design": {
+    "status": "PROPOSED_NOT_DEPLOYED",
+    "reward_reserve_ui": "85000000",
+    "lock_days": [
+      30,
+      90,
+      180,
+      365
+    ],
+    "lock_reward_weights": [
+      "1.00",
+      "1.10",
+      "1.20",
+      "1.40"
+    ],
+    "claim_cadence_days": 7,
+    "withdrawal_cooldown_days_after_maturity": 7,
+    "guaranteed_apy": false,
+    "secures_frg_pow": false
+  },
   "mainnet_fee_payer_observed": "2xLoLobNEk39Vne4FhG91i2j14Pxq75M4RAt4Pvwrk26",
   "mainnet_fee_payer_balance_at_preflight_sol": "0",
+  "mainnet_fee_payer_balance_observation_date": "2026-10-27",
+  "fee_payer_balance_currently_verified": false,
   "network_mint_address": null,
-  "metadata_status": "not_created",
-  "mint_authority_status": "not_created",
+  "metadata_status": "unverified",
+  "mint_authority_status": "unverified",
   "fixed_cap_enforced": false,
   "allocation_completed": false,
-  "mainnet_status": "BLOCKED_FEE_PAYER_HAS_ZERO_SOL",
+  "mainnet_status": "BLOCKED_UNVERIFIED_MINT_TREASURIES_AND_APPROVALS",
   "requires_unique_token_accounts": true,
   "treasury_and_reserve_must_be_reviewed_before_issuing": true,
-  "note": "Devnet mint 9HuHPHPeWZBtRJmhsne17pVzUkFYMf9Rg1ZwdH45ebkw is not a mainnet mint. Do not use it for mainnet asset displays. No token transfer, mint, or production release is authorized by this plan."
+  "note": "Historical devnet mint 9HuHPHPeWZBtRJmhsne17pVzUkFYMf9Rg1ZwdH45ebkw must never be treated as mainnet. This static file is not consumed as the wallet's production mainnet mint; the wallet uses config/miniFORGE.mainnet.json gated by productionReady and mint verification. No minting, transfer, staking, sale or checkout authorized."
 }

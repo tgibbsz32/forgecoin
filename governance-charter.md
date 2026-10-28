@@ -5,12 +5,12 @@
 
 ## Commitment and decision milestone
 
-The project intends to select and publish a governance solution **before the initial 5M mFRG sale concludes**. This is a project milestone and does not imply that the sale has opened, that any ending date has been announced, or that buyer rights have been established. A finalized governance charter should explicitly describe any on-chain/off-chain operation and effective dates before funds or tokens are governed under it.
+The project intends to select and publish a governance solution **before any authorized mFRG distribution begins**. This is a project milestone and does not imply that the sale has opened, that any ending date has been announced, or that buyer rights have been established. A finalized governance charter should explicitly describe any on-chain/off-chain operation and effective dates before funds or tokens are governed under it.
 
 ## Scope: two separate assets
 
 - **Native ForgeCoin (FRG)** is issued via PoW consensus (50M primary-emission reference, not cap; 0.20 FRG tail). Full node operators voluntarily adopt consensus releases. No project committee, mFRG tokenholder or hosted voting API can rewrite consensus automatically.
-- **miniFORGE (mFRG)** is a separate proposed 50M standard Solana SPL token; **5M sale**, **5M post-sale liquidity/staking treasury**, **40M future issuance and development treasury**. These are intended token allocations, not an already approved on-chain governance distribution, claim on native FRG, staking entitlement, reward promise or basis for a guaranteed FRG exchange rate.
+- **miniFORGE (mFRG)** is a separate planned 500M standard Solana SPL token, allocated across nine categories (50M staged cryptocurrency fundraising, 100M operations, 100M adoption, 85M finite staking rewards, 60M liquidity, 65M engineering/security, 15M founder immediately unlocked, 15M founder-beneficial team-labeled vesting in months 13–36, 10M emergency). Both 3% buckets benefit the **same founder**. These are proposed allocations, not verified funds, staking, sale or voting rights. See [full plan](docs/MFRG_LIFETIME_TOKENOMICS_500M.md).
 - The project-managed **1% eligible-reward mining-pool fee wallet** is separate from any governance/community treasury, the mFRG sale assets, and the eventual mFRG reserves. No automatic assignment of pool fees to governance is enacted.
 
 ## Principles that any future solution should address

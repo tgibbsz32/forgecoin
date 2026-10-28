@@ -1,0 +1,42 @@
+name: mFRG opt-in live holder inventory guardrails
+on:
+  pull_request:
+    paths:
+      - 'tools/read_mfrg_mainnet_inventory.py'
+      - 'tools/test_read_mfrg_mainnet_inventory.py'
+      - 'docs/MFRG_LIVE_MAINNET_INVENTORY.md'
+      - 'docs/index.md'
+      - 'docs/handoffs/MFRG_500M_STEP_17_LIVE_MAINNET_INVENTORY_2026-10-28.md'
+      - '.github/workflows/mfrg-live-holder-inventory.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/read_mfrg_mainnet_inventory.py'
+      - 'tools/test_read_mfrg_mainnet_inventory.py'
+      - 'docs/MFRG_LIVE_MAINNET_INVENTORY.md'
+      - 'docs/index.md'
+      - 'docs/handoffs/MFRG_500M_STEP_17_LIVE_MAINNET_INVENTORY_2026-10-28.md'
+      - '.github/workflows/mfrg-live-holder-inventory.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-live-holder-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: No-network live RPC transport injection tests
+        run: python3 tools/test_read_mfrg_mainnet_inventory.py
+      - name: Earlier six-read genesis and mint initialization checker
+        run: python3 tools/test_read_mfrg_mainnet_provenance.py
+      - name: Existing two-source offline holder accounting checks
+        run: python3 tools/test_reconcile_mfrg_token_accounts.py
+      - name: Existing mint and initialization evidence tests
+        run: |
+          python3 tools/test_verify_mfrg_mint_initialization.py
+          python3 tools/test_verify_mfrg_mint_snapshot.py
+      - name: Existing nine-account founder and 5M sale gating
+        run: |
+          python3 tools/test_mfrg_treasury_vesting_preflight.py
+          python3 tools/test_mfrg_policy.py

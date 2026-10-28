@@ -119,7 +119,7 @@ def assess(mint, signature, url_a, url_b, rpc=rpc_call):
         initialization = init_report(mint, signature, snapshots[0][1],
                                      snapshots[1][1], snapshots[0][0],
                                      url_a, url_b)
-        if mint_evidence["raw_supply_atomic"] != initialization["later_raw_supply_atomic"]:
+        if mint_evidence["matching_raw_supply_atomic"] != initialization["later_raw_supply_atomic"]:
             raise LiveReadError("Supply reports disagree")
     except (InitializationError, ReconciliationError) as exc:
         raise LiveReadError(str(exc)) from exc
@@ -128,9 +128,9 @@ def assess(mint, signature, url_a, url_b, rpc=rpc_call):
         "queried_rpc_hostnames": hosts, "reported_genesis": MAINNET_GENESIS,
         "genesis_matches_mainnet_expected_on_both_rpc_endpoints": True,
         "mint_snapshot_slots": mint_evidence["snapshot_slots"],
-        "mint_supply_atomic": mint_evidence["raw_supply_atomic"],
-        "mint_authority": mint_evidence["mint_authority"],
-        "freeze_authority": mint_evidence["freeze_authority"],
+        "mint_supply_atomic": mint_evidence["matching_raw_supply_atomic"],
+        "mint_authority": mint_evidence["matching_mint_authority"],
+        "freeze_authority": mint_evidence["matching_freeze_authority"],
         "mint_initialization_slot": initialization["observed_initialization_slot"],
         "transaction_and_mint_parsed_consistency": True,
         "read_only_rpc_queries_succeeded": True,

@@ -328,8 +328,13 @@ class SaleWSGITests(unittest.TestCase):
         self.assertEqual(core.MAX_SALE_ATOMIC,5000000*core.ATOMIC)
         self.assertEqual(core.SALE_TREASURY_TOKENS*core.ATOMIC,10*core.MAX_SALE_ATOMIC)
         self.assertLess(core.MAX_SALE_ATOMIC,core.TOTAL_SUPPLY_ATOMIC)
-        with self.assertRaises(core.InsufficientAllocation):
-            self.ledger.reserve_sandbox_order(BUYER,5000001*core.ATOMIC)
+        with self.assertRaises(core.SaleError):
+            core.SandboxTerms(
+                price_usdc_micro_per_mfrg=1000,
+                buyer_cap_atomic=5000001*core.ATOMIC,
+                usdc_recipient_owner=MERCHANT,
+                usdc_recipient_token_account=MERCHANT_ATA
+            ).validate()
 
     def test_38_fundraising_and_founder_not_double_counted(self):
         allocations=core.ALLOCATION_MFRG

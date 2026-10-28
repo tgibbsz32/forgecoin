@@ -1,0 +1,25 @@
+name: mFRG Step 23 integrated signed challenge checks
+on:
+  pull_request:
+    paths:
+      - 'tools/mfrg_integrated_challenge_verifier.py'
+      - 'tools/test_mfrg_integrated_challenge_verifier.py'
+      - '.github/workflows/mfrg-integrated-challenge.yml'
+      - 'docs/handoffs/MFRG_500M_STEP_23_INTEGRATED_CHALLENGE_2026-10-28.md'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/mfrg_integrated_challenge_verifier.py'
+      - 'tools/test_mfrg_integrated_challenge_verifier.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install 'cryptography>=43,<47'
+      - run: python3 tools/test_mfrg_integrated_challenge_verifier.py
+      - run: python3 tools/test_mfrg_signed_challenge_issuer.py
+      - run: python3 tools/test_verify_mfrg_control_challenges.py

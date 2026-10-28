@@ -1,0 +1,40 @@
+name: mFRG opt-in read-only mainnet genesis RPC preflight
+on:
+  pull_request:
+    paths:
+      - 'tools/read_mfrg_mainnet_provenance.py'
+      - 'tools/test_read_mfrg_mainnet_provenance.py'
+      - 'docs/MFRG_LIVE_MAINNET_PROVENANCE.md'
+      - 'docs/MFRG_MINT_INITIALIZATION_EVIDENCE.md'
+      - 'docs/index.md'
+      - 'docs/handoffs/MFRG_500M_STEP_16_LIVE_GENESIS_RPC_PREFLIGHT_2026-10-28.md'
+      - '.github/workflows/mfrg-live-mainnet-rpc.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/read_mfrg_mainnet_provenance.py'
+      - 'tools/test_read_mfrg_mainnet_provenance.py'
+      - 'docs/MFRG_LIVE_MAINNET_PROVENANCE.md'
+      - 'docs/MFRG_MINT_INITIALIZATION_EVIDENCE.md'
+      - 'docs/index.md'
+      - 'docs/handoffs/MFRG_500M_STEP_16_LIVE_GENESIS_RPC_PREFLIGHT_2026-10-28.md'
+      - '.github/workflows/mfrg-live-mainnet-rpc.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mainnet-genesis-rpc-synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify read-only genesis pinning with injected offline RPC
+        run: python3 tools/test_read_mfrg_mainnet_provenance.py
+      - name: Verify mint init transaction and 500M supply policy
+        run: python3 tools/test_verify_mfrg_mint_initialization.py
+      - name: Verify 3-of-5 / 4-of-5 custody and PDA fail-closed rules
+        run: python3 tools/test_verify_mfrg_multisig_pda.py
+      - name: Verify 500M tokenomics and sale-disabled policy
+        run: python3 tools/test_mfrg_policy.py
+      - name: Verify founder 6 percent beneficial ownership and vesting
+        run: python3 tools/test_mfrg_treasury_vesting_preflight.py

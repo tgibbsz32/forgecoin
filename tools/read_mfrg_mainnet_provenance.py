@@ -46,10 +46,12 @@ def exact_https_origin(url):
         raise LiveReadError("Require plain public HTTPS RPC origin (hostname only, no credentials)")
     try:
         ip = ipaddress.ip_address(host)
-        if not ip.is_global:
-            raise LiveReadError("Private or local IP literal not permitted")
     except ValueError:
-        pass
+        # A hostname is not an IP literal. This branch does not validate DNS
+        # resolution or guarantee the provider's organizational independence.
+        ip = None
+    if ip is not None and not ip.is_global:
+        raise LiveReadError("Private or local IP literal not permitted")
     return host.lower().rstrip(".")
 
 

@@ -1,0 +1,21 @@
+name: mFRG Step 27 signed checkpoint chain
+on:
+  pull_request:
+    paths:
+      - 'tools/mfrg_signed_checkpoint_chain.py'
+      - 'tools/test_mfrg_signed_checkpoint_chain.py'
+      - '.github/workflows/mfrg-signed-checkpoints.yml'
+      - 'docs/handoffs/MFRG_500M_STEP_27_SIGNED_CHECKPOINTS_2026-10-28.md'
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install 'cryptography>=43,<47'
+      - run: python3 tools/test_mfrg_signed_checkpoint_chain.py
+      - run: python3 tools/test_mfrg_sqlite_recovery_drill.py

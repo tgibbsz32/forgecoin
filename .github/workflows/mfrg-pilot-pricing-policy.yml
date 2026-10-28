@@ -1,0 +1,27 @@
+name: mFRG fixed pilot price policy and legal hold
+on:
+  pull_request:
+    paths:
+      - 'docs/MFRG_PILOT_PRICE_AND_USE_OF_PROCEEDS.md'
+      - 'docs/MFRG_PILOT_PRELIMINARY_US_LEGAL_REVIEW_2026-10-28.md'
+      - 'docs/miniforge-sale.html'
+      - 'docs/miniforge-tokenomics.html'
+      - 'docs/project-status.html'
+      - 'tools/test_mfrg_pilot_price_policy.py'
+      - '.github/workflows/mfrg-pilot-pricing-policy.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/MFRG_PILOT_PRICE_AND_USE_OF_PROCEEDS.md'
+      - 'tools/test_mfrg_pilot_price_policy.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/test_mfrg_pilot_price_policy.py
+      - run: python3 tools/test_public_project_status.py
+      - run: python3 tools/test_mfrg_predeployment_preflight.py

@@ -49,7 +49,7 @@ Pool network statistics, pool accounting data, worker dashboards and mining calc
 - [Native mainnet identity and blockers](docs/CURRENT_MAINNET.md)
 - [Native technical whitepaper, including separate mFRG economics](docs/WHITEPAPER.md)
 - [miniFORGE sale-information and allocation page](docs/miniforge-sale.html)
-- [mFRG 5M / 5M / 40M treasury plan](docs/MINIFORGE_SPL_TREASURIES.md)
+- [mFRG 500M nine-category lifetime treasury plan](docs/MINIFORGE_SPL_TREASURIES.md)
 - [Sales engineering gates](docs/MINIFORGE_SALE_MECHANISM.md)
 - [Provisional governance principles](governance-charter.md)
 - [FCMP++/CARROT and L1–L3 architecture](docs/SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md)

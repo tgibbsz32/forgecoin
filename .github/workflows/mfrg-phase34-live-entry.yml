@@ -1,0 +1,23 @@
+name: mFRG Step 34 opt-in live evidence entry
+on:
+  pull_request:
+    paths:
+      - 'tools/mfrg_phase34_live_entry.py'
+      - 'tools/test_mfrg_phase34_live_entry.py'
+      - 'docs/handoffs/MFRG_500M_STEP_34_LIVE_PHASE_ENTRY_2026-10-28.md'
+      - '.github/workflows/mfrg-phase34-live-entry.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/mfrg_phase34_live_entry.py'
+      - 'tools/test_mfrg_phase34_live_entry.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/test_mfrg_phase34_live_entry.py
+      - run: python3 tools/test_mfrg_owner_deployment_intake.py

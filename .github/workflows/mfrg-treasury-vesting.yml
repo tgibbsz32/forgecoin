@@ -7,6 +7,7 @@ on:
       - 'docs/mfrg-treasury-registry.template.json'
       - 'docs/MFRG_TREASURY_VESTING_IMPLEMENTATION.md'
       - 'docs/MFRG_TREASURY_VESTING_GATES.md'
+      - 'docs/handoffs/MFRG_500M_STEP_10_TREASURY_VESTING_PREFLIGHT_2026-10-28.md'
       - '.github/workflows/mfrg-treasury-vesting.yml'
   push:
     branches: [main]
@@ -16,6 +17,7 @@ on:
       - 'docs/mfrg-treasury-registry.template.json'
       - 'docs/MFRG_TREASURY_VESTING_IMPLEMENTATION.md'
       - 'docs/MFRG_TREASURY_VESTING_GATES.md'
+      - 'docs/handoffs/MFRG_500M_STEP_10_TREASURY_VESTING_PREFLIGHT_2026-10-28.md'
       - '.github/workflows/mfrg-treasury-vesting.yml'
   workflow_dispatch:
 permissions:

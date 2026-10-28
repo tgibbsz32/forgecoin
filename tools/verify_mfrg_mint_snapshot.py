@@ -128,7 +128,7 @@ def main(argv=None):
                         help="Saved read-only getAccountInfo jsonParsed response; no network requests")
     args = parser.parse_args(argv)
     try:
-        snap = json.loads(args.rpc_json.read_text(encoding="utf-8"))
+        snap = json.loads(args.rpc_json.read_text(encoding="utf-8-sig"))
         report = assess_snapshot(args.mint, snap)
     except (OSError, json.JSONDecodeError, SnapshotError) as exc:
         print(json.dumps({"snapshot_self_consistent": False,

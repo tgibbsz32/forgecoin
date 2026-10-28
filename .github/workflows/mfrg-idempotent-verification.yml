@@ -1,0 +1,24 @@
+name: mFRG Step 24 idempotent verification tests
+on:
+  pull_request:
+    paths:
+      - 'tools/mfrg_idempotent_verification.py'
+      - 'tools/test_mfrg_idempotent_verification.py'
+      - '.github/workflows/mfrg-idempotent-verification.yml'
+      - 'docs/handoffs/MFRG_500M_STEP_24_IDEMPOTENT_RESULTS_2026-10-28.md'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/mfrg_idempotent_verification.py'
+      - 'tools/test_mfrg_idempotent_verification.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install 'cryptography>=43,<47'
+      - run: python3 tools/test_mfrg_idempotent_verification.py
+      - run: python3 tools/test_mfrg_integrated_challenge_verifier.py

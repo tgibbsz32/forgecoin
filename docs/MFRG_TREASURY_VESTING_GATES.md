@@ -60,4 +60,6 @@ The proposed operational plan includes at least 12 months of liquid **external-a
 - [ ] Independently audit staking and escrow code, guard all deferred allocations and verify release permissions
 - [ ] Preserve public `sale_enabled=false` / mint address null / production `productionReady` fail-closed conditions until separate approved launch
 
+**Step 10 implementation evidence:** The [offline readiness runbook](MFRG_TREASURY_VESTING_IMPLEMENTATION.md), [unfunded nine-account template](mfrg-treasury-registry.template.json), and [calendar-month test and simulation code](../tools/mfrg_treasury_vesting_preflight.py) define the founder vesting convention **at the end of months 13–36** (12 × 625,000 vested by the end of year 2, 24 × 625,000 by year 3). No real launch timestamp or owner account has been identified.
+
 **Operational position:** This file does not grant authority to release any founder tokens, activate sale checkout, or increase network supply. See [mainnet mint read-only verification](MFRG_SOLANA_MINT_VERIFICATION.md) and [full lifetime policy](MFRG_LIFETIME_TOKENOMICS_500M.md).

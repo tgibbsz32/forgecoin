@@ -1,0 +1,122 @@
+{
+  "schema": "mfrg-treasury-readiness-v1",
+  "mode": "NON_TRANSACTIONAL_TEMPLATE_ONLY",
+  "policy_date": "2026-10-28",
+  "network": "solana-mainnet-beta",
+  "network_mint_address": null,
+  "launch_utc": null,
+  "purpose": "Template for future authenticated treasury custody; NOT proof of funded accounts, a signed release or authorized fundraising.",
+  "mint_supply_target_atomic": "500000000000000",
+  "verification": {
+    "mint_authenticated": false,
+    "holder_inventory_reconciled": false,
+    "multisig_signers_approved": false,
+    "vesting_contract_audited": false,
+    "treasury_funding_verified": false,
+    "legal_distributions_approved": false,
+    "sale_contract_audited": false
+  },
+  "founder": {
+    "beneficial_owner": "founder receives both allocations",
+    "unlocked_mfrg_at_actual_launch": 15000000,
+    "deferred_team_labeled_founder_benefit_mfrg": 15000000,
+    "first_release_month": 13,
+    "last_release_month": 36,
+    "monthly_release_mfrg": 625000,
+    "contract_address": null,
+    "beneficiary_wallet": null,
+    "actual_launch_timestamp_verified": false,
+    "vesting_funded_verified": false
+  },
+  "accounts": [
+    {
+      "id": "fundraising",
+      "allocation_mfrg": 50000000,
+      "allocation_atomic": "50000000000000",
+      "token_account": null,
+      "owner_authority": null,
+      "verified_balance_atomic": null,
+      "funded_verified": false
+    },
+    {
+      "id": "operations",
+      "allocation_mfrg": 100000000,
+      "allocation_atomic": "100000000000000",
+      "token_account": null,
+      "owner_authority": null,
+      "verified_balance_atomic": null,
+      "funded_verified": false
+    },
+    {
+      "id": "ecosystem",
+      "allocation_mfrg": 100000000,
+      "allocation_atomic": "100000000000000",
+      "token_account": null,
+      "owner_authority": null,
+      "verified_balance_atomic": null,
+      "funded_verified": false
+    },
+    {
+      "id": "staking",
+      "allocation_mfrg": 85000000,
+      "allocation_atomic": "85000000000000",
+      "token_account": null,
+      "owner_authority": null,
+      "verified_balance_atomic": null,
+      "funded_verified": false
+    },
+    {
+      "id": "liquidity",
+      "allocation_mfrg": 60000000,
+      "allocation_atomic": "60000000000000",
+      "token_account": null,
+      "owner_authority": null,
+      "verified_balance_atomic": null,
+      "funded_verified": false
+    },
+    {
+      "id": "engineering_security",
+      "allocation_mfrg": 65000000,
+      "allocation_atomic": "65000000000000",
+      "token_account": null,
+      "owner_authority": null,
+      "verified_balance_atomic": null,
+      "funded_verified": false
+    },
+    {
+      "id": "founder_immediate",
+      "allocation_mfrg": 15000000,
+      "allocation_atomic": "15000000000000",
+      "token_account": null,
+      "owner_authority": null,
+      "verified_balance_atomic": null,
+      "funded_verified": false
+    },
+    {
+      "id": "founder_deferred_team_label",
+      "allocation_mfrg": 15000000,
+      "allocation_atomic": "15000000000000",
+      "token_account": null,
+      "owner_authority": null,
+      "verified_balance_atomic": null,
+      "funded_verified": false
+    },
+    {
+      "id": "emergency",
+      "allocation_mfrg": 10000000,
+      "allocation_atomic": "10000000000000",
+      "token_account": null,
+      "owner_authority": null,
+      "verified_balance_atomic": null,
+      "funded_verified": false
+    }
+  ],
+  "external_proceeds": {
+    "asset": "USDC/SOL etc",
+    "treasury_account": null,
+    "signers_verified": false,
+    "balance_verified": false,
+    "notes": "External proceeds are separate from 500M mFRG allocation and must not be counted as minted mFRG."
+  },
+  "production_actions_allowed": false
+}

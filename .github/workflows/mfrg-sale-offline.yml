@@ -1,0 +1,46 @@
+name: miniFORGE disabled sale prototype tests
+on:
+  pull_request:
+    paths:
+      - 'apps/sale/**'
+      - 'docs/sale.js'
+      - 'docs/sale-status.json'
+      - 'docs/miniforge-sale.html'
+      - 'docs/index.html'
+      - 'docs/sale.css'
+      - 'tools/test_mfrg_policy.py'
+      - '.github/workflows/mfrg-sale-offline.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/sale/**'
+      - 'docs/sale.js'
+      - 'docs/sale-status.json'
+      - 'docs/miniforge-sale.html'
+      - 'docs/index.html'
+      - 'docs/sale.css'
+      - 'tools/test_mfrg_policy.py'
+      - '.github/workflows/mfrg-sale-offline.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-no-payments:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Offline quote, receipt and anti-replay tests
+        run: python3 apps/sale/tests/test_sale.py
+      - name: Public site and backend consistency tests
+        run: python3 apps/sale/tests/test_site.py
+      - name: Read-only wallet and payment-lock browser simulation
+        run: node apps/sale/tests/test_browser.cjs
+      - name: Full lifetime tokenomics and mint gate tests
+        run: python3 tools/test_mfrg_policy.py

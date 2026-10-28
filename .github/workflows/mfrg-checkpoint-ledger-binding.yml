@@ -1,0 +1,21 @@
+name: mFRG Step 28 ledger binding
+on:
+  pull_request:
+    paths:
+      - 'tools/mfrg_checkpoint_ledger_binding.py'
+      - 'tools/test_mfrg_checkpoint_ledger_binding.py'
+      - '.github/workflows/mfrg-checkpoint-ledger-binding.yml'
+      - 'docs/handoffs/MFRG_500M_STEP_28_LEDGER_BINDING_2026-10-28.md'
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install 'cryptography>=43,<47'
+      - run: python3 tools/test_mfrg_checkpoint_ledger_binding.py
+      - run: python3 tools/test_mfrg_signed_checkpoint_chain.py

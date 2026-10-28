@@ -1,0 +1,38 @@
+name: mFRG offline token-account inventory reconciliation
+on:
+  pull_request:
+    paths:
+      - 'tools/reconcile_mfrg_token_accounts.py'
+      - 'tools/test_reconcile_mfrg_token_accounts.py'
+      - 'docs/MFRG_TOKEN_ACCOUNT_INVENTORY.md'
+      - 'docs/index.md'
+      - 'docs/handoffs/MFRG_500M_STEP_12_TOKEN_ACCOUNT_INVENTORY_2026-10-28.md'
+      - '.github/workflows/mfrg-token-account-inventory.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/reconcile_mfrg_token_accounts.py'
+      - 'tools/test_reconcile_mfrg_token_accounts.py'
+      - 'docs/MFRG_TOKEN_ACCOUNT_INVENTORY.md'
+      - 'docs/index.md'
+      - 'docs/handoffs/MFRG_500M_STEP_12_TOKEN_ACCOUNT_INVENTORY_2026-10-28.md'
+      - '.github/workflows/mfrg-token-account-inventory.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inventory-accounting:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate token-account balance and authority reconciliation
+        run: python3 tools/test_reconcile_mfrg_token_accounts.py
+      - name: Validate original two-source mint account checks
+        run: python3 tools/test_reconcile_mfrg_mint_snapshots.py
+      - name: Validate existing mint authority safeguards
+        run: python3 tools/test_verify_mfrg_mint_snapshot.py
+      - name: Validate nine treasury budgets and founder vesting
+        run: python3 tools/test_mfrg_treasury_vesting_preflight.py
+      - name: Verify public sale disabled and 5M pilot cap
+        run: python3 tools/test_mfrg_policy.py

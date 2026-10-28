@@ -1,0 +1,38 @@
+name: mFRG offline mint initialization evidence checks
+on:
+  pull_request:
+    paths:
+      - 'tools/verify_mfrg_mint_initialization.py'
+      - 'tools/test_verify_mfrg_mint_initialization.py'
+      - 'docs/MFRG_MINT_INITIALIZATION_EVIDENCE.md'
+      - 'docs/index.md'
+      - 'docs/handoffs/MFRG_500M_STEP_15_MINT_INITIALIZATION_EVIDENCE_2026-10-28.md'
+      - '.github/workflows/mfrg-mint-initialization.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/verify_mfrg_mint_initialization.py'
+      - 'tools/test_verify_mfrg_mint_initialization.py'
+      - 'docs/MFRG_MINT_INITIALIZATION_EVIDENCE.md'
+      - 'docs/index.md'
+      - 'docs/handoffs/MFRG_500M_STEP_15_MINT_INITIALIZATION_EVIDENCE_2026-10-28.md'
+      - '.github/workflows/mfrg-mint-initialization.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  init-evidence-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check synthetic initialization and later mint account consistency
+        run: python3 tools/test_verify_mfrg_mint_initialization.py
+      - name: Check earlier dual-source mint comparisons
+        run: python3 tools/test_reconcile_mfrg_mint_snapshots.py
+      - name: Check multisig and PDA custody fail-closed safeguards
+        run: python3 tools/test_verify_mfrg_multisig_pda.py
+      - name: Check treasury founder vesting arithmetic and disabled payments
+        run: python3 tools/test_mfrg_treasury_vesting_preflight.py
+      - name: Check 500M supply and 5M pilot policy
+        run: python3 tools/test_mfrg_policy.py

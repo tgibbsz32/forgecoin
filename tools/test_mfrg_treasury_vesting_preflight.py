@@ -165,7 +165,35 @@ class TreasuryVestingTests(unittest.TestCase):
             with self.subTest(field=key), self.assertRaises(PreflightError):
                 assess_plan(self.plan, changed_status, self.registry)
 
-    def test_15_production_token_mint_not_silently_enabled(self):
+    def test_15_proposed_founder_escrow_cannot_be_marked_deployed(self):
+        for key, value in (("contract_address", "11111111111111111111111111111111"),
+                           ("beneficiary_wallet", "11111111111111111111111111111111"),
+                           ("actual_launch_timestamp_verified", True),
+                           ("vesting_funded_verified", True),
+                           ("monthly_release_mfrg", 624999)):
+            changed = copy.deepcopy(self.registry)
+            changed["founder"][key] = value
+            with self.subTest(field=key), self.assertRaises(PreflightError):
+                assess_plan(self.plan, self.status, changed)
+
+    def test_16_external_proceeds_and_activation_not_verified(self):
+        for field, value in (("treasury_account", "11111111111111111111111111111111"),
+                             ("signers_verified", True),
+                             ("balance_verified", True)):
+            changed = copy.deepcopy(self.registry)
+            changed["external_proceeds"][field] = value
+            with self.subTest(field=field), self.assertRaises(PreflightError):
+                assess_plan(self.plan, self.status, changed)
+        changed = copy.deepcopy(self.registry)
+        changed["production_actions_allowed"] = True
+        with self.assertRaises(PreflightError):
+            assess_plan(self.plan, self.status, changed)
+        changed = copy.deepcopy(self.registry)
+        changed["mint_supply_target_atomic"] = "500000000000001"
+        with self.assertRaises(PreflightError):
+            assess_plan(self.plan, self.status, changed)
+
+    def test_17_production_token_mint_not_silently_enabled(self):
         changed = copy.deepcopy(self.plan)
         changed["network_mint_address"] = "11111111111111111111111111111111"
         with self.assertRaises(PreflightError):

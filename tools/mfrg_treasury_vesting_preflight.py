@@ -195,8 +195,27 @@ def assess_plan(plan: dict, status: dict, registry: dict):
     if (registry.get("schema") != "mfrg-treasury-readiness-v1"
             or registry.get("mode") != "NON_TRANSACTIONAL_TEMPLATE_ONLY"
             or registry.get("network_mint_address") is not None
-            or registry.get("launch_utc") is not None):
+            or registry.get("launch_utc") is not None
+            or registry.get("mint_supply_target_atomic") != str(SUPPLY * FACTOR)
+            or registry.get("production_actions_allowed") is not False):
         raise PreflightError("Registry template must remain inert and address-free")
+    proposed_founder = registry.get("founder")
+    if (not isinstance(proposed_founder, dict)
+            or proposed_founder.get("unlocked_mfrg_at_actual_launch") != FOUNDERS_IMMEDIATE
+            or proposed_founder.get("deferred_team_labeled_founder_benefit_mfrg") != FOUNDERS_DEFERRED
+            or proposed_founder.get("first_release_month") != 13
+            or proposed_founder.get("last_release_month") != 36
+            or proposed_founder.get("monthly_release_mfrg") != MONTHLY_DEFERRED
+            or proposed_founder.get("contract_address") is not None
+            or proposed_founder.get("beneficiary_wallet") is not None
+            or proposed_founder.get("actual_launch_timestamp_verified") is not False
+            or proposed_founder.get("vesting_funded_verified") is not False):
+        raise PreflightError("Founder vesting registry must be unconfigured and unfunded")
+    proceeds = registry.get("external_proceeds")
+    if (not isinstance(proceeds, dict) or proceeds.get("treasury_account") is not None
+            or proceeds.get("signers_verified") is not False
+            or proceeds.get("balance_verified") is not False):
+        raise PreflightError("Crypto proceeds registry cannot imply funded accounts")
     gates = registry.get("verification")
     required = (
         "mint_authenticated", "holder_inventory_reconciled", "multisig_signers_approved",

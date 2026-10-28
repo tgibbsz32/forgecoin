@@ -104,7 +104,7 @@ function assess(manifest, inventory, asOf) {
       || manifest.claims.length > MAX_CLAIMS) reject("Require 1..100 claims");
   const {slot,accounts} = inventoryByAddress(manifest.mint, inventory);
   const now = utc(asOf, "as-of");
-  const seen = new Set(), totals = Object.fromEntries(Object.keys(BUDGET).map(k=>[k,0n]));
+  const seen = new Set(), nonces = new Set(), totals = Object.fromEntries(Object.keys(BUDGET).map(k=>[k,0n]));
   const claimedAddresses = [];
   for (const claim of manifest.claims) {
     if (!claim || !Object.prototype.hasOwnProperty.call(BUDGET, claim.purpose))
@@ -121,6 +121,8 @@ function assess(manifest, inventory, asOf) {
     if (observed.delegate || observed.closeAuthority || observed.state !== "initialized")
       reject("Delegate, close authority or frozen state requires separate custody review");
     if (typeof claim.nonce !== "string" || !/^[a-f0-9]{32,64}$/.test(claim.nonce)) reject("Require a unique random 16..32 byte hex nonce");
+    if (nonces.has(claim.nonce)) reject("Duplicate signed nonce");
+    nonces.add(claim.nonce);
     const issued = utc(claim.issued_utc, "issued_utc"), expiry=utc(claim.expires_utc,"expires_utc");
     if (issued > now || expiry < now || expiry <= issued || expiry-issued > MAX_AGE)
       reject("Future, expired or overly broad consent attestation");

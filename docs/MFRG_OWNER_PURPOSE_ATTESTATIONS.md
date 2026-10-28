@@ -45,6 +45,8 @@ Intended mFRG fixed lifetime supply: **500 million**, not observed issuance. Nin
 
 Production sale/quotes/payments/fulfillment, token issuance, vesting, staking, liquidity and FRG native chain changes remain **disabled and unperformed**. The required next evidence is an actual owner-authenticated mainnet mint creation record and independently corroborated token account inventory, followed by multisig/contract-specific authority validation, legal and security reviews.
 
+For treasury SPL multisig structure and a fail-closed, non-approval PDA review workflow, see [Step 14 custody authority preflight](MFRG_MULTISIG_PDA_READINESS.md). Direct Ed25519 signature consent is not a substitute for multisig account inspection or audited program-derived controls.
+
 ## Tests
 
 Run locally without any Solana credentials:

@@ -59,7 +59,7 @@ class OrderLedger:
                     id TEXT PRIMARY KEY,
                     reference TEXT NOT NULL UNIQUE,
                     buyer TEXT NOT NULL,
-                    mint_units INTEGER NOT NULL CHECK(mint_units>0 AND mint_units<=5000000000000) -- fixed 5M PILOT cap; do not increase to 50M lifetime,
+                    mint_units INTEGER NOT NULL CHECK(mint_units>0 AND mint_units<=5000000000000), -- 5M pilot hard ceiling
                     usdc_units INTEGER NOT NULL CHECK(usdc_units>0),
                     created_at INTEGER NOT NULL,
                     expires_at INTEGER NOT NULL,

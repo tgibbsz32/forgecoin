@@ -1,0 +1,24 @@
+name: mFRG Step 22 signed issuer and durable nonce tests
+on:
+  pull_request:
+    paths:
+      - 'tools/mfrg_signed_challenge_issuer.py'
+      - 'tools/test_mfrg_signed_challenge_issuer.py'
+      - '.github/workflows/mfrg-issuer-session.yml'
+      - 'docs/handoffs/MFRG_500M_STEP_22_SIGNED_ISSUER_2026-10-28.md'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/mfrg_signed_challenge_issuer.py'
+      - 'tools/test_mfrg_signed_challenge_issuer.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install 'cryptography>=43,<47'
+      - run: python3 tools/test_mfrg_signed_challenge_issuer.py
+      - run: python3 tools/test_verify_mfrg_challenge_session.py

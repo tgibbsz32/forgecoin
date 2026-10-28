@@ -1,0 +1,27 @@
+name: mFRG Step 18 offline account-purpose reconciliation
+on:
+  pull_request:
+    paths:
+      - 'tools/reconcile_mfrg_holder_purposes.py'
+      - 'tools/test_reconcile_mfrg_holder_purposes.py'
+      - 'docs/handoffs/MFRG_500M_STEP_18_HOLDER_PURPOSE_RECONCILIATION_2026-10-28.md'
+      - '.github/workflows/mfrg-holder-purpose-reconciliation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/reconcile_mfrg_holder_purposes.py'
+      - 'tools/test_reconcile_mfrg_holder_purposes.py'
+      - '.github/workflows/mfrg-holder-purpose-reconciliation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-purpose-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Step 18 synthetic reconciliation cases
+        run: python3 tools/test_reconcile_mfrg_holder_purposes.py
+      - name: Step 17 holder inventory regression cases
+        run: python3 tools/test_read_mfrg_mainnet_inventory.py

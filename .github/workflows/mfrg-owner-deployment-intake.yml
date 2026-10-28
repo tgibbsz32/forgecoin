@@ -1,0 +1,24 @@
+name: mFRG Step 33 public owner-deployment evidence intake
+on:
+  pull_request:
+    paths:
+      - 'tools/mfrg_owner_deployment_intake.py'
+      - 'tools/test_mfrg_owner_deployment_intake.py'
+      - '.github/workflows/mfrg-owner-deployment-intake.yml'
+      - 'docs/handoffs/MFRG_500M_STEP_33_PHASE_ENTRY_BLOCKER_2026-10-28.md'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/mfrg_owner_deployment_intake.py'
+      - 'tools/test_mfrg_owner_deployment_intake.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-intake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/test_mfrg_owner_deployment_intake.py
+      - run: python3 tools/test_mfrg_phase32_readiness.py

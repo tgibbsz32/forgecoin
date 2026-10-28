@@ -1,0 +1,27 @@
+name: mFRG Step 20 pinned trust and challenges
+on:
+  pull_request:
+    paths:
+      - 'tools/verify_mfrg_control_challenges.py'
+      - 'tools/test_verify_mfrg_control_challenges.py'
+      - 'docs/handoffs/MFRG_500M_STEP_20_PINNED_TRUST_CONTROL_2026-10-28.md'
+      - '.github/workflows/mfrg-control-challenges.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/verify_mfrg_control_challenges.py'
+      - 'tools/test_verify_mfrg_control_challenges.py'
+      - '.github/workflows/mfrg-control-challenges.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-control-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install 'cryptography>=43,<47'
+      - run: python3 tools/test_verify_mfrg_control_challenges.py
+      - run: python3 tools/test_verify_mfrg_signed_attestations.py
+      - run: python3 tools/test_reconcile_mfrg_holder_purposes.py

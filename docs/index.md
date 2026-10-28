@@ -1,7 +1,9 @@
-# ForgeCoin documentation and active project direction
+# ForgeCoin documentation and current project direction
 
-[Homepage](index.html) | [miniFORGE sale and treasury page](miniforge-sale.html) | [Native FRG mainnet status](CURRENT_MAINNET.md) | [ForgeCoin whitepaper](WHITEPAPER.md) | [Roadmap](../ROADMAP.md) | [Governance design](../governance-charter.md)
+[Homepage](index.html) | [miniFORGE tokenomics](miniforge-tokenomics.html) | [miniFORGE lifetime policy](MFRG_LIFETIME_TOKENOMICS_500M.md) | [Sale readiness](miniforge-sale.html) | [Native FRG mainnet](CURRENT_MAINNET.md) | [Whitepaper](WHITEPAPER.md) | [Roadmap](../ROADMAP.md)
 
-**October 27, 2026:** The native FRG mainnet is frozen pending public-release verification. The separate mFRG Solana SPL token has a 50M intended supply: **5M for the planned sale**, **5M in the post-sale liquidity/staking treasury** and **40M in the future issuance and development treasury**. None is evidence of live mainnet minting or staking, and the sale is not open.
+**October 28, 2026 policy:** The separate Solana miniFORGE asset is now **500,000,000 mFRG target fixed supply**, split across nine non-overlapping budgets including **50M mFRG (10%) proposed cryptocurrency-fundraising inventory**, **15M (3%) unlocked founder tokens at launch**, and **15M (3%) deferred team-labeled allocation beneficially owned by the same founder**, vesting 625k monthly in months 13–36.
 
-The project intends to select and publish governance rules **before the mFRG sale concludes**. The former fixed ten-seat design and the wrapped-FRG bridge are superseded as active roadmap items. The preferred later protocol research includes FCMP++/CARROT upgrades to native FRG, L1 atomic swaps, L2 payments and possible L3 applications. Future implementations and timing are not guaranteed.
+**No live distribution:** mint address, on-chain balances, staking contracts and sale eligibility/pricing are unverified or not authorized. No checkout is active; do not send funds to any website or unsolicited address.
+
+**Native FRG:** 50M is the documented **primary-emission reference**, not a hard cap: the existing network rules include a continuing 0.20 FRG mining tail reward each 120-second block. The frozen native mainnet remains subject to separate launch gates. Future privacy upgrades and cross-chain mechanisms are proposals, not production functionality.

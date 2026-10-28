@@ -40,6 +40,8 @@ The script **does not contact RPC**: it only examines the saved JSON. It rejects
 
 **No authority actions, supply changes or transfers occur.**
 
+For independent cross-checks of two separately obtained, saved mainnet mint snapshots, follow [Step 11 two-source comparison](MFRG_DUAL_SOURCE_MINT_VERIFICATION.md). This is a **read-only consistency check**, not authentication, and does not authorize minting or distribution.
+
 ## 3. Critical mint authority decisions
 
 | On-chain state **if independently verified** | Interpretation and required next action |

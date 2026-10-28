@@ -55,9 +55,9 @@
 
 ## Next-stage mFRG token, treasuries and governance
 
-miniFORGE (mFRG) is a separate, not-yet-issued-on-mainnet standard SPL token with **50M target supply**: **5M initial sale**, **5M post-sale liquidity/staking treasury** and **40M future issuance/development treasury**. The 40M reserve is for future controlled releases from the supply target. It does not authorize minting extra units. No sale, payment address, price, staking program or liquidity pool is operational.
+miniFORGE (mFRG) is a separate standard Solana SPL asset with a revised **500M target fixed supply**: **50M staged fundraising inventory** (including an initial 5M pilot), **100M operations, 100M grants, 85M staking incentives, 60M liquidity, 65M engineering/security, 15M founder immediately unlocked, 15M founder-beneficial team-labeled vesting in months 13–36, and 10M emergency**. All nine buckets are distinct and the two founder buckets belong to the same person. No token sale, mainnet mint verification or staking is active. See [lifetime tokenomics](../MFRG_LIFETIME_TOKENOMICS_500M.md).
 
-The project intends to choose and publish the governance framework **before the initial sale ends**; no particular number of representatives, miner bond, mFRG voting scheme or quorum is ratified. Older wrapped-FRG and fixed-seat roadmaps are superseded. See [technical roadmap](../../ROADMAP.md), [mFRG sale page](../miniforge-sale.html), [treasury specification](../MINIFORGE_SPL_TREASURIES.md) and [governance design](../../governance-charter.md).
+The project intends to choose and publish the governance framework **before any authorized mFRG distribution begins**; no particular number of representatives, miner bond, mFRG voting scheme or quorum is ratified. Older wrapped-FRG and fixed-seat roadmaps are superseded. See [technical roadmap](../../ROADMAP.md), [mFRG sale page](../miniforge-sale.html), [treasury specification](../MINIFORGE_SPL_TREASURIES.md) and [governance design](../../governance-charter.md).
 
 ## Intended future L1, L2 and possible L3 architecture
 

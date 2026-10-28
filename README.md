@@ -8,20 +8,13 @@ ForgeCoin is an experimental, privacy-preserving, proof-of-work cryptocurrency d
 
 ForgeCoin’s selected October 26 mainnet is genesis-frozen and unlaunched. The old chains are retired. Main-branch runtime code still reflects the legacy implementation; new-mainnet source remains under review in draft PR #111.
 
-## Current assets, sale plans and future privacy work (October 27, 2026)
+## Current assets and mFRG economic policy (October 28, 2026)
 
-**Native ForgeCoin (FRG)** remains an independent Monero-derived RandomX Proof-of-Work cryptocurrency. The frozen October 26 mainnet identity still requires security, chain-consensus and infrastructure release verification. Native FRG has no founder/team ICO premine or Solana-issued mining rewards.
+**ForgeCoin (FRG)** is the separate native RandomX-mined privacy chain. Its **50,000,000 FRG primary-emission reference is not a hard cap**; the documented consensus has a 0.20 FRG per 120-second block tail reward. Native mainnet activation is still gated by public-release checks.
 
-**miniFORGE (mFRG)** is a separate proposed **50,000,000 unit** Solana standard SPL token, with three non-overlapping intended allocations:
-- **5,000,000 mFRG for the initial sale** (not open; no approved start/end dates, price or payment recipient).
-- **5,000,000 mFRG in a separate post-sale liquidity/staking treasury**, activated only after reviewed governance, contracts and custody procedures. No staking yield is offered.
-- **40,000,000 mFRG in the future issuance and development treasury**, to be released later under publicly approved controls, not minted in excess of the intended 50M total.
+**miniFORGE (mFRG)** is a separate proposed Solana SPL token with **500,000,000 target fixed supply** (6 decimals). Allocations: 50M (10%) staged crypto-denominated fundraising; 100M (20%) long-term operations; 100M (20%) adoption; 85M (17%) staking/participation; 60M (12%) liquidity; 65M (13%) engineering/security; **15M (3%) founder unlocked at launch**; **15M (3%) founder-beneficial team-labeled vesting, 625k monthly months 13–36**; 10M (2%) emergency.
 
-Governance is an **open design**. The project intends to select and publish a governance solution **before the mFRG sale concludes**. There is no currently approved fixed-size chamber, FRG bond, voting entitlement or mFRG treasury authority.
-
-The former planned wrapped-FRG bridge was superseded by the separate miniFORGE program and is **not on the current delivery roadmap**. Later native privacy objectives remain FCMP++ and CARROT with a preferred audited in-place hard fork where feasible; future independently reviewed L1 atomic swaps, L2 settlement and possible L3 applications are research stages.
-
-See [project roadmap](ROADMAP.md), [technical whitepaper](docs/WHITEPAPER.md), [miniFORGE sale information](docs/miniforge-sale.html), [mFRG treasury details](docs/MINIFORGE_SPL_TREASURIES.md), [future privacy architecture](docs/SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md), and [governance design charter](governance-charter.md).
+No Solana mainnet mint, fixed-supply authority, sale, staking, LP or price is verified active by this documentation. **mFRG is neither native FRG nor a wrapped, redeemable or pegged FRG asset.** See [full 500M lifetime policy](docs/MFRG_LIFETIME_TOKENOMICS_500M.md), [treasury overview](docs/MINIFORGE_SPL_TREASURIES.md), [sale readiness](docs/MINIFORGE_SALE_MECHANISM.md), [website](docs/miniforge-tokenomics.html) and [mainnet release state](docs/CURRENT_MAINNET.md).
 
 ## Mission
 

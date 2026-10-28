@@ -1,0 +1,26 @@
+name: mFRG Step 19 signed attestations (synthetic only)
+on:
+  pull_request:
+    paths:
+      - 'tools/verify_mfrg_signed_attestations.py'
+      - 'tools/test_verify_mfrg_signed_attestations.py'
+      - '.github/workflows/mfrg-signed-attestations.yml'
+      - 'docs/handoffs/MFRG_500M_STEP_19_SIGNED_ATTESTATIONS_2026-10-28.md'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/verify_mfrg_signed_attestations.py'
+      - 'tools/test_verify_mfrg_signed_attestations.py'
+      - '.github/workflows/mfrg-signed-attestations.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-signature-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install 'cryptography>=43,<47'
+      - run: python3 tools/test_verify_mfrg_signed_attestations.py
+      - run: python3 tools/test_reconcile_mfrg_holder_purposes.py

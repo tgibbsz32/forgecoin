@@ -4,6 +4,8 @@
 
 As of this step, the repo contains **no independently authenticated real mFRG Solana mainnet mint address, creation/initialization transaction signature or authenticated mainnet signer/treasury inventory**. The previously known devnet test mint is not a valid mainnet identifier. An unconfigured desktop planning file does not establish absence of an on-chain mint. This is a procedure to collect and check **read-only** evidence.
 
+For operator-invoked **read-only HTTPS queries** that verify two RPC endpoints report the expected Solana mainnet genesis before comparing the existing mint and initialization transaction, see [Step 16 live mainnet provenance preflight](MFRG_LIVE_MAINNET_PROVENANCE.md). This does not prove legal issuer identity or authorize any token transaction.
+
 ## Verification tool
 
 The new [mint initialization evidence parser](../tools/verify_mfrg_mint_initialization.py) compares **two separately saved `getTransaction` results** with a saved `getAccountInfo` mint-account snapshot, all in Solana RPC `jsonParsed` representation. It requires the same expected mint and 64-byte base58 signature in both transaction responses, successful transaction metadata, a writable mint account key and exactly one original SPL Token Program `initializeMint` or `initializeMint2` parsed instruction with **six decimals**. It accepts outer and decoded inner instructions and checks identical transaction slot, initialization authority, program and mint across the two results. The later mint account must be the standard SPL Token Program and observed at a slot **at least as new** as the initializing transaction.

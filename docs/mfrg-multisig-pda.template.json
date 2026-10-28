@@ -1,0 +1,17 @@
+{
+  "schema": "mfrg-custody-preflight-v1",
+  "network": "mainnet-beta",
+  "mint": null,
+  "claim": {
+    "purpose": null,
+    "authority_type": null,
+    "token_account": null,
+    "owner_authority": null,
+    "expected_signer_keys": null,
+    "program_id": null
+  },
+  "notes": "Read-only inert custody template. Mint identity and signer/custody keys unverified. For spl_multisig expected_signer_keys is five public keys. For program_pda the tool deliberately reports BLOCKED, never verified custody. No signing keys, token transfers or actual account funding.",
+  "production_authorized": false,
+  "founder_vesting_deployed": false,
+  "treasuries_funded": false
+}

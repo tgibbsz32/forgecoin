@@ -6,6 +6,7 @@ on:
       - 'tools/test_verify_mfrg_mint_snapshot.py'
       - 'docs/MFRG_SOLANA_MINT_VERIFICATION.md'
       - 'docs/MFRG_TREASURY_VESTING_GATES.md'
+      - 'docs/handoffs/MFRG_500M_STEP_09_SOLANA_MINT_PREFLIGHT_2026-10-28.md'
       - '.github/workflows/mfrg-mint-preflight.yml'
   push:
     branches: [main]
@@ -14,6 +15,7 @@ on:
       - 'tools/test_verify_mfrg_mint_snapshot.py'
       - 'docs/MFRG_SOLANA_MINT_VERIFICATION.md'
       - 'docs/MFRG_TREASURY_VESTING_GATES.md'
+      - 'docs/handoffs/MFRG_500M_STEP_09_SOLANA_MINT_PREFLIGHT_2026-10-28.md'
       - '.github/workflows/mfrg-mint-preflight.yml'
   workflow_dispatch:
 permissions:

@@ -1,0 +1,45 @@
+name: miniFORGE offline multisig and PDA authority preflight
+on:
+  pull_request:
+    paths:
+      - 'tools/verify_mfrg_multisig_pda.py'
+      - 'tools/test_verify_mfrg_multisig_pda.py'
+      - 'docs/MFRG_MULTISIG_PDA_READINESS.md'
+      - 'docs/mfrg-multisig-pda.template.json'
+      - 'docs/index.md'
+      - 'docs/handoffs/MFRG_500M_STEP_14_MULTISIG_PDA_CUSTODY_PREFLIGHT_2026-10-28.md'
+      - '.github/workflows/mfrg-multisig-pda.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/verify_mfrg_multisig_pda.py'
+      - 'tools/test_verify_mfrg_multisig_pda.py'
+      - 'docs/MFRG_MULTISIG_PDA_READINESS.md'
+      - 'docs/mfrg-multisig-pda.template.json'
+      - 'docs/index.md'
+      - 'docs/handoffs/MFRG_500M_STEP_14_MULTISIG_PDA_CUSTODY_PREFLIGHT_2026-10-28.md'
+      - '.github/workflows/mfrg-multisig-pda.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-custody-authority:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Synthetic 3-of-5, 4-of-5 SPL multisig and blocked-PDA tests
+        run: python3 tools/test_verify_mfrg_multisig_pda.py
+      - name: Existing owner Ed25519 consent checks
+        run: node --test tools/test_verify_mfrg_purpose_attestations.cjs
+      - name: Account inventory and mint consistency checks
+        run: python3 tools/test_reconcile_mfrg_token_accounts.py
+      - name: Treasury founder vesting and nine-budget guardrails
+        run: python3 tools/test_mfrg_treasury_vesting_preflight.py
+      - name: Mainnet mint preflight
+        run: python3 tools/test_verify_mfrg_mint_snapshot.py
+      - name: Disabled sale and 500M policy gates
+        run: python3 tools/test_mfrg_policy.py

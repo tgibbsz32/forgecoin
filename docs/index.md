@@ -1,9 +1,7 @@
-# ForgeCoin current documentation
+# ForgeCoin documentation and active project direction
 
-[Website homepage](index.html) · [Current mainnet specification](CURRENT_MAINNET.md) · [Network parameters](current-mainnet.html) · [Whitepaper](WHITEPAPER.md) · [Roadmap](https://github.com/tgibbsz32/forgecoin/blob/main/ROADMAP.md)
+[Homepage](index.html) | [miniFORGE sale and treasury page](miniforge-sale.html) | [Native FRG mainnet status](CURRENT_MAINNET.md) | [ForgeCoin whitepaper](WHITEPAPER.md) | [Roadmap](../ROADMAP.md) | [Governance design](../governance-charter.md)
 
-The October 26 mainnet is genesis-frozen and **unlaunched**. Nonce 20261026; P2P/RPC/ZMQ 39480/39481/39482; prefixes 190/191/192. The 50M FRG primary reference is not a fixed cap; perpetual tail emission is 0.20 FRG per block. Main runtime remains legacy pending review of draft PR #111.
+**October 27, 2026:** The native FRG mainnet is frozen pending public-release verification. The separate mFRG Solana SPL token has a 50M intended supply: **5M for the planned sale**, **5M in the post-sale liquidity/staking treasury** and **40M in the future issuance and development treasury**. None is evidence of live mainnet minting or staking, and the sale is not open.
 
-The first planned post-launch integration is a backed, redeemable Solana wFRG bridge, followed by the preferred native in-place FCMP++/CARROT hard fork, with successor/voluntary migration only as fallback. Later native swaps, backed private stable assets, TSS/MPC private trades and L2/L3 are committed development directions.
-
-<small>Proposed future upgrades; implementation and timing are not guaranteed.</small>
+The project intends to select and publish governance rules **before the mFRG sale concludes**. The former fixed ten-seat design and the wrapped-FRG bridge are superseded as active roadmap items. The preferred later protocol research includes FCMP++/CARROT upgrades to native FRG, L1 atomic swaps, L2 payments and possible L3 applications. Future implementations and timing are not guaranteed.

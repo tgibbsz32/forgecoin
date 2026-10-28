@@ -91,7 +91,7 @@ The primary emission approaches its reference gradually rather than using period
 
 Tail emission continues indefinitely. ForgeCoin therefore does not have a permanent maximum supply. Annual percentage inflation declines as circulating supply grows, while continuing to fund miners after primary emission reaches the tail threshold.
 
-There is no token-sale, staking, governance-token, or protocol treasury mechanism in the current consensus code. Coins enter circulation through the genesis transaction and proof-of-work block rewards.
+There is no native FRG token-sale, mFRG treasury, staking or project governance issuance mechanism in the FRG consensus code. Native FRG units are accounted for by genesis and Proof-of-Work block rewards, subject to the documented genesis release blocker. The separate proposed Solana mFRG token and future sale do not alter FRG consensus issuance.
 
 ## Privacy model
 
@@ -125,27 +125,30 @@ ForgeCoin is not yet an independently audited production network. Its inherited 
 
 ForgeCoin is derived from Monero v0.18.5.1 and CryptoNote code and is distributed under the BSD 3-Clause license included with the source. XMRig, when distributed with a desktop release, remains a separate GPLv3 component with its matching source and license.
 
-## Planned interoperability and future protocol upgrades
+## Separate miniFORGE (mFRG) and proposed sale
 
-<small>Proposed future upgrades; implementation and timing are not guaranteed.</small>
+miniFORGE is a **separate, standard Solana SPL asset** (6 decimals) with a proposed **50 million mFRG** target total. It is neither native Proof-of-Work FRG nor redeemable for FRG at a fixed rate. It does not automatically convey a claim on FRG reserves, transaction privacy, treasury profits or guaranteed investment return.
 
-ForgeCoin's first planned post-launch interoperability step is a **user-backed, 1:1 Solana wFRG bridge**, with audited native FRG deposit accounting, mint/burn, reserve reconciliation and user redemption.
+| Planned allocation | mFRG units | Share | Planned timing and use |
+| --- | ---: | ---: | --- |
+| Initial sale inventory | 5,000,000 | 10% | Potential future sale, initially considering Solana USDC |
+| Liquidity/staking treasury | 5,000,000 | 10% | Designated to be held in a separate treasury **after the initial mFRG sale**, subject to reviewed liquidity/staking rules |
+| Future issuance and development treasury | 40,000,000 | 80% | Reserved for future controlled distributions and development under governance rules not yet selected |
+| **Total proposed** | **50,000,000** | **100%** | **Not verified as issued on Solana mainnet** |
 
-A later technical objective is an **FCMP++/CARROT upgrade of the existing ForgeCoin blockchain via a coordinated hard fork**, if independently validated compatibility makes this safe. A separate successor network and voluntary migration plan would be considered only as a fallback. Plans for eventual Solana-wrapper retirement require a usable redemption process.
+The 40M future-issuance treasury means staged release of reserved supply, not additional minting beyond the 50M target. A genuine on-chain maximum requires final supply reconciliation and proper revocation of mint authority. Treasury balances, signing separation and metadata are not yet independently verified. There is no published mFRG sale price, start/end date, live USDC checkout, liquidity pool, staking yield or guaranteed return. No payment should be made for an unofficial sale.
 
-FCMP++/CARROT engineering includes authenticated curve-tree databases, membership-proof and Generalized Bulletproof consensus validation, CARROT wallet/address and legacy-output compatibility, mempool revalidation during upgrades, reviewed performance improvements and a separate high-volume stressnet.
+## Governance milestone
 
-Further planned systems include native cross-chain atomic swaps, collateralized stable-denominated private transfers, independently secured multi-party trading vaults, L2 payment/settlement systems and possible L3 private applications. These are future research items rather than features of the present network. See [the complete future architecture](SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md).
+A formal governance solution is **to be chosen before the initial 5M mFRG sale concludes**. The earlier ten-seat representative model is no longer current policy. Governance design remains open, including eligibility, treasury signer controls, audit/approval policy, conflict-of-interest rules and public accountability. Legacy practice votes and proposed FRG bonds are nonbinding. See [governance principles](../governance-charter.md).
 
-## Planned miniFORGE (mFRG) value-accrual and native FRG staking relationship (not live)
+## Proposed FCMP++/CARROT privacy upgrades
 
-miniFORGE (mFRG) is intended to become the principal **ecosystem value-accrual asset associated with native ForgeCoin (FRG)**. This is a project design objective, **not** a claim that mFRG presently holds the market value of FRG, is collateralized by FRG, has a guaranteed exchange rate, or provides legal ownership of FRG reserves.
+Subject to dedicated independent security review and a separate stressnet, plan authenticated curve-tree databases, full-chain membership proof and generalized Bulletproof component verification, CARROT wallet/address integration, legacy output compatibility, deterministic consensus execution and mempool revalidation. The preferred route is a reviewed **in-place native FRG hard fork** where continuity remains safe. A separate successor chain and voluntary, supply-conserving migration are only a fallback research option.
 
-**Proposed sequence:** (1) independently validate and launch native FRG proof-of-work mining; (2) separately launch an mFRG SPL presale, subject to legal review, mint verification and operational readiness; (3) observe organic FRG mining participation, liquidity, price discovery and market stability over a meaningful but currently undefined period; (4) only after this evidence exists, design and independently review a mechanism enabling holders to **stake or lock native FRG in connection with mFRG**. The timing, economics and feasibility of this mechanism remain to be determined.
+Future extensions also include native cross-chain atomic swaps, independently backed stable-denominated systems, TSS/MPC-controlled trading, L2 payments/batching, and possible L3 applications including private markets, merchants and selective disclosure. None is already live. Solana transfers and staking are publicly observable unless distinct independently reviewed privacy systems are added.
 
-A staking mechanism does **not** automatically transfer FRG value to mFRG: the specification must state whether FRG is deposited into transparent custody, locked by a verifiable protocol, used to back issued mFRG units, earns rewards, supports redemption, or serves another explicit purpose. Any conversion, ratio, backing representation, yield or redemption entitlement would require separate public rules, reserves and security validation; **none is promised or presently active**. Staking must not silently alter native FRG proof-of-work issuance or confuse mFRG with the separately proposed 1:1 native-FRG-backed **wFRG** wrapper.
-
-**Pre-implementation gates:** obtain a market-observation methodology and published activation criteria; define custody and key management, accounting, contract roles, user withdrawal/redemption rules, risks, insolvency handling, independent testing and audits; assess securities, custody, money-transmission and tax treatment before accepting deposits. Solana transactions remain publicly observable despite native FRG's privacy properties.
+See the [technical roadmap](../ROADMAP.md), [mFRG treasury specification](MINIFORGE_SPL_TREASURIES.md), [public sale information](miniforge-sale.html), and [future protocol architecture](SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md).
 
 ## Disclaimer
 

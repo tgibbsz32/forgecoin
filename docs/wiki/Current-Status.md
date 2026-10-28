@@ -13,7 +13,7 @@ See [current network and economic specification](../CURRENT_MAINNET.md), [machin
 | Pool and explorer | Old hosted explorer/pool readiness pages are separate; no approved new-mainnet public pool or payout service |
 | Economics | 50M primary reference, 8 decimals, perpetual 0.20 FRG tail, no fixed cap; planned 1% pool operator fee |
 | Genesis output | 11.92092895 FRG, unlock height 60; permanent unspendability unresolved |
-| Governance | Draft design; no binding elections, live bond program or issuance authority |
-| Post-launch integrations | Solana wFRG first, preferred native FCMP++/CARROT hard fork later; successor/voluntary migration fallback |
+| Governance | Framework undecided; owner intends to select and publish it before the mFRG sale concludes; no fixed seat model or binding treasury votes |
+| Post-launch initiatives | Separate 50M mFRG SPL sale/treasuries (5M sale, 5M post-sale liquidity/staking, 40M future issuance/development); FCMP++/CARROT in-place hard fork research and later L1/L2/L3 |
 
 Read [roadmap and release gates](Roadmap.md). Historical test reports retain original dates and are not approval to launch, mine or change services. User wallets and keys remain private.

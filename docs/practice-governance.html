@@ -1,72 +1,10 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#08111d">
-<title>Practice Governance | ForgeCoin</title><meta name="description" content="Explore simulated ForgeCoin chamber votes, stakeholder ratification and proposal thresholds. No real votes are recorded.">
-<link rel="icon" href="images/forgecoin-logo.png?v=fd4aede8"><link rel="stylesheet" href="style.css">
-<style>
-.practice-shell{max-width:1080px;margin:auto}.notice{padding:18px 22px;background:#173043;border:1px solid #477289;border-radius:14px;color:#d4ebf5;margin:26px 0 32px}
-.practice-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:22px}.practice-card{background:#122233;border:1px solid var(--border);border-radius:15px;padding:25px}
-.practice-card h2{font-size:24px;letter-spacing:-.6px}.practice-card h3{font-size:17px}
-input,select,button{font:inherit}select,input[type=number]{border:1px solid #557089;border-radius:9px;background:#071927;color:#fff;padding:9px;max-width:100%}
-.vote-line{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:11px 0;border-bottom:1px solid #324557}.vote-line label{font-size:14px}.vote-line select{min-width:126px}
-.results{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:16px 0}.results div{background:#0a1a29;border:1px solid #283c4f;border-radius:10px;padding:14px}.results strong{display:block;font-size:27px}.results small{color:var(--muted)}
-.btn-simple{background:#163b4c;border:1px solid #3a6474;color:#dff8f6;padding:10px 14px;border-radius:9px;cursor:pointer}.btn-simple:hover{background:#1b5363}.field{display:flex;flex-direction:column;gap:7px;margin:18px 0}.field label{font-weight:650;font-size:14px}.mini{font-size:13px;color:#a7bdce}.result-banner{padding:14px;border:1px solid #4b657b;border-radius:9px;background:#0b2434;line-height:1.5}.meter{height:11px;border-radius:999px;background:#344859;overflow:hidden}.meter span{display:block;height:100%;background:#3de0d0;width:0;transition:width .2s}
-.bottom-refs{display:flex;gap:16px;flex-wrap:wrap;margin-top:24px}.bottom-refs a{color:var(--cyan);font-weight:700}
-@media(max-width:850px){.practice-grid{grid-template-columns:1fr}}@media(max-width:500px){.vote-line{align-items:flex-start;flex-direction:column}.vote-line select{width:100%}}
-</style></head><body><aside class="container safety-note" style="padding:16px"><strong>Current mainnet: frozen, not launched.</strong> Nonce 20261026; P2P/RPC/ZMQ 39480/39481/39482. <a href="current-mainnet.html">Current identity, tokenomics, roadmap and release status →</a> Main-branch runtime remains legacy pending review; no approved public mining or bootstrap peer.</aside><a class="skip" href="#main">Skip to content</a>
-<header class="site-header"><div class="container nav-wrap"><a class="brand" href="index.html"><img class="brand-logo" src="images/forgecoin-logo.png?v=fd4aede8" alt=""><span>FORGE<span class="accent">COIN</span></span></a><nav class="nav-links" style="display:flex;position:static;flex-direction:row;flex-wrap:wrap;background:transparent;padding:0;border:0"><a href="index.html">Home</a><a href="community.html">Community</a><a href="member-eligibility.html">Eligibility</a><a href="https://github.com/tgibbsz32/forgecoin/blob/main/governance-charter.md">Charter ↗</a></nav></div></header>
-<main id="main"><div class="container"><p><strong>Archived, nonbinding demonstration:</strong> This is an old, nonbinding UI demonstration, not an active voter registry. ForgeCoin V1 is native FRG only. Miner representative authority would require independently verified mining and an enforceable native FRG governance bond; neither is verified here. See the <a href="https://github.com/tgibbsz32/forgecoin/blob/main/governance-charter.md">current charter</a>.</p></div><section class="section"><div class="container practice-shell"><span class="kicker">GOVERNANCE SANDBOX • V0.1</span><h1>Practice a <span class="accent">chamber vote.</span></h1>
-<p class="lead">Try the proposed ten-seat voting rules and simulate stakeholder ratification. This is a local, educational prototype—not an election or a production governance service.</p>
-<div class="notice" role="status"><strong>Simulation only:</strong> No wallet connects, no account is created, no vote is submitted or saved, and no token or treasury transaction is possible. Vote selections are reset when this page reloads.</div>
-<div class="practice-grid"><div class="practice-card">
-<h2>1. Chamber ballot</h2><div class="field"><label for="proposal-class">Proposal type</label><select id="proposal-class">
-<option value="routine">Routine operations — 6 yes</option><option value="treasury">Treasury policy — 7 yes</option>
-<option value="monetary" selected>Monetary policy — 8 yes + stake ratification</option><option value="founder">Founder compensation — 7 non-founder yes + stake ratification</option></select></div>
-<div id="ballots" aria-label="Ten representative votes"></div><div class="results" aria-live="polite">
-<div><strong id="yes">0</strong><small>Yes</small></div><div><strong id="no">0</strong><small>No</small></div><div><strong id="abstain">10</strong><small>Abstain</small></div></div>
-<p id="council-result" class="result-banner" aria-live="polite"></p><button class="btn-simple" type="button" id="reset">Reset demonstration</button>
-</div><div><div class="practice-card">
-<h2>2. Stakeholder ratification</h2><p class="mini">Required for monetary-policy and founder-compensation changes. Uses hypothetical stake figures, not real voting data.</p>
-<div class="field"><label for="eligible">Illustrative native FRG governance bonds (not implemented)</label><input type="number" id="eligible" min="1" step="1" value="100000"></div>
-<div class="field"><label for="turnout">Stake participating</label><input type="number" id="turnout" min="0" step="1" value="20000"></div>
-<div class="field"><label for="support">Participating stake voting yes</label><input type="number" id="support" min="0" step="1" value="15000"></div>
-<div class="meter" aria-hidden="true"><span id="turnout-meter"></span></div><p id="stake-result" class="result-banner" aria-live="polite"></p></div>
-<div class="practice-card" style="margin-top:20px"><h2>3. Final simulation outcome</h2><p id="overall" class="result-banner" aria-live="polite"></p><p class="mini">Passing this simulation would not authorize an actual amendment. In production, identity and stake verification, published snapshots, recorded ballots, 90-day monetary notice and timelocked on-chain execution are additionally necessary.</p></div>
-</div></div>
-<div class="bottom-refs"><a href="community.html">← Community portal</a><a href="https://github.com/tgibbsz32/forgecoin/blob/main/governance-charter.md">Governance charter ↗</a><a href="https://github.com/tgibbsz32/forgecoin/issues">Project issues ↗</a></div>
-</div></section></main><footer><div class="container"><p>ForgeCoin governance prototype · Educational demonstration only · No votes, tokens, credentials or funds are collected.</p></div></footer>
-<script>
-(function(){
-'use strict';
-const names=['Staking representative 1','Staking representative 2','Staking representative 3','Staking representative 4','Staking representative 5','Miner representative','Developer representative','Community representative','Founder — original','Founder — constituency'];
-const ballot=document.getElementById('ballots');
-names.forEach((name,i)=>{
- const row=document.createElement('div');row.className='vote-line';
- const label=document.createElement('label');label.textContent=name;label.htmlFor='seat-'+i;
- const input=document.createElement('select');input.id='seat-'+i;input.dataset.seat=String(i);
- [['abstain','Abstain'],['yes','Yes'],['no','No']].forEach(([value,text])=>{const opt=document.createElement('option');opt.value=value;opt.textContent=text;input.appendChild(opt)});
- input.addEventListener('change',render);row.append(label,input);ballot.appendChild(row);
-});
-const fields=['proposal-class','eligible','turnout','support'];fields.forEach(id=>document.getElementById(id).addEventListener('input',render));
-document.getElementById('reset').addEventListener('click',()=>{document.querySelectorAll('[data-seat]').forEach(x=>x.value='abstain');document.getElementById('proposal-class').value='monetary';document.getElementById('eligible').value=100000;document.getElementById('turnout').value=20000;document.getElementById('support').value=15000;render()});
-function render(){
- const type=document.getElementById('proposal-class').value, votes=[...document.querySelectorAll('[data-seat]')].map(x=>x.value);
- const effectiveVotes=votes.map((v,i)=>document.getElementById('proposal-class').value==='founder'&&i>=8?'abstain':v);const yes=effectiveVotes.filter(x=>x==='yes').length,no=effectiveVotes.filter(x=>x==='no').length,abstain=10-yes-no;
- ['yes','no','abstain'].forEach((k,i)=>document.getElementById(k).textContent=[yes,no,abstain][i]);
- const special=type==='founder',needed=type==='routine'?6:type==='treasury'?7:type==='monetary'?8:7;
- const nonfounderYes=votes.slice(0,8).filter(x=>x==='yes').length;
- document.querySelectorAll('[data-seat]').forEach((select,i)=>{select.disabled=special&&i>=8;if(special&&i>=8)select.value='abstain'});
- const effective=votes.map((v,i)=>special&&i>=8?'abstain':v), effectiveYes=effective.filter(x=>x==='yes').length, attendance=10;
- const council=attendance>=8&&(special?nonfounderYes>=7:effectiveYes>=needed);
- document.getElementById('council-result').textContent=(council?'Chamber threshold met. ':'Chamber threshold not met. ')+(special?'Founder seats recused; need at least 7 of 8 non-founder yes votes.':'Need '+needed+' yes votes.')+' All 10 seats are assumed present in this simulation; abstention is not absence.';
- const n=id=>Number(document.getElementById(id).value),eligible=n('eligible'),turnout=n('turnout'),support=n('support');
- const valid=[eligible,turnout,support].every(Number.isFinite)&&eligible>0&&turnout>=0&&support>=0&&turnout<=eligible&&support<=turnout;
- const participation=valid?turnout/eligible:0,approval=valid&&turnout>0?support/turnout:0;
- const stake=valid&&participation>=.15&&support*3>=turnout*2;
- document.getElementById('turnout-meter').style.width=Math.min(participation*100,100)+'%';
- document.getElementById('stake-result').textContent=valid?'Turnout: '+(participation*100).toFixed(1)+'% (minimum 15%). Yes stake: '+(approval*100).toFixed(1)+'% (minimum 66.67%). '+(stake?'Ratification threshold met.':'Ratification threshold not met.'):'Invalid hypothetical stake values; eligible > 0 and 0 ≤ yes ≤ turnout ≤ eligible.';
- const requiresStake=type==='monetary'||type==='founder';
- document.getElementById('overall').textContent=council&&(!requiresStake||stake)?'Simulation passes the selected vote thresholds only. No real proposal has passed.':'Simulation does not pass the selected approval thresholds.';
-}
-render();
-})();
-</script></body></html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Archived Governance Demonstration | ForgeCoin</title><link rel="stylesheet" href="style.css"></head>
+<body><main class="container" style="max-width:920px;padding:60px 24px">
+ <p><a href="index.html">Home</a> &nbsp; <a href="community.html">Governance</a> &nbsp; <a href="miniforge-sale.html">miniFORGE sale information</a></p>
+ <h1>Historical governance demonstration</h1>
+ <p><strong>This is not an active governance system, voter registry or staking program.</strong> Previous fixed-seat chamber, eligibility, bond, registration and vote demos are superseded historical experiments. The project has not selected a replacement governance structure.</p>
+ <p>The project intends to choose and publish its governance framework <strong>before the initial 5M mFRG sale concludes</strong>. No binding elections, registration, voting privileges, treasury execution, staking rewards, wallet signing or identity collection operate here.</p>
+ <p>Read the <a href="community.html">current governance overview</a> and the <a href="https://github.com/tgibbsz32/forgecoin/blob/main/governance-charter.md">open design charter</a>. Source history remains available through Git.</p>
+ </main></body></html>

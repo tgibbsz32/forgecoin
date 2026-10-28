@@ -1,18 +1,18 @@
-> [Current mainnet specification, tokenomics and release status](CURRENT_MAINNET.md) — October 26, 2026; prelaunch.
+# ForgeCoin future FCMP++/CARROT, L1/L2/L3 architecture
 
-# ForgeCoin interoperability and FCMP++/CARROT evolution
-
-**Committed development direction — October 26, 2026.** The capabilities below are planned engineering work and are not implemented on the current network.
-
-<small>Proposed future upgrades; implementation and timing are not guaranteed.</small>
+**Updated October 27, 2026. All capabilities listed here are future proposals, not production features.** The former wFRG/wrapped-FRG bridge was a superseded planning direction and is **not part of the current roadmap**.
 
 ## Intended sequence
 
-1. **Launch and secure the existing native FRG L1.** Release a tested RandomX CPU miner, wallet and daemon, independent nodes, explorer, and verified mining pool; validate the emissions, chain identity, genesis, custody and public-release process first.
-2. **Immediate post-launch expansion: wrapped FRG on Solana.** Design and pursue a user-deposit-backed 1:1 **wFRG** SPL/Token-2022 representation for easier access to Solana wallets, DEXes, payments and liquidity markets. **This is the first planned interoperability implementation.** Deposited native FRG backs the corresponding wrapped units; mint/burn/redemption must have verifiable supply conservation, exact 8-decimal handling, independently reviewed reserve custody/proofs, confirmations, replay/reorg defenses, rate limits, incident controls and audits. Token creation does not guarantee exchange listing or liquidity. The wrapper is **not** additional FRG mining or issuance. Solana activity is publicly observable and does not inherit FRG privacy automatically.
-3. **Later native privacy upgrade: FCMP++ with CARROT.** Prefer a coordinated **in-place hard fork of ForgeCoin**, preserving the existing blockchain, issuance history, coin ownership and native FRG unit if the upgrade can safely support legacy output spends and wallets. A hard fork updates consensus and does **not** necessarily require a separate new blockchain. Independently verify chain continuity, migration tooling, pool and exchange compatibility, and broad node adoption before selecting an activation height.
-4. **Separate successor network only if necessary.** If rigorous testing proves the in-place upgrade unsafe or infeasible, publish and audit a separate-chain, opt-in migration/bridge design: legacy-FRG lock/burn or equivalent proof, successor-chain claim, nonduplicated supply, user recovery, privacy review, replay protection, reorg/finality handling, redemption/dispute windows and explicit community consent. **No automatic copying of development-chain balances, no hidden premine, no involuntary swap.**
-5. **Eventually reduce and phase out the interim wFRG reliance.** When the FCMP++/CARROT upgraded native ecosystem and safe liquidity alternatives operate, plan a gradual wrapper wind-down: notice to holders, stop new deposits/minting, maintain user redemption options, reconcile reserves and outstanding claims, coordinate venues, and only terminate custody/contracts after obligations have been addressed. No forced forfeiture or guaranteed wind-down date.
+1. Finish the independent FRG Proof-of-Work network and audit native wallet, RandomX mining, official pool, read-only explorer, node infrastructure and security release gates.
+2. Separately issue **miniFORGE (mFRG)** on Solana once reviewed: 50M target SPL supply (6 decimals), **5M initial sale**, **5M designated to a post-sale liquidity/staking treasury**, and **40M to a future issuance/development treasury**. This token does not represent a guaranteed amount of FRG, is not an automatic native privacy wrapper and is not a dividend or yield promise.
+3. Choose and publish governance rules **before the mFRG sale concludes**, with transparent treasury custody, approval thresholds, security and community oversight. No prescribed number of seats or vote type is adopted.
+4. Pursue a reviewed FCMP++/CARROT **in-place hard fork** of the existing FRG chain if proven safe. Maintain valid legacy outputs and owners' rights, or propose a separately approved supply-conserving successor migration only if necessary.
+5. Research native swaps, secure multiparty execution and optional future L2/L3 systems under independent threat models.
+
+## mFRG distribution versus native FRG
+
+The three mFRG allocations are **planned**, not verified funded mainnet token accounts. No sale is open, and a public Solana token or staking system cannot hide balances by virtue of association with native FRG. Future issuance from the 40M treasury means phased distribution of reserved mFRG; it does not authorize minting beyond the 50M target. Any true fixed maximum requires a validated issued supply and properly revoked mint authority.
 
 ## FCMP++/CARROT core implementation gates (later, not current L1)
 
@@ -50,10 +50,4 @@ These are **separate, prospective protocols**, not features automatically delive
 
 ## Release-order discipline
 
-Complete **native L1 wallet/miner -> validated node/pool/explorer -> first Solana wrapper -> researched FCMP++/CARROT in-place upgrade -> optional atomic-swap/private-execution/L2/L3 services**. The FCMP++/CARROT successor is a **future implementation track**, not permission to replace the new-mainnet genesis, generate a second coin supply or abandon redemption for existing owners. See [the main roadmap](../ROADMAP.md) and [governance charter](../governance-charter.md).
-
-## Update: mFRG is separate from wFRG (October 27, 2026)
-
-A **separate miniFORGE / mFRG standard SPL asset** is proposed for Solana mainnet with **50 million target supply** allocated **5 million to a planned future sale/trading treasury**, **5 million to a future liquidity reserve** and **40 million reserved for later distribution**. The 6-decimal devnet mint exists with **zero issued supply**. The real mainnet mint is **not created**, a sale has not launched, the treasuries have no mainnet allocation and no SOL/USDC pool has been deployed. Mainnet issuance awaits fee funding, independent custody/metadata/authority review and on-chain verification. See [miniFORGE issuance and custody](MINIFORGE_SPL_TREASURIES.md).
-
-**Do not confuse mFRG with the existing planned 1:1 deposit-backed wFRG bridge.** An mFRG balance does not represent a locked native FRG reserve or inherit private transaction properties. Any eventual wFRG must use an explicitly different token mint and provable native FRG collateral/mint/burn/redemption mechanics; those protocols remain future, unimplemented systems. The other long-term FCMP++/CARROT, native L1 swaps, L2 and potential L3 tasks in this document remain intended roadmap developments only and require separate technical/security validation.
+No change in this architecture authorizes mining, new consensus activation, Solana minting, token-sale payment collection, staking/yield, custody transfers or deployment of unaudited financial services. Existing release freezes and exact identity verification remain required. See the [roadmap](../ROADMAP.md), [mFRG allocation controls](MINIFORGE_SPL_TREASURIES.md) and [governance design charter](../governance-charter.md).

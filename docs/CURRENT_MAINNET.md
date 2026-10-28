@@ -27,13 +27,13 @@ For an unpenalized two-minute block, calculate in atomic units: `max((5,000,000,
 
 **Genesis blocker:** the transaction contains 11.92092895 FRG with unlock height 60. This is a maturity lock, not proof of permanent unspendability. The zero-allocation policy does not establish a cryptographic burn. Independent proof or a separately reviewed consensus treatment remains required before launch.
 
-## Committed development direction
+## Separate Solana miniFORGE and planned protocol developments
 
-The first planned post-launch integration is a user-deposit-backed, redeemable 1:1 Solana wFRG bridge. The preferred later privacy upgrade is an in-place FCMP++/CARROT hard fork preserving native FRG history and balances; a separate successor and voluntary, supply-conserving migration are the fallback. Later work includes native atomic swaps, backed private stable assets, TSS/MPC private trades, L2 settlement and L3 applications.
+Native FRG consensus issuance is not affected by miniFORGE (mFRG), a separate standard 6-decimal Solana SPL token with a **50M mFRG target**: **5M initial sale inventory**, **5M post-sale liquidity/staking treasury** and **40M future issuance/development treasury**. “Future issuance” means later releases of reserved mFRG units, not new minting over that target. No mainnet mFRG mint/sale allocation or public sale is independently verified ready, and there is no approved payment recipient, price or active liquidity/staking program.
 
-<small>Proposed future upgrades; implementation and timing are not guaranteed.</small>
+The project intends to establish a governance solution **before the mFRG sale concludes**. No fixed ten-seat chamber, staking mandate or voter rights exist. Future native FRG privacy research includes a preferred in-place FCMP++/CARROT hard fork if safely implemented, plus native atomic swaps, potential L2 settlement and L3 applications. No wrapper bridge or guaranteed mFRG/FRG conversion is part of the current roadmap.
 
-No bridge, wrapped token, FCMP++/CARROT upgrade, stable asset or private-trading service is live. Wrapper mint/burn, reserves, redemption and any later wind-down must conserve supply and protect outstanding claims. See [roadmap](../ROADMAP.md) and [future architecture](SOLANA_FCMP_CARROT_The first planned post-launch integration is a user-deposit-backed, redeemable 1:1 Solana wFRG bridge. The preferred later privacy upgrade is an in-place FCMP++/CARROT hard fork preserving native FRG history and balances; a separate successor and voluntary, supply-conserving migration are the fallback. Later work includes native atomic swaps, backed private stable assets, TSS/MPC private trades, L2 settlement and L3 applications._ARCHITECTURE.md).
+See [technical roadmap](../ROADMAP.md), [miniFORGE sale details](miniforge-sale.html), [mFRG custody/specification](MINIFORGE_SPL_TREASURIES.md) and [future privacy architecture](SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md).
 
 ## Source and release status
 

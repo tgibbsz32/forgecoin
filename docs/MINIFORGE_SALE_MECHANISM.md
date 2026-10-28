@@ -7,10 +7,14 @@ The miniFORGE webpage provides public facts and a non-transacting checkout previ
 | Allocation | mFRG | Percentage | Intended use |
 | --- | ---: | ---: | --- |
 | Sale / trading treasury | 5,000,000 | 10% | Potential future sales/trades against Solana USDC and later separately reviewed assets |
-| Liquidity reserve | 5,000,000 | 10% | Held until a future liquidity decision; not an active pool |
-| Later distribution | 40,000,000 | 80% | No distribution mechanism or eligible recipient currently specified |
+| Post-sale liquidity/staking treasury | 5,000,000 | 10% | A separate 5M mFRG allocation designated for treasury custody after the sale; no staking yield or pool is active |
+| Future issuance and development treasury | 40,000,000 | 80% | Reserved for staged circulation/distribution and development under future approved controls; not minting beyond 50M |
 
-Only the **sale treasury** can supply a prospective website checkout. The other **45M** must never be silently included in checkout inventory. The initial contemplated payment asset is **native Circle USDC on Solana mainnet**, canonical mint EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v. Do not rely on token names or icons for security. SOL may be used by purchasers to cover network transaction fees but is *not* an approved alternative price/payment method. Any future SOL, PYUSD, USDT or other chain token payment requires separate merchant support, escrow and pricing risk review.
+Only the **sale treasury** can supply a prospective website checkout. The other **45M** (5M liquidity/staking treasury after the sale plus 40M future issuance/development treasury) must never be silently included in checkout inventory. No part of the initial 5M sold is also counted toward the separate post-sale 5M treasury. The initial contemplated payment asset is **native Circle USDC on Solana mainnet**, canonical mint EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v. Do not rely on token names or icons for security. SOL may be used by purchasers to cover network transaction fees but is *not* an approved alternative price/payment method. Any future SOL, PYUSD, USDT or other chain token payment requires separate merchant support, escrow and pricing risk review.
+
+## Required governance deadline and treasury disclosures
+
+Select and publish an appropriate governance model **before the 5M mFRG sale ends**. No ten-seat chamber, token-vote entitlement, staking contract or treasury-signing threshold is finalized. The eventual rules must cover independent custody, approval procedures, conflicts of interest, how any sale proceeds will be held/used, and how the 5M post-sale and 40M development reserves can be disbursed. The proposed 50M supply is an intended limit; future issuance from the 40M reserve does not authorize additional minting above it.
 
 ## Intended buyer experience
 
@@ -33,7 +37,7 @@ Only the **sale treasury** can supply a prospective website checkout. The other 
 
 **No sale may open solely by editing a boolean, including sale-status.json or an environment variable.** A separate code-reviewed release is required after all below are completed:
 
-1. Mainnet token mint created, supply reconciled and mint/freeze/metadata authorities documented; 5M sale allocation actually funded and separately controlled, 5M liquidity and 40M reserve independently inventoried.
+1. Mainnet token mint created, supply reconciled and mint/freeze/metadata authorities documented; 5M sale allocation actually funded and separately controlled, 5M post-sale liquidity/staking and 40M future issuance/development reserves independently inventoried.
 2. Sale beneficiary/USDC receiver account is derived and independently verified as belonging to the approved treasury, with multi-party custody, key recovery, on-chain monitoring, rent and emergency pause.
 3. Jurisdiction-specific securities/consumer/financial compliance, eligibility/KYC/AML/sanctions obligations as applicable and buyer protection, refund and risk disclosures reviewed with competent counsel; avoid promises of profit, guaranteed price or liquidity.
 4. Published unit price or bounded allocation/auction mechanism, sale window, per-wallet and per-user controls, fair distribution rules, exact quote expiry, supply and payment threshold constraints and terms of service.

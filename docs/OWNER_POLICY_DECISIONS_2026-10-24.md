@@ -1,3 +1,5 @@
+> **October 27, 2026 superseding notice:** This is historical research/evidence. The current direction has **no approved fixed ten-seat governance system** and **no planned wFRG bridge**. The separately proposed 50M mFRG SPL token has **5M initial sale**, **5M post-sale liquidity/staking treasury**, and **40M future issuance/development treasury**. Governance is to be selected before the sale concludes. The current active specifications are [ROADMAP.md](../ROADMAP.md) and [miniFORGE allocation](MINIFORGE_SPL_TREASURIES.md). Do not treat earlier planning decisions here as active authorization.
+
 > **Historical archive — superseded for current configuration.** Original evidence and decisions below retain their original dates and network parameters. Do not use old ports, genesis, balances, token proposals or release claims as current instructions. See [current mainnet specification](CURRENT_MAINNET.md) and the current roadmap.
 
 ## Owner decisions confirmed — 2026-10-24

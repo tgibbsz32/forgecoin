@@ -53,14 +53,12 @@
 
 **Done when:** a miner can independently verify accepted blocks, allocations and matured payouts from an audited service. **State:** synthetic research only; public pool unavailable.
 
-## Post-launch development direction
+## Next-stage mFRG token, treasuries and governance
 
-First integrate the user-deposit-backed Solana wFRG bridge; follow with the preferred native FCMP++/CARROT hard fork and later native swaps, private finance and L2/L3 applications. Each workstream requires its own engineering and review. Native governance bonds remain a separate governance proposal.
+miniFORGE (mFRG) is a separate, not-yet-issued-on-mainnet standard SPL token with **50M target supply**: **5M initial sale**, **5M post-sale liquidity/staking treasury** and **40M future issuance/development treasury**. The 40M reserve is for future controlled releases from the supply target. It does not authorize minting extra units. No sale, payment address, price, staking program or liquidity pool is operational.
 
-## Intended next-stage technology: wrapper first, FCMP++ later
+The project intends to choose and publish the governance framework **before the initial sale ends**; no particular number of representatives, miner bond, mFRG voting scheme or quorum is ratified. Older wrapped-FRG and fixed-seat roadmaps are superseded. See [technical roadmap](../../ROADMAP.md), [mFRG sale page](../miniforge-sale.html), [treasury specification](../MINIFORGE_SPL_TREASURIES.md) and [governance design](../../governance-charter.md).
 
-After the native FRG L1 launch, prioritize a **1:1 reserve-backed Solana wFRG bridge with secure mint/burn and user redemption**. Subsequently, research an **in-place FCMP++/CARROT hard fork** on the existing chain: incrementally updated curve-tree storage, consensus proof verification, legacy wallet/output compatibility, mempool revalidation and a dedicated FCMP++ stressnet. A separate blockchain and voluntary migration mechanism would be a contingency only if an in-place fork cannot be made safe.
+## Intended future L1, L2 and possible L3 architecture
 
-Longer-term planned implementations include cross-chain atomic swaps, reserve-backed synthetic stable assets, TSS/MPC-secured private block trading and optional routing fees, L2 payment/settlement, and L3 private-market applications. Their cryptography, financial controls, and execution mechanisms need independent validation; they are **not currently supported**. [Full engineering intentions](../SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md).
-
-See [testing and release verification](Testing-and-Release.md), [current status](Current-Status.md) and [detailed implementation plan](../POOL_EXPLORER_IMPLEMENTATION_PLAN.md).
+The FCMP++/CARROT upgrade remains intended research for an independently audited, in-place native FRG hard fork if feasible. Additional candidate systems include native atomic swaps, MPC/TSS protected settlement, secure L2 payments/batching and L3 applications. Each has its own security, legal and implementation gates. No feature is live merely because it is documented.

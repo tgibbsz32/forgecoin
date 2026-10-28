@@ -1,61 +1,10 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#08111d"><title>ForgeCoin | Member Registration</title>
-<link rel="stylesheet" href="style.css"><link rel="icon" href="images/forgecoin-logo.png?v=fd4aede8">
-<style>
-.register-shell{max-width:1040px}.register-columns{display:grid;grid-template-columns:1fr 1fr;gap:18px}.register-panel{padding:25px;background:#112335;border:1px solid var(--border);border-radius:15px}.register-panel h2{font-size:24px}.register-field{margin:17px 0}.register-field label{display:block;margin-bottom:6px;font-weight:700;font-size:14px}.register-field :is(input,select,textarea){display:block;width:100%;background:#071b29;color:white;border:1px solid #54738a;border-radius:9px;padding:11px;font:inherit}.register-field textarea{min-height:110px}.register-warning,.register-message{background:#102e3d;border:1px solid #38627c;border-radius:11px;padding:16px;color:#c4dfef;margin:20px 0}.register-message{font-size:14px;white-space:pre-wrap}.register-buttons{display:flex;flex-wrap:wrap;gap:10px}.register-buttons button,.submit-button{border:0;border-radius:9px;padding:11px 16px;font:inherit;font-weight:750;background:var(--cyan);color:#081927;cursor:pointer}.register-buttons button:disabled,.submit-button:disabled{opacity:.45;cursor:not-allowed}.register-buttons .quiet{background:#2b4155;color:white}.register-item{border-bottom:1px solid var(--border);padding:13px 0}.register-item strong{display:block}.register-item small,.register-note{color:var(--muted);font-size:13px}.register-panel a{color:var(--cyan)}@media(max-width:820px){.register-columns{grid-template-columns:1fr}}
-</style></head><body><aside class="container safety-note" style="padding:16px"><strong>Current mainnet: frozen, not launched.</strong> Nonce 20261026; P2P/RPC/ZMQ 39480/39481/39482. <a href="current-mainnet.html">Current identity, tokenomics, roadmap and release status →</a> Main-branch runtime remains legacy pending review; no approved public mining or bootstrap peer.</aside>
-<a class="skip" href="#main">Skip to content</a><header class="site-header"><div class="container nav-wrap">
-<a class="brand" href="index.html"><img class="brand-logo" src="images/forgecoin-logo.png?v=fd4aede8" alt=""><span>FORGE<span class="accent">COIN</span></span></a>
-<nav class="nav-links" style="display:flex;position:static;flex-direction:row;flex-wrap:wrap;background:transparent;padding:0;border:0">
-<a href="index.html">Home</a><a href="community.html">Community</a><a href="member-eligibility.html">Eligibility</a></nav></div></header>
-<main id="main"><section class="section"><div class="container register-shell">
-<span class="kicker">GOVERNANCE / MEMBER REGISTRATION</span><h1>Request your <span class="accent">voting category.</span></h1>
-<p class="lead">Link a wallet, apply for community, mining or developer eligibility, and check application status. Category approval alone cannot authorize a binding election ballot.</p>
-<div class="register-warning"><strong>Development interface only.</strong> GitHub Pages hosts an informational preview; registration only works when the governance API intentionally serves this page on <code>127.0.0.1:8765</code>. No production registration, voting or staking service is live. Never enter a wallet seed phrase, private key, identity document or funds.</div>
-<div class="register-columns"><section class="register-panel"><h2>1. Wallet authentication</h2>
-<p id="mode" class="register-message" role="status">Not connected.</p>
-<div class="register-buttons"><button id="login" type="button" disabled>Sign in with Solana</button><button id="logout" type="button" class="quiet" disabled>Sign out</button></div>
-<p id="wallet" class="register-note">Wallet: none</p>
-<h2>2. Eligibility application</h2><form id="application">
-<div class="register-field"><label for="role">Requested category</label><select id="role" required><option value="community">Community</option><option value="miner">Native FRG miner</option><option value="developer">Developer / contributor</option></select></div>
-<p class="register-note" id="requirements">Community eligibility requires meaningful participation and a uniqueness review.</p>
-<div class="register-field"><label for="reference">Evidence reference</label><input id="reference" maxlength="250" minlength="8" placeholder="ref:case-12345" autocomplete="off" required></div>
-<p class="register-note">Use a non-sensitive reference, not private identity information or wallet secrets. Evidence references are retained by the local registry.</p>
-<div class="register-field"><label for="statement">Participation statement</label><textarea id="statement" minlength="10" maxlength="500" required placeholder="Describe the contribution or activity relevant to this category."></textarea></div>
-<button class="submit-button" type="submit" id="send" disabled>Submit application</button></form>
-<p id="feedback" role="status" class="register-message">No application submitted.</p></section>
-<section class="register-panel"><h2>3. Application history</h2>
-<p class="register-note">Your status is visible only after signing in. Approval must be performed by an independent reviewer.</p>
-<div class="register-buttons"><button id="refresh" type="button" disabled>Refresh my status</button></div><div id="history" aria-live="polite"><p class="register-note">No applications loaded.</p></div>
-<h2 style="margin-top:28px">Voting restrictions</h2>
-<div class="register-item"><strong>Community</strong><small>Verified participation, wallet control and uniqueness review.</small></div>
-<div class="register-item"><strong>Mining</strong><small>Independent proof of native FRG mining activity.</small></div>
-<div class="register-item"><strong>Developer</strong><small>Reviewed contributions within the previous 180 days.</small></div>
-<div class="register-item"><strong>legacy staker</strong><small>No Solana staking in V1. A proposed native FRG bond qualifies verified miners for governance only; not implemented.</small></div>
-<div class="register-item"><strong>Chamber seat</strong><small>Requires a seated representative credential; not self-requestable here.</small></div>
-<p style="margin-top:25px"><a href="practice-governance.html">Try the public practice simulator →</a></p>
-<p><a href="https://github.com/tgibbsz32/forgecoin/blob/main/governance-charter.md">Full governance charter ↗</a></p></section></div>
-</div></section></main><footer><div class="container"><p>ForgeCoin experimental member registration. No binding voting, verified staking, or production financial service.</p></div></footer>
-<script>
-(()=>{'use strict';
-const $=id=>document.getElementById(id);
-const active=(location.hostname==='127.0.0.1'||location.hostname==='localhost')&&location.port==='8765'&&location.pathname==='/member/registration';
-const roles={community:'Community eligibility needs participation history and identity-uniqueness review.',miner:'Miner eligibility requires separately verified native FRG mining contribution.',developer:'Developer eligibility requires independently reviewed contributions within 180 days.'};
-let token='',wallet='',epoch=0;
-$('role').addEventListener('change',()=>{$('requirements').textContent=roles[$('role').value]});
-function notify(message){$('feedback').textContent=message}
-function buttons(){const logged=!!token;$('login').disabled=!active||logged;$('logout').disabled=!logged;$('send').disabled=!logged;$('refresh').disabled=!logged}
-function clear(){epoch++;token='';wallet='';$('wallet').textContent='Wallet: none';$('history').replaceChildren();$('history').textContent='No applications loaded.';notify('No application submitted.');buttons()}
-function b58(data){const a=[0];for(const b of data){let carry=b;for(let j=0;j<a.length;j++){carry+=a[j]*256;a[j]=carry%58;carry=Math.floor(carry/58)}while(carry){a.push(carry%58);carry=Math.floor(carry/58)}}let leading=0;while(leading<data.length&&data[leading]===0)leading++;const alphabet='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';return '1'.repeat(leading)+a.reverse().map(i=>alphabet[i]).join('')}
-async function api(path,body,auth=false){const headers={'Content-Type':'application/json'};if(auth)headers.Authorization='Bearer '+token;const r=await fetch(path,{method:body?'POST':'GET',headers,body:body?JSON.stringify(body):undefined,cache:'no-store',credentials:'omit'});let data;try{data=await r.json()}catch{throw Error('Unexpected API response')}if(!r.ok)throw Error(typeof data.detail==='string'?data.detail:'Request rejected ('+r.status+')');return data}
-$('login').addEventListener('click',async()=>{if(!active)return;const initial=++epoch;const b=$('login');b.disabled=true;$('mode').textContent='Requesting wallet signature…';
-try{const provider=window.solana;if(!provider||!provider.isPhantom||typeof provider.signMessage!=='function')throw Error('Compatible Phantom browser wallet not found');const connection=await provider.connect();const key=connection.publicKey.toBase58();const challenge=await api('/auth/challenge',{address:key});const bytes=new TextEncoder().encode(challenge.message);const signed=await provider.signMessage(bytes,'utf8');const result=await api('/auth/verify',{address:key,nonce:challenge.nonce,signature:b58(signed.signature)});if(initial!==epoch)return;wallet=key;token=result.access_token;$('wallet').textContent='Wallet: '+wallet;$('mode').textContent='Authenticated for LOCAL development only. No live voting rights.';buttons();await refresh()}catch(e){if(initial!==epoch)return;clear();$('mode').textContent='Sign-in unavailable: '+(e.message||'unknown error')}}); 
-$('logout').addEventListener('click',()=>{clear();$('mode').textContent='Signed out. Local session token cleared from page memory.'});
-async function refresh(){const current=epoch;const target=$('history');try{const result=await api('/applications/mine',null,true);if(current!==epoch)return;target.replaceChildren();if(!result.applications.length){target.textContent='No applications yet.';return}for(const app of result.applications){const d=document.createElement('div');d.className='register-item';const name=document.createElement('strong');name.textContent=app.role+' — '+app.status;const sub=document.createElement('small');sub.textContent='Application #'+app.id+' · '+new Date(app.created_at*1000).toLocaleString();d.append(name,sub);target.appendChild(d)}}catch(e){if(current===epoch)target.textContent='Could not load history: '+e.message}}
-$('refresh').addEventListener('click',refresh);
-$('application').addEventListener('submit',async e=>{e.preventDefault();if(!active||!token)return;const current=epoch;$('send').disabled=true;try{const result=await api('/applications',{role:$('role').value,evidence_reference:$('reference').value.trim(),statement:$('statement').value.trim()},true);if(current!==epoch)return;notify('Application #'+result.application_id+' recorded as pending. This does not grant voting privileges.');$('reference').value='';$('statement').value='';await refresh()}catch(err){if(current===epoch)notify('Application not submitted: '+err.message)}finally{if(current===epoch)buttons()}});
-$('mode').textContent=active?'Local development API detected. Sign in only with a disposable test wallet.':'Public informational preview: wallet connection and submissions disabled.';
-buttons();window.addEventListener('pagehide',clear);
-})();
-</script></body></html>
+<title>Archived Governance Demonstration | ForgeCoin</title><link rel="stylesheet" href="style.css"></head>
+<body><main class="container" style="max-width:920px;padding:60px 24px">
+ <p><a href="index.html">Home</a> &nbsp; <a href="community.html">Governance</a> &nbsp; <a href="miniforge-sale.html">miniFORGE sale information</a></p>
+ <h1>Historical governance demonstration</h1>
+ <p><strong>This is not an active governance system, voter registry or staking program.</strong> Previous fixed-seat chamber, eligibility, bond, registration and vote demos are superseded historical experiments. The project has not selected a replacement governance structure.</p>
+ <p>The project intends to choose and publish its governance framework <strong>before the initial 5M mFRG sale concludes</strong>. No binding elections, registration, voting privileges, treasury execution, staking rewards, wallet signing or identity collection operate here.</p>
+ <p>Read the <a href="community.html">current governance overview</a> and the <a href="https://github.com/tgibbsz32/forgecoin/blob/main/governance-charter.md">open design charter</a>. Source history remains available through Git.</p>
+ </main></body></html>

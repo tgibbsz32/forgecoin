@@ -8,21 +8,20 @@ ForgeCoin is an experimental, privacy-preserving, proof-of-work cryptocurrency d
 
 ForgeCoin’s selected October 26 mainnet is genesis-frozen and unlaunched. The old chains are retired. Main-branch runtime code still reflects the legacy implementation; new-mainnet source remains under review in draft PR #111.
 
-## Current asset scope (October 2026)
+## Current assets, sale plans and future privacy work (October 27, 2026)
 
-**ForgeCoin V1 is native FRG only.** There is no Solana token, bridge or additional mining reward at launch. The **first intended post-launch interoperability addition** is a **1:1 native-FRG-backed Solana wFRG token and redeemable bridge**. After that, the project intends to research FCMP++/CARROT privacy upgrades, **preferably by hard-forking the existing L1 rather than replacing its blockchain**. A separate successor and opt-in migration are a fallback only if chain continuity is infeasible. The governance draft proposes native **FRG governance bonds** combined with independently verified mining participation for miner representatives; the bonding mechanism is not implemented and has no effect on native proof of work.
+**Native ForgeCoin (FRG)** remains an independent Monero-derived RandomX Proof-of-Work cryptocurrency. The frozen October 26 mainnet identity still requires security, chain-consensus and infrastructure release verification. Native FRG has no founder/team ICO premine or Solana-issued mining rewards.
 
-See [roadmap](ROADMAP.md), [zero-cost pool research](docs/ZERO_COST_MINING_POOL_RESEARCH.md), and [revised governance charter](governance-charter.md).
+**miniFORGE (mFRG)** is a separate proposed **50,000,000 unit** Solana standard SPL token, with three non-overlapping intended allocations:
+- **5,000,000 mFRG for the initial sale** (not open; no approved start/end dates, price or payment recipient).
+- **5,000,000 mFRG in a separate post-sale liquidity/staking treasury**, activated only after reviewed governance, contracts and custody procedures. No staking yield is offered.
+- **40,000,000 mFRG in the future issuance and development treasury**, to be released later under publicly approved controls, not minted in excess of the intended 50M total.
 
-## Intended evolution: wFRG bridge first, FCMP++/CARROT later
+Governance is an **open design**. The project intends to select and publish a governance solution **before the mFRG sale concludes**. There is no currently approved fixed-size chamber, FRG bond, voting entitlement or mFRG treasury authority.
 
-<small>Proposed future upgrades; implementation and timing are not guaranteed.</small>
+The former planned wrapped-FRG bridge was superseded by the separate miniFORGE program and is **not on the current delivery roadmap**. Later native privacy objectives remain FCMP++ and CARROT with a preferred audited in-place hard fork where feasible; future independently reviewed L1 atomic swaps, L2 settlement and possible L3 applications are research stages.
 
-**Future development only.** ForgeCoin intends to follow native L1 launch with a **Solana Token-2022/SPL wrapper (wFRG) backed 1:1 by locked user-deposited FRG**, including explicit mint/burn/redemption and reserve reconciliation. After that, the preferred FCMP++/CARROT upgrade is a **coordinated in-place hard fork** preserving native FRG chain history and funds if technically sound; a separate successor and opt-in bridge/migration is the fallback. Any interim wFRG wind-down must protect redemption and outstanding reserve obligations.
-
-Future engineering requirements: incremental authenticated curve-tree databases; consensus verification of FCMP++ membership proofs and Generalized Bulletproofs components; CARROT wallet/address and legacy-output compatibility; mempool revalidation across hard-fork activation; and a unique heavy-load stressnet. Further research includes **native atomic swaps with ETH/USDC, backed privacy-shielded synthetic stable assets, TSS/MPC-secured private block-trade routing with potential basis-point fees, L2 payment/settlement systems and L3 applications**. All require separate design, audits, custody, security and compliance reviews. Neither perfect privacy nor immediate settlement is guaranteed.
-
-See [the full interoperability, migration and successor plan](docs/SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md) and [ROADMAP.md](ROADMAP.md).
+See [project roadmap](ROADMAP.md), [technical whitepaper](docs/WHITEPAPER.md), [miniFORGE sale information](docs/miniforge-sale.html), [mFRG treasury details](docs/MINIFORGE_SPL_TREASURIES.md), [future privacy architecture](docs/SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md), and [governance design charter](governance-charter.md).
 
 ## Mission
 

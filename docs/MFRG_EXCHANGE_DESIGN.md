@@ -5,8 +5,8 @@ Status: **Design / preview only.** No wallet deposits, purchase quotes, treasury
 ## Asset identity and non-interchangeability
 
 - **FRG** is the ForgeCoin native L1 mined asset.
-- **wFRG** is the separately proposed 1:1 native-FRG-backed Solana representation. It is not yet operational.
-- **mFRG** (miniFORGE) is a distinct planned SPL token, with its own mint, issuance, sale allocation and liquidity economics. mFRG is **not** redeemable 1:1 for native FRG merely because the names are related.
+- **No wrapped native-FRG bridge is part of the current project roadmap.** Native FRG and proposed mFRG are distinct network assets; there is no audited cross-chain conversion or redemption protocol.
+- **mFRG** (miniFORGE) is a separate planned 50M standard SPL asset: 5M intended sale inventory, 5M post-sale liquidity/staking treasury, 40M future issuance/development treasury. mFRG is **not** redeemable 1:1 for native FRG merely because the names are related.
 - Do not show a contract address, token price, circulating supply, live inventory, or buy control until verified on-chain and formally approved.
 
 ## Routes and phased delivery
@@ -41,3 +41,8 @@ A public, static GitHub Pages website can host the interface; secrets and signin
 ## Prior tokenomics assumptions requiring confirmation
 
 Earlier plans discussed 55 million mFRG SPL tokens, with 4 million for sale, 1 million participation incentives, and 50 million held for later allocation; a later proposal considered reserving 5 million from the held amount for liquidity. These are planning figures, not verified mainnet allocations. Reconcile them against the final mint authority and on-chain inventory before publishing sale quantities.
+
+
+## October 27 superseding decision
+
+The live project plan is 5M mFRG sale, a separate 5M mFRG post-sale liquidity/staking treasury, and 40M mFRG future issuance/development reserve, with a governance solution chosen before the sale concludes. Any older 55M or wrapped-bridge material above is archived research, not current direction. No sale, exchange listing, staking or liquidity service is live.

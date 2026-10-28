@@ -1,0 +1,24 @@
+name: mFRG 500M predeployment readiness audit
+on:
+  pull_request:
+    paths:
+      - 'tools/mfrg_predeployment_preflight.py'
+      - 'tools/test_mfrg_predeployment_preflight.py'
+      - 'apps/desktop/config/miniFORGE.mainnet.plan.json'
+      - '.github/workflows/mfrg-predeployment-readiness.yml'
+      - 'docs/handoffs/MFRG_500M_PREDEPLOYMENT_READINESS_PHASE_2026-10-28.md'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/mfrg_predeployment_preflight.py'
+      - 'tools/test_mfrg_predeployment_preflight.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/test_mfrg_predeployment_preflight.py
+      - run: python3 tools/mfrg_predeployment_preflight.py

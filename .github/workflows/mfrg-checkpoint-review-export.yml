@@ -1,0 +1,21 @@
+name: mFRG Step 29 offline review export
+on:
+  pull_request:
+    paths:
+      - 'tools/mfrg_checkpoint_review_export.py'
+      - 'tools/test_mfrg_checkpoint_review_export.py'
+      - 'docs/handoffs/MFRG_500M_STEP_29_REVIEW_EXPORT_2026-10-28.md'
+      - '.github/workflows/mfrg-checkpoint-review-export.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install 'cryptography>=43,<47'
+      - run: python3 tools/test_mfrg_checkpoint_review_export.py
+      - run: python3 tools/test_mfrg_checkpoint_ledger_binding.py

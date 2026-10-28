@@ -1,0 +1,34 @@
+name: mFRG mainnet mint read-only preflight
+on:
+  pull_request:
+    paths:
+      - 'tools/verify_mfrg_mint_snapshot.py'
+      - 'tools/test_verify_mfrg_mint_snapshot.py'
+      - 'docs/MFRG_SOLANA_MINT_VERIFICATION.md'
+      - 'docs/MFRG_TREASURY_VESTING_GATES.md'
+      - 'docs/handoffs/MFRG_500M_STEP_09_SOLANA_MINT_PREFLIGHT_2026-10-28.md'
+      - '.github/workflows/mfrg-mint-preflight.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/verify_mfrg_mint_snapshot.py'
+      - 'tools/test_verify_mfrg_mint_snapshot.py'
+      - 'docs/MFRG_SOLANA_MINT_VERIFICATION.md'
+      - 'docs/MFRG_TREASURY_VESTING_GATES.md'
+      - 'docs/handoffs/MFRG_500M_STEP_09_SOLANA_MINT_PREFLIGHT_2026-10-28.md'
+      - '.github/workflows/mfrg-mint-preflight.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  snapshot-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify synthetic mint snapshots and fail-closed authority logic
+        run: python3 tools/test_verify_mfrg_mint_snapshot.py
+      - name: Validate existing 500M accounting and disabled sale state
+        run: python3 tools/test_mfrg_policy.py
+      - name: Validate offline legacy pilot backend with explicit 5M cap
+        run: python3 apps/sale/tests/test_sale.py

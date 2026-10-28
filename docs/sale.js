@@ -43,12 +43,14 @@
         status.network !== 'solana-mainnet-beta' ||
         status.sale_enabled !== false ||
         status.payments_enabled !== false ||
+        status.quotes_enabled !== false ||
+        status.fulfillment_enabled !== false ||
         status.token_mainnet_mint !== null ||
         status.sale_price_usdc !== null ||
-        status.supply_total_mfrg !== 50000000 ||
-        status.sale_treasury_mfrg !== 5000000 ||
-        status.future_liquidity_reserve_mfrg !== 5000000 ||
-        status.future_distribution_reserve_mfrg !== 40000000) {
+        status.supply_total_mfrg !== 500000000 ||
+        status.sale_treasury_mfrg !== 50000000 ||
+        status.future_liquidity_reserve_mfrg !== 60000000 ||
+        status.future_distribution_reserve_mfrg !== 390000000) {
       // A bad or unexpectedly enabled status is a hard stop, not authorization.
       throw new Error('Unreviewed or contradictory sale metadata');
     }

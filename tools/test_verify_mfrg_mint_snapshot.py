@@ -124,6 +124,13 @@ class SnapshotParserTests(unittest.TestCase):
         with self.assertRaises(SnapshotError):
             assess_snapshot(FAKE_MINT, x)
 
+    def test_missing_authority_field_cannot_be_called_revoked(self):
+        for name in ("mintAuthority", "freezeAuthority"):
+            x = fake_rpc()
+            del x["result"]["value"]["data"]["parsed"]["info"][name]
+            with self.subTest(field=name), self.assertRaises(SnapshotError):
+                assess_snapshot(FAKE_MINT, x)
+
     def test_context_slot_required(self):
         for bad in (0, -1, "123", True):
             x = fake_rpc()

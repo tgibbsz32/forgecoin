@@ -1,0 +1,23 @@
+name: mFRG Step 25 offline evidence integrity
+on:
+  pull_request:
+    paths:
+      - 'tools/verify_mfrg_evidence_bundle.py'
+      - 'tools/test_verify_mfrg_evidence_bundle.py'
+      - 'docs/handoffs/MFRG_500M_STEP_25_EVIDENCE_RECOVERY_2026-10-28.md'
+      - '.github/workflows/mfrg-evidence-bundle.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/verify_mfrg_evidence_bundle.py'
+      - 'tools/test_verify_mfrg_evidence_bundle.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/test_verify_mfrg_evidence_bundle.py
+      - run: python3 tools/test_mfrg_integrated_challenge_verifier.py

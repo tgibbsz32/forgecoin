@@ -136,7 +136,7 @@ class TreasuryVestingTests(unittest.TestCase):
         with self.assertRaises(PreflightError):
             assess_plan(self.plan, self.status, changed)
         changed = copy.deepcopy(self.registry)
-        changed["accounts"][0]["allocation_atomic"] = "50000000000000"
+        changed["accounts"][0]["allocation_atomic"] = "49999999999999"
         with self.assertRaises(PreflightError):
             assess_plan(self.plan, self.status, changed)
         changed = copy.deepcopy(self.plan)

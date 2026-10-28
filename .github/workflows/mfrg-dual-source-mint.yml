@@ -1,0 +1,38 @@
+name: miniFORGE dual-source mint comparison tests
+on:
+  pull_request:
+    paths:
+      - 'tools/reconcile_mfrg_mint_snapshots.py'
+      - 'tools/test_reconcile_mfrg_mint_snapshots.py'
+      - 'tools/verify_mfrg_mint_snapshot.py'
+      - 'tools/test_verify_mfrg_mint_snapshot.py'
+      - 'docs/MFRG_DUAL_SOURCE_MINT_VERIFICATION.md'
+      - 'docs/handoffs/MFRG_500M_STEP_11_DUAL_SOURCE_MINT_PREFLIGHT_2026-10-28.md'
+      - '.github/workflows/mfrg-dual-source-mint.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/reconcile_mfrg_mint_snapshots.py'
+      - 'tools/test_reconcile_mfrg_mint_snapshots.py'
+      - 'tools/verify_mfrg_mint_snapshot.py'
+      - 'tools/test_verify_mfrg_mint_snapshot.py'
+      - 'docs/MFRG_DUAL_SOURCE_MINT_VERIFICATION.md'
+      - 'docs/handoffs/MFRG_500M_STEP_11_DUAL_SOURCE_MINT_PREFLIGHT_2026-10-28.md'
+      - '.github/workflows/mfrg-dual-source-mint.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-evidence-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Synthetic two-source supply and authority conflict checks
+        run: python3 tools/test_reconcile_mfrg_mint_snapshots.py
+      - name: Existing single snapshot fail-closed checks
+        run: python3 tools/test_verify_mfrg_mint_snapshot.py
+      - name: Existing treasury and founder vesting plan checks
+        run: python3 tools/test_mfrg_treasury_vesting_preflight.py
+      - name: Existing supply, founder ownership and disabled checkout policy
+        run: python3 tools/test_mfrg_policy.py

@@ -93,9 +93,10 @@ def parse_inventory(mint, response):
         raw = _raw_amount(amount.get("amount"), "token amount")
         if info.get("state") not in ("initialized", "frozen"):
             raise InventoryError("Unknown or uninitialized token-account state")
-        if "delegate" not in info:
-            raise InventoryError("Missing delegate field; absence is not proof of no delegation")
-        delegate = info["delegate"]
+        # jsonParsed commonly omits optional authorities entirely.
+        # Absent delegate is a parsed-field convention, NOT proof of
+        # beneficial ownership or independent authority verification.
+        delegate = info.get("delegate")
         if delegate is not None:
             _key(delegate, "delegate authority")
             delegated = info.get("delegatedAmount")
@@ -109,9 +110,7 @@ def parse_inventory(mint, response):
             if "delegatedAmount" in info and isinstance(info["delegatedAmount"], dict):
                 if _raw_amount(info["delegatedAmount"].get("amount"), "delegatedAmount") != 0:
                     raise InventoryError("Nonzero delegated amount with no delegate")
-        if "closeAuthority" not in info:
-            raise InventoryError("Missing closeAuthority; no proof of control")
-        close_authority = info["closeAuthority"]
+        close_authority = info.get("closeAuthority")
         if close_authority is not None:
             _key(close_authority, "close authority")
         if "isNative" in info and info["isNative"] not in (False, None):

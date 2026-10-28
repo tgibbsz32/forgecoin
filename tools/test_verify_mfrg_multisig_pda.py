@@ -82,7 +82,7 @@ class MultisigAndPDATests(unittest.TestCase):
 
     def test_05_signer_mismatch_rejected(self):
         m, mint, accounts, owner = fixture()
-        m["claim"]["expected_signer_keys"][0] = OWNER_A
+        m["claim"]["expected_signer_keys"][0] = "11111111111111111111111111111112"
         with self.assertRaisesRegex(AuthorityError, "signer set conflicts"):
             assess(m, mint, accounts, owner)
 

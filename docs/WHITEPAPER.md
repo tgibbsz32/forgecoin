@@ -2,7 +2,7 @@
 
 [Current mainnet specification and release status](CURRENT_MAINNET.md). The October 26 identity is frozen and unlaunched; main-branch runtime remains legacy pending separate implementation review.
 
-Version 0.2 — October 26, 2026
+Version 0.3 — October 28, 2026 (mFRG lifetime policy revision)
 
 ## Abstract
 

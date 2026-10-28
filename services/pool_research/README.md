@@ -97,6 +97,37 @@ Run offline: `python -m unittest discover -s services/pool_research -p test_mode
 
 Before a public pool, implement and independently verify native FRG-compatible Stratum/RandomX template handling, difficulty-vetted shares, durable share accounting, a real connection limiter, reorg-aware reward eligibility, payout safety, rate limiting, ARM64 runtime performance and actual 100-worker load testing. Solo mining and independent pools must remain permissionless, and the official pool's intended 1% fee must be separately disclosed from transaction costs.
 
+## Offline PPLNS work-window calculation (2026-10-27)
+
+`pplns.py` calculates a deterministic, **research-only** pay-per-last-N-shares
+snapshot using share **difficulty weights**, not just counts of submitted
+shares. Its configurable window is two times the candidate network difficulty
+by default. Shares MUST be passed in strictly increasing recorded sequence
+and must already be independently validated and deduplicated by the caller;
+this module is **not** an acceptance or identity-authentication boundary.
+The caller must freeze a complete snapshot at the block discovery cutoff,
+excluding later submissions. Missing historical shares cannot be reconstructed
+or inferred by the calculator.
+
+The oldest share can be partially included where the rolling work target is
+crossed. A shorter recorded history allocates only observed work. The
+standalone `allocate_pplns` helper uses the existing 1% integer fee and
+largest-remainder atomic-unit allocation for deterministic conservation.
+It limits inputs to 100,000 research shares and SQLite-size integer amounts.
+Results have **no** spending authority and are not fed automatically into
+the reward ledger. The default window multiplier is a provisional policy,
+not a validated parameter for the public ForgeCoin network.
+
+Run `python -m unittest services.pool_research.test_pplns -v`.
+The tests cover a partial boundary share, short history, fee/rounding,
+determinism, ordering, duplicate share IDs, invalid difficulty, and limits.
+
+**Required before production:** an authenticated miner/share identity,
+persistence of native-verified shares and immutable discovered-block snapshots,
+network-difficulty provenance, independent canonical-chain/maturity checks,
+PPLNS audit/recovery, orphan reconciliation, operator fee policy disclosure,
+and separately authorized wallet payouts.
+
 ## Experimental persistent reward ledger (offline only)
 
 `ledger.py` adds a local SQLite prototype for **already independently verified** block records. It stores per-block integer allocations, deduplicates block hashes, tracks pending versus mature rewards, persists across restarts, and reverses allocations when callers identify an orphaned block. It explicitly rejects automatic revival of a previously orphaned block. Tests: `python -m unittest services.pool_research.test_ledger -v` from the repository root.

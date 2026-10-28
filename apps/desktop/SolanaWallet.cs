@@ -60,7 +60,7 @@ namespace ForgeCoinDesktop
             Label notice = new Label {
                 Dock = DockStyle.Fill, ForeColor = Color.FromArgb(95, 77, 37),
                 Text = "Solana is a public blockchain and is separate from native private FRG. " +
-                       "miniFORGE (mFRG) is not issued on Solana mainnet yet. " +
+                       "No verified mFRG Solana mainnet mint is configured in this application. " +
                        "Creating a Solana wallet does not create or convert native FRG."
             };
             root.Controls.Add(notice, 0, 0);
@@ -127,7 +127,7 @@ namespace ForgeCoinDesktop
             solBalanceLabel = Stat(assets, 0, "SOL");
             solMfrgBalanceLabel = Stat(assets, 1, "miniFORGE (mFRG)");
             solBalanceLabel.Text = "-";
-            solMfrgBalanceLabel.Text = "Not issued on mainnet";
+            solMfrgBalanceLabel.Text = "Mainnet mint unconfigured";
             root.Controls.Add(assets, 0, 4);
 
             FlowLayoutPanel net = new FlowLayoutPanel { Dock = DockStyle.Fill,
@@ -141,7 +141,7 @@ namespace ForgeCoinDesktop
             solNetworkSelector.SelectedIndexChanged += delegate {
                 solBalanceLabel.Text = "-";
                 solMfrgBalanceLabel.Text = solNetworkSelector.SelectedIndex == 0 ?
-                    "Not issued on mainnet" : "Checking...";
+                    "Mainnet mint unconfigured" : "Checking...";
                 if (!String.IsNullOrEmpty(solCurrentAddress)) RefreshSolanaBalances(true);
             };
             net.Controls.Add(solNetworkSelector);
@@ -156,7 +156,7 @@ namespace ForgeCoinDesktop
                        "losing both means permanent loss of funds. Importing a CLI keypair cannot recreate its " +
                        "original recovery phrase. No private key or mnemonic is sent to RPC. " +
                        "The displayed mFRG balance uses the verified mint for the selected network; " +
-                       "mainnet remains unconfigured until the official mint is issued and published." };
+                       "mainnet remains unconfigured until a verified official mainnet mint is published and independently checked." };
             root.Controls.Add(info, 0, 6);
             page.Controls.Add(root);
             return page;
@@ -191,7 +191,7 @@ namespace ForgeCoinDesktop
             solWalletState.ForeColor = Color.DarkGreen;
             solBalanceLabel.Text = "Checking...";
             solMfrgBalanceLabel.Text = solNetworkSelector.SelectedIndex == 0 ?
-                "Not issued on mainnet" : "Checking...";
+                "Mainnet mint unconfigured" : "Checking...";
             RefreshSolanaBalances(true);
         }
         private void SolanaError(string message)
@@ -512,7 +512,7 @@ namespace ForgeCoinDesktop
                     });
                     long lamports = Convert.ToInt64(balance["value"], CultureInfo.InvariantCulture);
                     string sol = (lamports / 1000000000m).ToString("0.#########", CultureInfo.InvariantCulture);
-                    string tokens = mainnet ? "Not issued on mainnet" : "0";
+                    string tokens = mainnet ? "Mainnet mint unconfigured" : "0";
                     if (verifiedMint != null)
                     {
                         IDictionary parsed = SolanaRpc(rpc, "getTokenAccountsByOwner", new object[] {
@@ -561,7 +561,7 @@ namespace ForgeCoinDesktop
                         if (solCurrentAddress != address || mainnet != (solNetworkSelector.SelectedIndex == 0)) return;
                         solBalanceLabel.Text = "Unavailable";
                         solMfrgBalanceLabel.Text = verifiedMint == null ?
-                            "Not issued on mainnet" : "Unavailable";
+                            "Mainnet mint unconfigured" : "Unavailable";
                         solNetworkStatusLabel.Text = "RPC unavailable. Check connection and retry.";
                     });
                 }

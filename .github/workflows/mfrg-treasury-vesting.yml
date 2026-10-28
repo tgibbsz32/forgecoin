@@ -1,0 +1,36 @@
+name: miniFORGE treasury and vesting preflight
+on:
+  pull_request:
+    paths:
+      - 'tools/mfrg_treasury_vesting_preflight.py'
+      - 'tools/test_mfrg_treasury_vesting_preflight.py'
+      - 'docs/mfrg-treasury-registry.template.json'
+      - 'docs/MFRG_TREASURY_VESTING_IMPLEMENTATION.md'
+      - 'docs/MFRG_TREASURY_VESTING_GATES.md'
+      - '.github/workflows/mfrg-treasury-vesting.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/mfrg_treasury_vesting_preflight.py'
+      - 'tools/test_mfrg_treasury_vesting_preflight.py'
+      - 'docs/mfrg-treasury-registry.template.json'
+      - 'docs/MFRG_TREASURY_VESTING_IMPLEMENTATION.md'
+      - 'docs/MFRG_TREASURY_VESTING_GATES.md'
+      - '.github/workflows/mfrg-treasury-vesting.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  treasury-vesting-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check nine allocations and founder vesting via synthetic UTC tests
+        run: python3 tools/test_mfrg_treasury_vesting_preflight.py
+      - name: Confirm repository has no verified mint or authorized treasury deployment
+        run: python3 tools/mfrg_treasury_vesting_preflight.py
+      - name: Verify mint-snapshot parser remains fail-closed
+        run: python3 tools/test_verify_mfrg_mint_snapshot.py
+      - name: Verify fundraising still limited to 5M pilot and disabled payments
+        run: python3 tools/test_mfrg_policy.py

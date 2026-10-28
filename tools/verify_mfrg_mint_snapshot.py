@@ -65,6 +65,9 @@ def assess_snapshot(mint_address, snapshot):
     info = data["parsed"].get("info")
     if not isinstance(info, dict):
         raise SnapshotError("Missing decoded mint metadata")
+    required = {"isInitialized", "decimals", "supply", "mintAuthority", "freezeAuthority"}
+    if not required.issubset(info):
+        raise SnapshotError("Incomplete mint data: absence of an authority field is NOT revocation")
     if info.get("isInitialized") is not True:
         raise SnapshotError("SPL mint is not initialized")
     if type(info.get("decimals")) is not int or info["decimals"] != DECIMALS:

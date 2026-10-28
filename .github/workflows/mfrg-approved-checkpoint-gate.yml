@@ -1,0 +1,22 @@
+name: mFRG Step 31 offline checkpoint approval integration
+on:
+  pull_request:
+    paths:
+      - 'tools/mfrg_approved_checkpoint_gate.py'
+      - 'tools/test_mfrg_approved_checkpoint_gate.py'
+      - '.github/workflows/mfrg-approved-checkpoint-gate.yml'
+      - 'docs/handoffs/MFRG_500M_STEP_31_APPROVED_CHECKPOINT_2026-10-28.md'
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install 'cryptography>=43,<47'
+      - run: python3 tools/test_mfrg_approved_checkpoint_gate.py
+      - run: python3 tools/test_mfrg_signed_review_quorum.py
+      - run: python3 tools/test_mfrg_checkpoint_ledger_binding.py

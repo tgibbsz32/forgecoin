@@ -1,56 +1,47 @@
-# miniFORGE (mFRG) - proposed Solana tokenomics and treasury controls
+# miniFORGE (mFRG) — 500M SPL allocation, custody and controls
 
-**Updated October 27, 2026. Sale is not open, and 50M mainnet issuance and token custody are not yet independently verified.**
+**Updated October 28, 2026.** This page supersedes the previously proposed **50M mFRG** three-bucket allocation. **No Solana mainnet mint, funded vaults, staking, price, active sale or verified issuance is established by this documentation.**
 
-miniFORGE (mFRG) is a **separate** 6-decimal standard Solana SPL Token asset, distinct from native Proof-of-Work ForgeCoin (FRG). Its goal and economics do not establish a fixed FRG conversion, reserve claim, dividend, guaranteed liquidity, staking yield, or inherited private transfers.
+The **authoritative detailed allocation, release schedule, founder disclosure, locking, staking, liquidity, burns, crypto-denominated fundraising and legal risk gates** are in the [500M mFRG lifetime tokenomics policy](MFRG_LIFETIME_TOKENOMICS_500M.md).
 
-## Proposed supply and post-sale sequencing
+## New fixed-supply target: 500,000,000 mFRG (6 decimals)
 
-| Allocation | mFRG | Percent | Treasury or sale policy |
-| --- | ---: | ---: | --- |
-| **Initial sale allocation** | 5,000,000 | 10% | Reserved inventory for a future, separately approved mFRG sale, initially contemplating USDC on Solana |
-| **Post-sale liquidity/staking treasury** | 5,000,000 | 10% | A DIFFERENT 5M allocation to be held for liquidity/staking operations after the 5M sale; program mechanics and custody pending |
-| **Future issuance and development treasury** | 40,000,000 | 80% | Held for later authorized releases, development funding and other publicly approved uses |
-| **Total target** | **50,000,000** | **100%** | **Not a claim of verified mainnet supply** |
+| Separate allocation | Quantity | % |
+| --- | ---: | ---: |
+| Crypto-for-mFRG exchange inventory | 50,000,000 | 10% |
+| Long-term operational development | 100,000,000 | 20% |
+| Ecosystem adoption and grants | 100,000,000 | 20% |
+| Staking/participation incentives | 85,000,000 | 17% |
+| Liquidity infrastructure | 60,000,000 | 12% |
+| Engineering, privacy research and audits | 65,000,000 | 13% |
+| **Founder unlocked immediately** | **15,000,000** | **3%** |
+| **Team label (same founder-beneficiary), months 13–36** | **15,000,000** | **3%** |
+| Emergency | 10,000,000 | 2% |
+| **TOTAL** | **500,000,000** | **100%** |
 
-**Accounting distinction:** the 5M sold to purchasers is not also deposited into the 5M liquidity/staking treasury. The 5M post-sale treasury and 40M future-development treasury comprise the *remaining 45M mFRG supply allocation*. How USDC sale proceeds will be used, including how much will support liquidity or development, must be approved and separately disclosed; the 5M liquidity/staking row is a token allocation, not a proven USDC proceeds budget.
+**The founder beneficially controls 30M mFRG in total (6%).** The first 15M has no vesting. The additional 15M vest **625,000 monthly in months 13 through 36**. The two buckets are not independent team holdings.
 
-“Future issuance” describes planned distribution from the earmarked 40M reserve, NOT minting additional mFRG over the 50M target. If the project issues all 50M to treasuries first, on-chain mint authority must be irreversibly revoked under an approved supply policy to make that supply a technically enforced maximum. Until then, 50M is a target allocation.
+## Custody and treasury operations
 
-### Verified and unverified identities
+Each allocation has a separately named and independently reconciled account or enforceable vesting vault. A proposed 3-of-5 multisig should approve routine project treasury operations, subject to independent signer and conflict-of-interest policies. A proposed 4-of-5 approval threshold applies to the emergency reserve. **These controls are proposed, not yet on-chain or ratified.**
 
-- **Token program:** standard Solana SPL Token (not Token-2022). Intended ticker mFRG, name miniFORGE, 6 decimals.
-- **Devnet test mint:** 9HuHPHPeWZBtRJmhsne17pVzUkFYMf9Rg1ZwdH45ebkw, development only; test supply was zero in prior audit.
-- **Solana mainnet mint, allocation accounts and metadata:** NOT verified published. No address presented here may be treated as a payment or token-sale destination.
-- **Prior funding preflight:** the configured CLI wallet had 0 mainnet SOL in an earlier Oct 27 check. The 0.1 SOL recommendation is an approximate setup margin, not a current verified fee or a request to send funds to a specific address.
-- **Capped supply and vesting:** 50M cap, custody, lockups, signer policy, planned distribution constraints and disclosures require documented independent review and on-chain proof.
+Funds raised by mFRG-for-crypto exchanges are **external USDC/SOL/other assets**, held in a separate proceeds treasury; they are **not** 500M tokens of additional issuance. Publish wallet holdings, vesting, grant payments, treasury expenses, founder compensation, and proceeds/runway monthly. Program-owned LP positions need separate accounting.
 
-### Sale and operations
+## Distribution sequencing
 
-Before opening the initial 5M sale, verify token mint, metadata, separate treasury allocations, fund custody and legal requirements; publish a price or price mechanism, window, eligibility restrictions, refund handling, accurate payment asset/recipient, transparent inventory and independently audited transaction delivery. Solana USDC is the contemplated initial payment asset, but no executable sales offer is live. Never collect deposits from an informational page.
+Maximum availability: **74M in year 1, 95M in years 2–3, 117M in years 4–10, 113M in years 11–20 and 101M in years 21–30**. These are outer limits, not automatic circulation.
 
-After the sale, the **separate 5M liquidity/staking treasury** may be activated only under reviewed, published treasury decisions, custody, risk controls and audited contracts. Staking could involve token or FRG-related arrangements, but neither native FRG deposit backing nor yield arises automatically. Any announced future return, fee sharing or holder rights require explicit specifications and appropriate review.
+Fundraising: **5M pilot, 15M additional year 1, 20M years 2–3, 10M years 4–10**. Price, legal permissions, issuance, treasury funding and validated payment settlement are prerequisites. No sale or wallet payment collection is live.
 
-The **40M issuance/development treasury** remains reserved for later controlled release; each release requires public accounting, governance approvals, recipient/utility specification and audits. Neither these treasuries nor a future mFRG sale creates a native FRG genesis premine.
+Staking: **85M reserved for a finite participation program**, with proposed 30/90/180/365-day locks and 1.0/1.1/1.2/1.4 weights, weekly reward claims, and seven-day cooldown after lock maturity. Not live; no guaranteed yield; not a substitute for RandomX mining.
 
-### Governance milestone
+Liquidity: **60M separately reserved**, subject to matching USDC/SOL and approved LP budgets. No fixed FRG conversion. A separate, genuinely reserve-backed wrapped FRG token could only be researched and audited in a later program.
 
-The project intends to determine a governance solution **before the mFRG sale concludes**. No ten-seat chamber, token-voting contract, delegation model or binding quorum is ratified. The rules must specify eligibility, voting/representative authority, treasury spending controls, transparency, conflicts of interest and custody, without claiming native FRG consensus can be unilaterally changed. See the [open governance charter](../governance-charter.md).
+## Verified vs proposed facts
 
-### Technical release checks
+- Intended standard SPL Token, name miniFORGE, symbol mFRG, six decimals. Historical **devnet-only mint**: `9HuHPHPeWZBtRJmhsne17pVzUkFYMf9Rg1ZwdH45ebkw`.
+- **No authenticated mainnet mint address or current total supply is verified in this document.** If mint authority was revoked below 500M, the existing mint cannot be increased and a disclosed migration is necessary.
+- Native FRG **50M primary emission is not a strict hard cap** under documented tail emission. See [CURRENT_MAINNET](CURRENT_MAINNET.md).
+- [Official sale engineering gates](MINIFORGE_SALE_MECHANISM.md) and [informational website](miniforge-sale.html) remain disabled pending implementation and review.
 
-1. Verify mint identity, program ID, 6 decimals, Solana mainnet signatures, token metadata URI and source authenticity.
-2. Prove raw atomic supply and account balances with expected exact allocation, independent owner keys/multisig, freeze/mint authority and an irreversible fixed-cap decision if intended.
-3. Verify sale inventory (no more than 5M), exact integer arithmetic, anti-replay receipts, secure atomic or independently guaranteed USDC-for-mFRG fulfillment and error/refund procedures.
-4. Review staking/liquidity design separately: risk, legal treatment, management fees, security audits, unwind/withdrawal rights, on-chain monitoring and public disclosures.
-5. Publish governance rules and signer authorizations by the sale end; review all development treasury disbursements with change-control policies.
-6. Keep native FRG mainnet and official pool release gates separate; do not change existing chain consensus or bootstrap mining as part of this token distribution work.
-
-## Canonical public links
-
-- [miniFORGE sale page and accessible allocation explanation](miniforge-sale.html#allocation)
-- [ForgeCoin technical whitepaper](WHITEPAPER.md)
-- [Roadmap](../ROADMAP.md)
-- [Solana sale/checkout engineering gates](MINIFORGE_SALE_MECHANISM.md)
-
-This is a project plan, not a public offer of securities or a guarantee of value, staking payments, liquidity, anonymity or mainnet deployment.
+**No fundraising offer, staking promise or permission to accept deposits is created by this specification.**

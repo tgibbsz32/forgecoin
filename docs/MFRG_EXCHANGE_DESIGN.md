@@ -6,7 +6,7 @@ Status: **Design / preview only.** No wallet deposits, purchase quotes, treasury
 
 - **FRG** is the ForgeCoin native L1 mined asset.
 - **No wrapped native-FRG bridge is part of the current project roadmap.** Native FRG and proposed mFRG are distinct network assets; there is no audited cross-chain conversion or redemption protocol.
-- **mFRG** (miniFORGE) is a separate planned 50M standard SPL asset: 5M intended sale inventory, 5M post-sale liquidity/staking treasury, 40M future issuance/development treasury. mFRG is **not** redeemable 1:1 for native FRG merely because the names are related.
+- **mFRG** (miniFORGE) is a separate proposed **500M fixed-supply standard SPL asset** (6 decimals), with **50M (10%) staged crypto-denominated fundraising inventory**, separately budgeted 60M liquidity and 85M staking incentives. The complete nine-category breakdown and the **6% total founder-beneficial allocation (3% unlocked immediately, 3% vesting months 13–36)** are in [lifetime tokenomics](MFRG_LIFETIME_TOKENOMICS_500M.md). mFRG is not redeemable for FRG at any fixed rate.
 - Do not show a contract address, token price, circulating supply, live inventory, or buy control until verified on-chain and formally approved.
 
 ## Routes and phased delivery
@@ -38,11 +38,6 @@ Status: **Design / preview only.** No wallet deposits, purchase quotes, treasury
 
 A public, static GitHub Pages website can host the interface; secrets and signing authorities **must not** live on GitHub Pages or browser JavaScript. Build a separately deployed restricted quote API only if necessary. Prefer wallet-signed non-custodial trades and audited settlement contracts. Repository changes should be reviewed in a draft PR and **not deployed as a functioning exchange** until all launch gates pass.
 
-## Prior tokenomics assumptions requiring confirmation
+## Superseded historical assumptions
 
-Earlier plans discussed 55 million mFRG SPL tokens, with 4 million for sale, 1 million participation incentives, and 50 million held for later allocation; a later proposal considered reserving 5 million from the held amount for liquidity. These are planning figures, not verified mainnet allocations. Reconcile them against the final mint authority and on-chain inventory before publishing sale quantities.
-
-
-## October 27 superseding decision
-
-The live project plan is 5M mFRG sale, a separate 5M mFRG post-sale liquidity/staking treasury, and 40M mFRG future issuance/development reserve, with a governance solution chosen before the sale concludes. Any older 55M or wrapped-bridge material above is archived research, not current direction. No sale, exchange listing, staking or liquidity service is live.
+The historical 55M, 50M and three-bucket mFRG plans are **superseded** by the October 28, 2026 **500M intended fixed supply** and [nine-category lifetime distribution](MFRG_LIFETIME_TOKENOMICS_500M.md). This document remains an informational exchange design and does not authorize payments, minting, a swap or liquidity. Native FRG remains an independent PoW asset with a continuing tail-emission policy.

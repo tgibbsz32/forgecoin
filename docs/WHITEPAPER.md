@@ -2,7 +2,7 @@
 
 [Current mainnet specification and release status](CURRENT_MAINNET.md). The October 26 identity is frozen and unlaunched; main-branch runtime remains legacy pending separate implementation review.
 
-Version 0.2 — October 26, 2026
+Version 0.3 — October 28, 2026 (mFRG lifetime policy revision)
 
 ## Abstract
 
@@ -125,22 +125,32 @@ ForgeCoin is not yet an independently audited production network. Its inherited 
 
 ForgeCoin is derived from Monero v0.18.5.1 and CryptoNote code and is distributed under the BSD 3-Clause license included with the source. XMRig, when distributed with a desktop release, remains a separate GPLv3 component with its matching source and license.
 
-## Separate miniFORGE (mFRG) and proposed sale
+## Separate miniFORGE (mFRG) — updated 500M lifetime policy
 
-miniFORGE is a **separate, standard Solana SPL asset** (6 decimals) with a proposed **50 million mFRG** target total. It is neither native Proof-of-Work FRG nor redeemable for FRG at a fixed rate. It does not automatically convey a claim on FRG reserves, transaction privacy, treasury profits or guaranteed investment return.
+miniFORGE is an economically separate, **500,000,000 target fixed-supply** standard SPL token (6 decimals) that would support Solana-side adoption, treasury governance, software services, participation incentives and liquidity. This is an approved **project allocation plan**, **not verified mainnet minting, a sale approval, a live staking product or FRG-backed collateral**. There is no fixed FRG/mFRG conversion. FRG retains its own primary-emission reference and continuing tail reward.
 
-| Planned allocation | mFRG units | Share | Planned timing and use |
-| --- | ---: | ---: | --- |
-| Initial sale inventory | 5,000,000 | 10% | Potential future sale, initially considering Solana USDC |
-| Liquidity/staking treasury | 5,000,000 | 10% | Designated to be held in a separate treasury **after the initial mFRG sale**, subject to reviewed liquidity/staking rules |
-| Future issuance and development treasury | 40,000,000 | 80% | Reserved for future controlled distributions and development under governance rules not yet selected |
-| **Total proposed** | **50,000,000** | **100%** | **Not verified as issued on Solana mainnet** |
+| Proposed purpose | mFRG | Share |
+| --- | ---: | ---: |
+| Staged crypto-denominated fundraising | 50,000,000 | 10% |
+| Long-term operations/development | 100,000,000 | 20% |
+| Ecosystem adoption/grants | 100,000,000 | 20% |
+| Staking/participation rewards | 85,000,000 | 17% |
+| Liquidity | 60,000,000 | 12% |
+| Engineering/security | 65,000,000 | 13% |
+| **Founder, freely unlocked immediately** | **15,000,000** | **3%** |
+| **Founder-beneficial team-labeled vesting, months 13–36** | **15,000,000** | **3%** |
+| Emergency | 10,000,000 | 2% |
+| **Total** | **500,000,000** | **100%** |
 
-The 40M future-issuance treasury means staged release of reserved supply, not additional minting beyond the 50M target. A genuine on-chain maximum requires final supply reconciliation and proper revocation of mint authority. Treasury balances, signing separation and metadata are not yet independently verified. There is no published mFRG sale price, start/end date, live USDC checkout, liquidity pool, staking yield or guaranteed return. No payment should be made for an unofficial sale.
+Both 3% buckets belong to **the same founder**. The deferred 15M unlock **625,000 mFRG monthly from month 13 through 36**. Fundraising can exchange mFRG for **USDC/SOL or other expressly approved crypto**, with 5M pilot, 15M additional year 1, 20M years 2–3 and 10M years 4–10. No live price, purchase facility, authority revocation or verified mainnet custody is claimed. The sale must meet independent engineering, legal and accounting gates.
+
+The 85M reward reserve is finite, does not secure FRG's PoW chain, and does not guarantee APY. Prospective 30/90/180/365-day staking locks, weekly accrued claims and seven-day post-expiry cooldown remain subject to audit and approval. Liquidity needs separately acquired matching assets. Optional token burns would apply only to designated mFRG service fees, **not ordinary SPL transfers**. Project assets and founder benefits must be disclosed separately.
+
+See the [complete lifetime tokenomics and release table](MFRG_LIFETIME_TOKENOMICS_500M.md), [treasury custody summary](MINIFORGE_SPL_TREASURIES.md), [planned website sale](miniforge-sale.html), and [future architecture](SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md).
 
 ## Governance milestone
 
-A formal governance solution is **to be chosen before the initial 5M mFRG sale concludes**. The earlier ten-seat representative model is no longer current policy. Governance design remains open, including eligibility, treasury signer controls, audit/approval policy, conflict-of-interest rules and public accountability. Legacy practice votes and proposed FRG bonds are nonbinding. See [governance principles](../governance-charter.md).
+Governance rules, treasury signers, conflicts-of-interest protections, approvals and public accountability must be adopted **before any approved mFRG distribution**, not after one has begun. Native FRG node consensus cannot be commanded by mFRG token votes. Former representative-chamber proposals do not establish binding voting rights.
 
 ## Proposed FCMP++/CARROT privacy upgrades
 

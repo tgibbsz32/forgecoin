@@ -1,3 +1,5 @@
+> **Current mFRG policy (October 28, 2026): Historical archive only.** The previous 50M mFRG three-bucket notice below is superseded by a **500M proposed fixed-supply target, 50M fundraising and 30M founder-beneficial holdings (6%)**. See [canonical current policy](MFRG_LIFETIME_TOKENOMICS_500M.md). Native FRG mining economics remain independent.
+
 > **October 27, 2026 superseding notice:** This is historical research/evidence. The current direction has **no approved fixed ten-seat governance system** and **no planned wFRG bridge**. The separately proposed 50M mFRG SPL token has **5M initial sale**, **5M post-sale liquidity/staking treasury**, and **40M future issuance/development treasury**. Governance is to be selected before the sale concludes. The current active specifications are [ROADMAP.md](../ROADMAP.md) and [miniFORGE allocation](MINIFORGE_SPL_TREASURIES.md). Do not treat earlier planning decisions here as active authorization.
 
 > [Current mainnet specification, tokenomics and release status](CURRENT_MAINNET.md) — October 26, 2026; prelaunch.

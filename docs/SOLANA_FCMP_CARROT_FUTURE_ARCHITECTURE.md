@@ -5,14 +5,14 @@
 ## Intended sequence
 
 1. Finish the independent FRG Proof-of-Work network and audit native wallet, RandomX mining, official pool, read-only explorer, node infrastructure and security release gates.
-2. Separately issue **miniFORGE (mFRG)** on Solana once reviewed: 50M target SPL supply (6 decimals), **5M initial sale**, **5M designated to a post-sale liquidity/staking treasury**, and **40M to a future issuance/development treasury**. This token does not represent a guaranteed amount of FRG, is not an automatic native privacy wrapper and is not a dividend or yield promise.
-3. Choose and publish governance rules **before the mFRG sale concludes**, with transparent treasury custody, approval thresholds, security and community oversight. No prescribed number of seats or vote type is adopted.
+2. Separately issue **miniFORGE (mFRG)** on Solana only after review: **500M intended fixed supply (6 decimals)**, with **50M staged crypto-denominated distribution**, 100M long-term operations, 100M ecosystem, 85M finite staking rewards, 60M liquidity, 65M security engineering, **30M total founder-beneficial** (15M immediate; 15M vesting months 13–36), and 10M emergency. See [revised lifetime tokenomics](MFRG_LIFETIME_TOKENOMICS_500M.md). mFRG is neither a FRG wrapper nor a guaranteed dividend, pegged asset or yield instrument.
+3. Choose and publish governance rules **before authorized mFRG distribution**, with transparent treasury custody, approval thresholds, security and community oversight. No prescribed number of seats or vote type is adopted.
 4. Pursue a reviewed FCMP++/CARROT **in-place hard fork** of the existing FRG chain if proven safe. Maintain valid legacy outputs and owners' rights, or propose a separately approved supply-conserving successor migration only if necessary.
 5. Research native swaps, secure multiparty execution and optional future L2/L3 systems under independent threat models.
 
 ## mFRG distribution versus native FRG
 
-The three mFRG allocations are **planned**, not verified funded mainnet token accounts. No sale is open, and a public Solana token or staking system cannot hide balances by virtue of association with native FRG. Future issuance from the 40M treasury means phased distribution of reserved mFRG; it does not authorize minting beyond the 50M target. Any true fixed maximum requires a validated issued supply and properly revoked mint authority.
+The nine mFRG allocations are **planned**, not verified funded mainnet token accounts. No sale is open, and a public Solana token or staking system cannot hide balances by virtue of association with native FRG. Future issuance from the 40M treasury means phased distribution of reserved mFRG; it does not authorize minting beyond the 50M target. Any true fixed maximum requires a validated issued supply and properly revoked mint authority.
 
 ## FCMP++/CARROT core implementation gates (later, not current L1)
 

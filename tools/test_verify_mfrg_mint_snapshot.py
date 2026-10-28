@@ -143,6 +143,9 @@ class SnapshotParserTests(unittest.TestCase):
             p = Path(d) / "synthetic-snapshot.json"
             p.write_text(json.dumps(fake_rpc()), encoding="utf-8")
             self.assertEqual(main(["--mint", FAKE_MINT, "--rpc-json", str(p)]), 0)
+            # Windows PowerShell 5.1 defaults to a UTF-8 BOM for Set-Content.
+            p.write_bytes(b"\\xef\\xbb\\xbf" + json.dumps(fake_rpc()).encode("utf-8"))
+            self.assertEqual(main(["--mint", FAKE_MINT, "--rpc-json", str(p)]), 0)
             p.write_text(json.dumps(fake_rpc(TARGET_ATOMIC + 1)), encoding="utf-8")
             self.assertEqual(main(["--mint", FAKE_MINT, "--rpc-json", str(p)]), 2)
 

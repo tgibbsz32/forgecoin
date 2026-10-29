@@ -144,5 +144,3 @@ public class NodeService extends Service {
         stopForeground(STOP_FOREGROUND_REMOVE); super.onDestroy();
     }
 }
-
-[executed on device: TREYS_DELL_RTX (a6f7a031-77f9-48a0-8221-947182e0b72a)]

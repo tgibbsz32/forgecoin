@@ -240,7 +240,13 @@ namespace ForgeCoinDesktop
                 {
                     output = keygen.StandardOutput.ReadToEnd();
                     string ignoredStderr = keygen.StandardError.ReadToEnd();
-                    if (!keygen.WaitForExit(30000) || keygen.ExitCode != 0)
+                    if (!keygen.WaitForExit(30000))
+                    {
+                        // A timed-out generator must not continue writing secret files.
+                        try { keygen.Kill(); keygen.WaitForExit(5000); } catch { }
+                        throw new InvalidOperationException("Solana local key generation timed out.");
+                    }
+                    if (keygen.ExitCode != 0)
                         throw new InvalidOperationException("Solana local key generation failed.");
                 }
                 string mnemonic = "";
@@ -258,10 +264,12 @@ namespace ForgeCoinDesktop
                 string pair = File.ReadAllText(tempKeypair);
                 string vault = SolanaVault.Encrypt(pair, mnemonic, solPasswordBox.Text);
                 string address = SolanaVault.PublicAddress(vault);
-                SolanaVault.SaveNew(target, vault);
+                // Never report wallet creation as successful while a plaintext keypair
+                // remains in the temporary folder. Cleanup must succeed first.
                 File.Delete(tempKeypair);
                 Directory.Delete(scratch);
                 scratch = null;
+                SolanaVault.SaveNew(target, vault);
                 SolanaOpened(target, address);
                 solWalletState.Text = "Created and encrypted. Back up your vault and 12-word recovery phrase now.";
             }

@@ -13,7 +13,8 @@ public final class SolanaWalletLifecycle {
   try(InputStream in=ctx.getAssets().open("bip39-english.txt")){return SolanaMnemonicCheck.load(in);}
  }
  public static Created create(Context ctx,String name)throws Exception{
-  String[] w=words(ctx),phrase=SolanaMnemonicGenerate.create(w);
+  String[] w=words(ctx);
+  String phrase=SolanaMnemonicGenerate.create(w);
   return restore(ctx,name,phrase);
  }
  public static Created restore(Context ctx,String name,String phrase)throws Exception{

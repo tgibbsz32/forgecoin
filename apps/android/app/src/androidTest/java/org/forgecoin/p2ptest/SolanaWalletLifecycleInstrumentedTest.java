@@ -14,6 +14,8 @@ public class SolanaWalletLifecycleInstrumentedTest {
   try{
    SolanaWalletLifecycle.Created created=SolanaWalletLifecycle.create(ctx,one);
    assertEquals(12,created.phrase.split(" ").length);
+   assertFalse(new java.io.File(ctx.getNoBackupFilesDir(),"solana-"+one+".vault").exists());
+   SolanaWalletLifecycle.restore(ctx,one,created.phrase);
    assertEquals(created.address,SolanaWalletLifecycle.addressFromStored(ctx,one));
    SolanaWalletLifecycle.Created restored=SolanaWalletLifecycle.restore(ctx,two,created.phrase);
    assertEquals(created.address,restored.address);

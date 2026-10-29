@@ -30,6 +30,45 @@ namespace ForgeCoinDesktop
             public string Mnemonic;
         }
 
+        // Development-only in-memory keypair primitive. NOT a mnemonic wallet.
+        // The caller must preserve an encrypted backup and must not use this
+        // primitive for production custody until audited recovery exists.
+        internal static string GenerateEncryptedKeypairInMemory(string password)
+        {
+            if (password == null || password.Length < 12)
+                throw new ArgumentException("Use an encryption password of at least 12 characters.");
+            byte[] seed = RandomBytes(32);
+            byte[] pub = new byte[32];
+            byte[] secret = new byte[64];
+            try
+            {
+                if (sodium_init() < 0 || crypto_sign_seed_keypair(pub, secret, seed) != 0)
+                    throw new CryptographicException("Ed25519 generation unavailable.");
+                int[] values = new int[64];
+                for (int i = 0; i < 64; i++) values[i] = secret[i];
+                try
+                {
+                    // Empty mnemonic is intentional: no invented recovery words.
+                    return Encrypt(Json.Serialize(values), "", password);
+                }
+                finally { Array.Clear(values, 0, values.Length); }
+            }
+            catch (DllNotFoundException)
+            {
+                throw new CryptographicException("Required Ed25519 library unavailable.");
+            }
+            catch (EntryPointNotFoundException)
+            {
+                throw new CryptographicException("Incompatible Ed25519 library.");
+            }
+            finally
+            {
+                Array.Clear(seed, 0, seed.Length);
+                Array.Clear(pub, 0, pub.Length);
+                Array.Clear(secret, 0, secret.Length);
+            }
+        }
+
         internal static string Encode58(byte[] bytes)
         {
             if (bytes == null || bytes.Length == 0) throw new ArgumentException("Empty public key");

@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.22.1)
+project(forgecoin_android_runtime LANGUAGES CXX)
+add_library(forge_runtime_probe SHARED forge_runtime_probe.cpp)
+target_compile_features(forge_runtime_probe PRIVATE cxx_std_17)
+target_compile_options(forge_runtime_probe PRIVATE -Wall -Wextra -Werror)

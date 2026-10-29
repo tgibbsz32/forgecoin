@@ -1,0 +1,3 @@
+# Android ARM64 JNI linkage milestone
+
+A minimal C++ library (`libforge_runtime_probe.so`) compiles through the Android NDK and is loaded with `System.loadLibrary`. The capability report is intentionally fail-closed: native FRG wallet, signing, RandomX and mainnet chain acceptance all report NOT LINKED/NOT VERIFIED. An Android instrumentation test asserts the actual ARM64 native library loaded, and confirms mining/wallet capability is **not** claimed. No finance operation is enabled. This lays down a tested JNI toolchain for integrating the real FRG wallet and RandomX libraries in subsequent milestones, but is **not** an FRG wallet/miner implementation or an independent security review.

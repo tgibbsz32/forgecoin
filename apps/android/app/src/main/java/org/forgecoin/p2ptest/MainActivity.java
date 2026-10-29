@@ -80,6 +80,7 @@ public class MainActivity extends Activity {
         link("View partner offers", "https://tgibbsz32.github.io/forgecoin/#affiliate-offers",partners);
         LinearLayout node=panel(root);node.addView(label("NODE DIAGNOSTICS",17,CYAN));
         node.addView(label("Legacy ARM64 daemon is not certified for the October 26 mainnet. Remote node startup is disabled.",13,MUTED));
+        node.addView(label(NativeRuntimeProbe.status(),12,MUTED));
         status=label("Stopped",13,WHITE);node.addView(status);
         logs=label("",10,MUTED);logs.setTypeface(Typeface.MONOSPACE);node.addView(logs);
         LinearLayout solana=panel(root);solana.addView(label("SOLANA / mFRG — FUTURE RELEASE",17,BLUE));

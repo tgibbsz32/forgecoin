@@ -8,7 +8,7 @@
 #include <vector>
 
 // Isolated RandomX hash primitive, not a miner. No network, nonce search or block submission.
-// Cache initialization is expensive. Serialize the single light VM to bound memory pressure.
+// Cache initialization is expensive. Serialize per-call light VMs to bound peak memory pressure.
 namespace {
 std::mutex mutex;
 struct CacheDeleter { void operator()(randomx_cache* p) const { if(p) randomx_release_cache(p); } };

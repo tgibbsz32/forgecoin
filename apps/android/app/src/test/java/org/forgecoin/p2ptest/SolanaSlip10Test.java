@@ -8,6 +8,7 @@ public class SolanaSlip10Test {
   String p="abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
   byte[] a=SolanaSlip10.derive(p,"",0),b=SolanaSlip10.derive(p,"",0),c=SolanaSlip10.derive(p,"",1);
   assertEquals(32,a.length);assertArrayEquals(a,b);assertFalse(Arrays.equals(a,c));
+  assertEquals("37df573b3ac4ad5b522e064e25b63ea16bcbe79d449e81a0268d1047948bb445",hex(a));
  }
  @Test(expected=IllegalArgumentException.class) public void rejectsNegativeAccount() throws Exception {
   SolanaSlip10.derive("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about","",-1);

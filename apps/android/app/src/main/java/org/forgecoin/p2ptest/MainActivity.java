@@ -84,8 +84,8 @@ public class MainActivity extends Activity {
         logs=label("",10,MUTED);logs.setTypeface(Typeface.MONOSPACE);node.addView(logs);
         LinearLayout solana=panel(root);solana.addView(label("SOLANA / mFRG — FUTURE RELEASE",17,BLUE));
         solana.addView(label("DEBUG BUILDS ONLY — disposable wallet UI tests. Never deposit funds.",12,MUTED));
-        button("Create Solana TEST wallet",BuildConfig.DEBUG,solana,()->SolanaWalletDebugFlow.create(this));
-        button("Restore Solana TEST wallet",BuildConfig.DEBUG,solana,()->SolanaWalletDebugFlow.restore(this));
+        button("Create Solana TEST wallet",BuildConfig.DEBUG,solana,()->SolanaDebugAuthGate.require(this,()->SolanaWalletDebugFlow.create(this)));
+        button("Restore Solana TEST wallet",BuildConfig.DEBUG,solana,()->SolanaDebugAuthGate.require(this,()->SolanaWalletDebugFlow.restore(this)));
         button("mFRG balances / transfer — unavailable",false,solana,null);
         button("FRG staking — unavailable",false,solana,null);
         setContentView(scroll);

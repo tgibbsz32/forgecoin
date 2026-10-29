@@ -31,9 +31,6 @@ public final class SolanaRecoveryConfirmDialog {
   EditText fourth=new EditText(activity);fourth.setHint("Word 4");fourth.setSingleLine(true);fourth.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
   EditText ninth=new EditText(activity);ninth.setHint("Word 9");ninth.setSingleLine(true);ninth.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
   v.addView(fourth);v.addView(ninth);
-  new AlertDialog.Builder(activity).setTitle("Confirm your backup").setMessage("Enter words 4 and 9 exactly as written.")
-   .setView(v).setNegativeButton("Cancel",null)
-   .setPositiveButton("Verify",null).create();
   final AlertDialog dialog=new AlertDialog.Builder(activity).setTitle("Confirm your backup").setView(v)
    .setNegativeButton("Cancel",null).setPositiveButton("Verify",null).create();
   dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(button->{

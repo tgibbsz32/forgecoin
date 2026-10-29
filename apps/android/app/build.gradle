@@ -14,5 +14,4 @@ android {
     buildTypes { release { minifyEnabled false } }
 }
 
-[executed on device: TREYS_DELL_RTX (a6f7a031-77f9-48a0-8221-947182e0b72a)]
 dependencies { testImplementation 'junit:junit:4.13.2' }

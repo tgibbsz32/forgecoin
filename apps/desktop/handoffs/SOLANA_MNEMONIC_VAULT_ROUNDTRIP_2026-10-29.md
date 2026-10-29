@@ -1,0 +1,10 @@
+# ForgeCoin Desktop — Solana mnemonic encrypted-vault recovery round-trip (2026-10-29)
+
+## Completed
+Added a standalone component combining BIP39 phrase validation, existing PBKDF2-HMAC-SHA512 BIP39 seed derivation, hardened SLIP-0010 Ed25519 path m/44'/501'/0'/0', libsodium keypair derivation and existing encrypted Solana wallet vault. It does not write a plaintext keypair file. Windows test compiled and passed: standard disposable 12-word phrase encrypted into vault, decrypt returned the same mnemonic, re-deriving from the mnemonic yielded the identical public address, and an invalid mnemonic checksum was rejected.
+
+## Scope / release limitations
+The desktop's GUI Create Wallet and Restore Wallet controls have NOT been changed. The new component is a development-only helper. The reference test demonstrates a closed-loop round-trip, not independently demonstrated compatibility with all Solana CLI or consumer wallet derivation paths, nor a fresh-device restore. BIP39 passphrase is not presently represented in encrypted vault metadata; if used non-empty, it MUST be preserved separately or the mnemonic alone will not reproduce its address. For initial GUI integration either explicitly prohibit non-empty BIP39 passphrases or design safe metadata and restore UX. The current encrypted vault contains mnemonic strings and JSON keypair strings in managed memory. Require native library provenance/pinning, secure DLL loading, recovery and backup audit, malicious-file testing, and correct build distribution including dependent source and BIP39 word list.
+
+## Next phase
+Add a public-only proof-of-wallet address display and mnemonic restore screen with explicit derivation path and empty-passphrase policy; build a full disposable wallet GUI acceptance test on Windows. Review 12/24-word recovery and the legacy Solana CLI path before replacing the legacy plaintext temporary-key creation. Owner plans desktop-created FRG and Solana custody; no hardware wallet. Do not create real mint authority, issue mFRG or activate Oracle mining yet.

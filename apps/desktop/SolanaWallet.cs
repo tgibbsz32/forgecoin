@@ -238,8 +238,10 @@ namespace ForgeCoinDesktop
                 string output;
                 using (Process keygen = Process.Start(start))
                 {
-                    output = keygen.StandardOutput.ReadToEnd();
-                    string ignoredStderr = keygen.StandardError.ReadToEnd();
+                    // Drain both pipes concurrently so an overflowing stderr buffer
+                    // cannot deadlock before the subprocess timeout is enforced.
+                    var stdoutRead = keygen.StandardOutput.ReadToEndAsync();
+                    var stderrRead = keygen.StandardError.ReadToEndAsync();
                     if (!keygen.WaitForExit(30000))
                     {
                         // A timed-out generator must not continue writing secret files.
@@ -248,6 +250,8 @@ namespace ForgeCoinDesktop
                     }
                     if (keygen.ExitCode != 0)
                         throw new InvalidOperationException("Solana local key generation failed.");
+                    output = stdoutRead.GetAwaiter().GetResult();
+                    string ignoredStderr = stderrRead.GetAwaiter().GetResult();
                 }
                 string mnemonic = "";
                 foreach (string line in output.Split(new char[] {'\r','\n'}, StringSplitOptions.RemoveEmptyEntries))

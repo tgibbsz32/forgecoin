@@ -15,7 +15,8 @@ public final class SolanaWalletLifecycle {
  public static Created create(Context ctx,String name)throws Exception{
   String[] w=words(ctx);
   String phrase=SolanaMnemonicGenerate.create(w);
-  return restore(ctx,name,phrase);
+  String address=SolanaPublicAddress.fromPhrase(phrase,w,0);
+  return new Created(phrase,address);
  }
  public static Created restore(Context ctx,String name,String phrase)throws Exception{
   String[] w=words(ctx);

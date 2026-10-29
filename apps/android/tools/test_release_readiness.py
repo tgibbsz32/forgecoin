@@ -9,7 +9,7 @@ class ReadinessTests(unittest.TestCase):
             root = Path(temp)
             (root / "app/src/main/java/org/forgecoin/p2ptest").mkdir(parents=True)
             (root / "app/src/main/AndroidManifest.xml").write_text('<application android:allowBackup="false"/>')
-            (root / "app/src/main/java/org/forgecoin/p2ptest/MainActivity.java").write_text('"Create FRG wallet — unavailable"')
+            (root / "app/src/main/java/org/forgecoin/p2ptest/MainActivity.java").write_text('"Create FRG wallet unavailable"', encoding="utf-8")
             checks = audit(root)
             self.assertTrue(checks["private_app_backup_disabled"])
             self.assertFalse(checks["native_frgbinary_present"])

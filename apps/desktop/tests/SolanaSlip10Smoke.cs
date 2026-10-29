@@ -16,7 +16,9 @@ internal static class SolanaSlip10Smoke
    byte[] pub=new byte[32],secret=new byte[64];
    if(crypto_sign_seed_keypair(pub,secret,a)!=0)throw new Exception("Ed25519 unavailable");
    Console.WriteLine("SLIP10_DERIVATION_DETERMINISTIC_AND_ACCOUNT_SEPARATION_OK");
-   Console.WriteLine("REFERENCE_CANDIDATE_PUBLIC_KEY_HEX="+Hex(pub));
+   const string knownPublicHex="f036276246a75b9de3349ed42b15e232f6518fc20f5fcd4f1d64e81f9bd258f7";
+   if(Hex(pub)!=knownPublicHex)throw new Exception("Known address-derivation vector mismatch");
+   Console.WriteLine("SLIP10_KNOWN_PUBLIC_KEY_VECTOR_OK");
    Array.Clear(a,0,a.Length);Array.Clear(b,0,b.Length);Array.Clear(c,0,c.Length);Array.Clear(secret,0,secret.Length);
    return 0;
  }

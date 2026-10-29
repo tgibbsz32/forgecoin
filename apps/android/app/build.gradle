@@ -13,7 +13,10 @@ android {
     }
     buildFeatures { buildConfig true }
     packaging { jniLibs { useLegacyPackaging = true; keepDebugSymbols += ['**/libforged.so'] } }
-    buildTypes { release { minifyEnabled false } }
+    buildTypes {
+        debug { applicationIdSuffix '.isolatedqa' ; versionNameSuffix '-isolatedqa' }
+        release { minifyEnabled false }
+    }
 }
 
 dependencies {

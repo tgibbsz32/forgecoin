@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web.Script.Serialization;
@@ -13,6 +14,10 @@ namespace ForgeCoinDesktop
     // Do not change this format without migrations and independent cryptographic review.
     internal static class SolanaVault
     {
+        [DllImport("libsodium-26.dll", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int sodium_init();
+        [DllImport("libsodium-26.dll", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int crypto_sign_seed_keypair(byte[] publicKey, byte[] secretKey, byte[] seed);
         private const string Format = "forgecoin-solana-aes256-hmac-v1";
         private const int Iterations = 300000;
         private const string Alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -58,6 +63,7 @@ namespace ForgeCoinDesktop
             if (items == null || items.Count != 64)
                 throw new InvalidDataException("Solana keypair must contain exactly 64 byte values.");
             byte[] pub = new byte[32];
+            byte[] seed = new byte[32];
             for (int i = 0; i < 64; i++)
             {
                 // Reject booleans, floating-point values, strings and coercible JSON
@@ -68,8 +74,32 @@ namespace ForgeCoinDesktop
                 if (number < 0 || number > 255)
                     throw new InvalidDataException("Invalid keypair byte.");
                 if (i >= 32) pub[i - 32] = (byte)number;
+                else seed[i] = (byte)number;
             }
-            return Encode58(pub);
+            byte[] derivedPublic = new byte[32];
+            byte[] derivedSecret = new byte[64];
+            try
+            {
+                if (sodium_init() < 0 || crypto_sign_seed_keypair(derivedPublic, derivedSecret, seed) != 0)
+                    throw new CryptographicException("Ed25519 key verification unavailable.");
+                if (!FixedEquals(pub, derivedPublic))
+                    throw new InvalidDataException("Solana public key does not match private seed.");
+                return Encode58(pub);
+            }
+            catch (DllNotFoundException)
+            {
+                throw new CryptographicException("Required reviewed Ed25519 library is missing; wallet import is disabled.");
+            }
+            catch (EntryPointNotFoundException)
+            {
+                throw new CryptographicException("Incompatible Ed25519 library; wallet import is disabled.");
+            }
+            finally
+            {
+                Array.Clear(seed, 0, seed.Length);
+                Array.Clear(derivedSecret, 0, derivedSecret.Length);
+                Array.Clear(derivedPublic, 0, derivedPublic.Length);
+            }
         }
 
         private static byte[] RandomBytes(int count)

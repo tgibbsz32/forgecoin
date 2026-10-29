@@ -60,10 +60,13 @@ namespace ForgeCoinDesktop
             byte[] pub = new byte[32];
             for (int i = 0; i < 64; i++)
             {
-                int number;
-                try { number = Convert.ToInt32(items[i]); }
-                catch { throw new InvalidDataException("Keypair contains a non-byte value."); }
-                if (number < 0 || number > 255) throw new InvalidDataException("Invalid keypair byte.");
+                // Reject booleans, floating-point values, strings and coercible JSON
+                // data: a keypair is a canonical JSON array of integral bytes.
+                if (!(items[i] is int) && !(items[i] is long))
+                    throw new InvalidDataException("Keypair must contain integer JSON bytes.");
+                long number = Convert.ToInt64(items[i]);
+                if (number < 0 || number > 255)
+                    throw new InvalidDataException("Invalid keypair byte.");
                 if (i >= 32) pub[i - 32] = (byte)number;
             }
             return Encode58(pub);

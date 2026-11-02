@@ -55,3 +55,17 @@ The QA workstation retained a pre-guard *isolated* MAINNET-identity chain with a
 The isolated daemon smoke test now submits this **historically accepted, correctly formatted block** to a fresh prelaunch-locked genesis-only daemon. The expected result is the RPC error `Block not accepted` and a chain remaining at height 1; an error claiming the payload is malformed does **not** satisfy the gate. This is a meaningful main-chain rejection check but does not test alternative forks, real coinbase spending rings, reorgs, payout maturity, or public synchronization. The revised CI job must pass before claiming this runtime behavior is verified.
 
 **Source of truth:** draft PR #185, branch `integration/frozen-mainnet-prelaunch-20261102`. Merge into main only after the full runtime and consensus acceptance requirements are met; never bypass the lock to make the public chain accept this old test block.
+
+## Native difficulty transition regression (November 2 continuation)
+
+`tests/mainnet/frozen_difficulty_policy.cpp` compiles and runs the *real* `src/cryptonote_basic/forgecoin_difficulty.h` code, linked only to a sentinel for the preexisting non-mainnet `next_difficulty` function. It does not run PoW or modify blockchain data.
+
+- Height 1–15: fixed 500000 independent of ancestor data.
+- Height 16: progressive LWMA starts using 15 ancestor intervals; at 120-second spacing and 500000 historical work, expected difficulty 495000 (the intentional 0.99 bias).
+- Heights 17, 32, 90, 91, 92 and 150: at matching 120-second intervals, expected 495000; height 91 and beyond exercise the full 90-interval suffix.
+- 30-second solves: expected 1980000; 480-second solves: floor to 400000.
+- Missing history, mismatched vector sizes, wrong target, invalid or non-growing cumulative work, and invalid height reject with zero. Timestamp normalization and the non-mainnet passthrough are also tested.
+- C++17 with `-pedantic -Wall -Wextra -Werror` was compiled and run on `ForgeCoinBuild` Linux WSL: **PASS**.
+- CI now independently compiles and runs this executable on Ubuntu for every integration push and PR. Its CI result must be confirmed separately.
+
+This regression increases numerical coverage, **but it is not proof of an actual multi-node synchronized 90+ block chain**. The launch-lock build intentionally cannot mine such a chain; a separately reviewed disposable test-enabled binary and independent consensus tests are required before unlocking public network mining. No change to the agreed frozen consensus parameters was made.

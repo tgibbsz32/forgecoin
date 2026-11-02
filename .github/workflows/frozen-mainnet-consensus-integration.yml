@@ -35,6 +35,11 @@ jobs:
           g++ -std=c++17 -pedantic -Wall -Wextra -Werror -O2 -Isrc \
             tests/mainnet/prelaunch_policy.cpp -o /tmp/frg-prelaunch-policy
           /tmp/frg-prelaunch-policy
+      - name: Compile and exercise real frozen difficulty and LWMA code
+        run: |
+          g++ -std=c++17 -O2 -pedantic -Wall -Wextra -Werror -Isrc -Icontrib/epee/include \
+            tests/mainnet/frozen_difficulty_policy.cpp -o /tmp/frg-frozen-difficulty
+          /tmp/frg-frozen-difficulty
       - name: Assert mining and payouts remain unapproved
         run: |
           python - <<'PY'

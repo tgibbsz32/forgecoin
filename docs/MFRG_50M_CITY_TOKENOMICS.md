@@ -8,10 +8,11 @@ Standard Solana SPL Token (not Token-2022); six decimals; intended immutable max
 |---|---:|---:|
 | Initial presale inventory | 5,000,000 | 10% |
 | Future liquidity reserve | 5,000,000 | 10% |
-| Staking, collateral and ecosystem reserve, including game integration | 40,000,000 | 80% |
+| Founder allocation — 50% launch / 50% six-month vesting | 5,000,000 | 10% |
+| Staking, collateral and ecosystem reserve, including game integration | 35,000,000 | 70% |
 | **Total** | **50,000,000** | **100%** |
 
-The 40M reserve is a **combined ceiling**, not three separately funded 40M budgets. Its suballocations, custody, release schedule, founder token entitlement (if any), and treatment of earlier 500M founder allocations require explicit approval before deployment. No allocation can be counted twice.
+The 35M reserve is a **combined ceiling**, not three separately funded 35M budgets. Its suballocations, custody and release schedule require approval before deployment. The founder receives 2,500,000 mFRG (5% of supply) unlocked at token launch, and 2,500,000 mFRG (5%) vested in six equal monthly installments after launch, with the last installment adjusted for six-decimal rounding. Vesting requires an independently reviewed enforceable escrow, disclosed beneficiary and explicit start date. No allocation can be counted twice.
 
 ## Sale
 Up to 5M tokens are earmarked for an initial sale, not an active offering. SOL and Solana USDC are proposed settlement assets. **One fixed presale price has not been verified as finally approved.** Previous round schedules are historical proposals only and must not be advertised as operative. No checkout, payment address, public solicitation or sale activation before legal review, verified custody and explicit owner authorization. Prior 80% project / 20% founder proceeds intent remains a proposal subject to legal, accounting and governance review, not an automatic entitlement.
@@ -23,4 +24,4 @@ Discover Your City is a planned persistent multiplayer real-world-geography city
 Native RandomX-mined FRG and Solana mFRG are distinct assets. A potential future 1:1-backed FRG↔mFRG mechanism is a research proposal only, not a live bridge, redemption promise or claim of reserves. Any bridge needs a separately audited backing, custody, proof-of-reserves, consensus and legal design. Solana transfers do not inherit native FRG privacy.
 
 ## Migration / release blockers
-The older 500M documents, scripts, treasury templates, website pages and test fixtures contain historical assumptions. **Do not use them to mint or distribute.** Before deployment: audit and migrate all references, reconcile token supply and reserve suballocations, approve price and founder terms, independently review mint authority/custody, complete security/legal review, and update all tests. No token transaction is authorized by this document.
+The older 500M documents, scripts, treasury templates, website pages and test fixtures contain historical assumptions. **Do not use them to mint or distribute.** Before deployment: audit and migrate all references, reconcile token supply and reserve suballocations, confirm sale price and implement founder vesting, independently review mint authority/custody, complete security/legal review, and update all tests. No token transaction is authorized by this document.

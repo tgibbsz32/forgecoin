@@ -64,6 +64,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "util.h"
 #include "xmr.h"
 #include "frg_transfer_receipt.h"
+#include "frg_block_submit_receipt.h"
 #include "frg_pplns_money.h"
 #include "log.h"
 #include "webui.h"
@@ -2188,40 +2189,41 @@ rpc_on_last_block_header(const char* data, rpc_callback_t *callback)
 static void
 rpc_on_block_submitted(const char* data, rpc_callback_t *callback)
 {
-    int rc = 0;
+    /* A rejected or malformed submit_block RPC must never count as a pool
+     * block or enter the maturity ledger. OK means daemon ACK only;
+     * later chain reconciliation determines canonical/orphan status.
+     */
     json_object *root = json_tokener_parse(data);
-    JSON_GET_OR_WARN(result, root, json_type_object);
-    JSON_GET_OR_WARN(status, result, json_type_string);
-    const char *ss = json_object_get_string(status);
-    json_object *error = NULL;
-    json_object_object_get_ex(root, "error", &error);
-    /*
-      The RPC reports submission as an error even when it's added as
-      an alternative block. Thus, still store it. This doesn't matter
-      as upon payout, blocks are checked whether they are orphaned or not.
-    */
-    if (error)
+    if (!frg_block_submission_rpc_accepted(root))
     {
-        JSON_GET_OR_WARN(code, error, json_type_object);
-        JSON_GET_OR_WARN(message, error, json_type_string);
-        int ec = json_object_get_int(code);
-        const char *em = json_object_get_string(message);
-        log_warn("Error (%d) with block submission: %s", ec, em);
+        log_error("Daemon did not accept submitted block; stats/ledger unchanged");
+        if (root) json_object_put(root);
+        return;
     }
-    if (!status || strcmp(ss, "OK"))
+
+    block_t *b = callback ? (block_t*)callback->data : NULL;
+    if (!b)
     {
-        log_warn("Error submitting block: %s", ss);
+        log_error("Accepted daemon response missing local block metadata");
+        json_object_put(root);
+        return;
+    }
+    int rc = store_block(b->height, b);
+    if (rc)
+    {
+        log_error("Daemon ACK accepted block, but LMDB persistence failed: %s",
+                  mdb_strerror(rc));
+        json_object_put(root);
+        return;
     }
     pool_stats.pool_blocks_found++;
-    block_t *b = (block_t*)callback->data;
     if (!upstream_event)
     {
         pool_stats.last_block_found = b->timestamp;
         pool_stats.round_hashes = 0;
     }
-    log_info("Block submitted at height: %"PRIu64, b->height);
-    if ((rc = store_block(b->height, b)))
-        log_warn("Failed to store block: %s", mdb_strerror(rc));
+    log_info("Daemon acknowledged candidate block at height %"PRIu64
+             "; canonical confirmation remains pending", b->height);
     json_object_put(root);
 }
 

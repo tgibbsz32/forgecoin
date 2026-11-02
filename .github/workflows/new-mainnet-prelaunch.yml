@@ -10,6 +10,7 @@ on:
       - 'apps/explorer/**'
       - 'apps/pool-site/**'
       - 'services/official_pool/**'
+      - 'services/pool_settlement/**'
       - 'tests/mainnet/**'
       - 'tools/verify_mainnet.py'
       - '.github/workflows/new-mainnet-prelaunch.yml'
@@ -32,6 +33,8 @@ jobs:
         run: python -m unittest discover -s tests/mainnet -p 'test_*.py' -v
       - name: Pool source and wallet accounting safeguards
         run: python -m unittest discover -s services/official_pool/tests -p 'test_*.py' -v
+      - name: Offline settlement journal regression tests
+        run: python -m unittest discover -s services/pool_settlement/tests -p 'test_*.py' -v
       - name: Strict FRG atomic amount and fee tests
         run: |
           gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 -o /tmp/frg-money-test services/official_pool/tests/test_currency.c

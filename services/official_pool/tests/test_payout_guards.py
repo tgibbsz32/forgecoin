@@ -58,6 +58,15 @@ class PayoutSafetyContracts(unittest.TestCase):
                         fn.index("Mature block credited in local ledger"))
         self.assertIn("rollback_block_ledger:\n    mdb_cursor_close(cursor);\n    mdb_txn_abort(txn);",fn)
 
+    def test_daemon_rejected_block_never_enters_reward_ledger(self):
+        fn=SRC.split("rpc_on_block_submitted(const char* data, rpc_callback_t *callback)",1)[1].split("rpc_on_wallet_transferred(",1)[0]
+        self.assertIn("if (!frg_block_submission_rpc_accepted(root))",fn)
+        self.assertLess(fn.index("if (!frg_block_submission_rpc_accepted(root))"),
+                        fn.index("store_block(b->height, b)"))
+        self.assertLess(fn.index("store_block(b->height, b)"),
+                        fn.index("pool_stats.pool_blocks_found++"))
+        self.assertIn("canonical confirmation remains pending",fn)
+
     def test_unsafe_wallet_spending_cannot_be_enabled_with_macro(self):
         self.assertIn("#if defined(FRG_TESTED_WALLET_PAYOUTS)",SRC)
         self.assertIn('#error "Unsafe FRG pool wallet payouts prohibited:',SRC)

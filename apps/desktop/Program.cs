@@ -127,11 +127,11 @@ namespace ForgeCoinDesktop
         public MainForm()
         {
             Text = "ForgeCoin Desktop - New Mainnet 20261026";
-            MinimumSize = new Size(900, 680);
-            Size = new Size(1040, 760);
+            MinimumSize = new Size(1080, 760);
+            Size = new Size(1240, 875);
             StartPosition = FormStartPosition.CenterScreen;
             Font = new Font("Segoe UI", 10F);
-            BackColor = Color.FromArgb(246, 247, 249);
+            BackColor = Color.FromArgb(11, 21, 37);
 
             publicMiningRelease = VerifyPackagedMiningRelease();
             Directory.CreateDirectory(appRoot);
@@ -141,7 +141,7 @@ namespace ForgeCoinDesktop
             Directory.CreateDirectory(Path.Combine(appRoot, "logs"));
 
             TableLayoutPanel shell = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Margin = new Padding(0), Padding = new Padding(0) };
-            shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 82));
+            shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
             shell.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             shell.Controls.Add(BuildHeader(), 0, 0);
             shell.Controls.Add(BuildTabs(), 0, 1);
@@ -162,7 +162,18 @@ namespace ForgeCoinDesktop
 
         private Control BuildHeader()
         {
-            Panel header = new Panel { Dock = DockStyle.Top, Height = 82, BackColor = Color.FromArgb(28, 32, 42) };
+            Panel header = new Panel { Dock = DockStyle.Fill, Height = 92, BackColor = Color.FromArgb(16, 42, 69) };
+            header.Paint += delegate(object sender, PaintEventArgs e) {
+                using (var brush = new System.Drawing.Drawing2D.LinearGradientBrush(header.ClientRectangle,
+                    Color.FromArgb(9, 25, 43), Color.FromArgb(25, 83, 126), 0f))
+                    e.Graphics.FillRectangle(brush, header.ClientRectangle);
+                using (var pen = new Pen(Color.FromArgb(57, 145, 198), 1.5f))
+                    for (int ring = 0; ring < 4; ring++)
+                        e.Graphics.DrawEllipse(pen, header.Width - 170 + ring * 22, -95 + ring * 17,
+                            125 + ring * 28, 125 + ring * 28);
+                using (var accent = new SolidBrush(Color.FromArgb(118, 203, 253)))
+                    e.Graphics.FillRectangle(accent, 0, header.Height - 3, header.Width, 3);
+            };
             Label title = new Label { Text = "FORGECOIN", ForeColor = Color.White, Font = new Font("Segoe UI Semibold", 22F), AutoSize = true, Location = new Point(24, 14) };
             Label subtitle = new Label { Text = publicMiningRelease ? "20261026 FRG mainnet — verified release build" : "20261026 genesis-frozen wallet — PRELAUNCH, mining disabled", ForeColor = Color.FromArgb(181, 188, 204), AutoSize = true, Location = new Point(27, 51) };
             header.Controls.Add(title);

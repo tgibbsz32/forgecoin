@@ -264,3 +264,12 @@ did not include the new ARM64 workflow source; the sparse list has been
 updated. The failed CI run therefore **does not establish a passing
 ARM64 binary**. Await a fresh on-target ARM64 CI result on the corrected
 commit before advancing the Oracle private-staging gate.
+
+
+## November 1, 2026 — runtime identity and callback guards (POOL-BACKEND-005)
+
+The frozen mainnet requires address prefixes **190/191/192** and ports **39480/39481/39482**, while the present native consensus header on main still uses legacy **90/91/92** and **19480/19481/19482**. The pool's startup now refuses to serve an incompatible native build, even if operator release macros are set. The configured RPC port is 39481, and the native source must be rebuilt and retested for the frozen chain before this gate can pass. No port change alone makes the node mainnet-ready.
+
+Source-level defenses were added for strict eight-digit nonce parsing, rejection of unconfirmed block callbacks, avoiding low-difficulty hashrate credit, and avoiding balance debit after a malformed, unsuccessful or ambiguous wallet response. A wallet success response must include a nonempty transaction-hash list. These safeguards are not complete settlement safety: the inherited payout code still has separate LMDB balance and payment transactions, without a durable idempotent payout-attempt state machine or verified replay recovery. Therefore the compile-time payout barrier, localhost research bind and public-release block remain fully in effect.
+
+These are reviewable source changes only. Neither a running Oracle pool nor canonical native FRG accepted block, maturation/reorg reversal, payout to two test wallets, nor load/stress testing is established by this handoff. Run source guards, currency conversion tests, native ARM64/x86 link workflows, disposable daemon integration, payout recovery and independent security review before any public mining authorization.

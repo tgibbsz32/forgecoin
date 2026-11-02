@@ -55,6 +55,16 @@ using namespace cryptonote;
 using namespace crypto;
 using namespace config;
 
+/* Compile-time native consensus constants must match the frozen identity. */
+int frg_matches_frozen_mainnet(void)
+{
+    return CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX == 190 &&
+           CRYPTONOTE_PUBLIC_INTEGRATED_ADDRESS_BASE58_PREFIX == 191 &&
+           CRYPTONOTE_PUBLIC_SUBADDRESS_BASE58_PREFIX == 192 &&
+           P2P_DEFAULT_PORT == 39480 && RPC_DEFAULT_PORT == 39481 &&
+           ZMQ_RPC_DEFAULT_PORT == 39482;
+}
+
 static int nettype_from_prefix(uint8_t *nettype, uint64_t prefix)
 {
     static const struct { cryptonote::network_type type; uint64_t prefix; } nettype_prefix[] = {

@@ -1,6 +1,12 @@
 # ForgeCoin (FRG) Governance Charter — Proposed Framework
 
-**Draft adopted as a project design direction: November 1, 2026. Not ratified, not binding, and not an active voting system.**
+**Draft proposal — November 1, 2026. Not ratified, not binding, and not an active voting system. All governance structures, weights, milestones and eligibility requirements are subject to change as the FRG miner base, collaborators, contributors, node operators and holders grow.**
+
+## Founder-led selection during the network's formative period
+
+**The founder retains sole decision-making authority over which governance system the project will propose and implement during its founder-led phase**, informed by nonbinding advice, discussion and recommendations from miners, collaborators, contributors, node operators and FRG holders. The founder will assess the network's evolving participation and the long-term **longevity, utility, privacy and resilience** of the FRG network when selecting or revising that system. The four-chamber design and six-month advisory milestone in this document are **illustrative proposals, not irrevocable commitments**. The founder may modify, replace, postpone or withdraw them after considering community guidance and operational/security evidence.
+
+This founder authority applies to project-controlled governance design, software, communications and assets **within applicable legal and technical limits**. It does not grant power to compel independent nodes or miners to adopt consensus changes, seize third-party assets, override valid blockchain rules, or promise control of infrastructure owned by others. No binding community governance is currently delegated. Any future delegation must be explicitly documented and implemented.
 
 ## 1. Priority, purpose, and jurisdiction
 
@@ -8,7 +14,7 @@ Native **ForgeCoin (FRG)** is the primary network: a RandomX proof-of-work crypt
 
 This charter defines a future **FRG stakeholder advisory assembly**. It cannot alter blockchain consensus, transfer funds, control private repositories or infrastructure, impose fees, create legal rights, or authorize expenditures by itself. Consensus upgrades still require implementation, security review, compatible releases and voluntary independent node adoption.
 
-**miniFORGE (mFRG)** is a **future development proposal only**. There is no live sale, deployed mint, bridge, guaranteed exchange, staking entitlement, mFRG vote, or automatic approval of prior tokenomics. Any mFRG plan must be proposed anew to the mature FRG community and separately approved under governance procedures subsequently ratified. No mFRG participation confers FRG governance power.
+**miniFORGE (mFRG)** is a **future development proposal only**. There is no live sale, deployed mint, bridge, guaranteed exchange, staking entitlement, mFRG vote, or automatic approval of prior tokenomics. Any mFRG plan must remain a future proposal, subject to community consultation and the founder's selection of an appropriate governance and approval process; no existing mFRG plan is automatically authorized. No mFRG participation confers FRG governance power.
 
 ## 2. Advisory assembly and chamber weights
 
@@ -63,9 +69,9 @@ For ordinary advisory ballots, target at least 20% aggregate eligible voting wei
 
 ## 5. Limits on authority and future ratification
 
-**All governance remains advisory until separately ratified.** Even a unanimous advisory ballot does not create binding authority. A future binding charter must be separately drafted, publicly reviewed, independently security-assessed, and explicitly ratified through a defined transition process. That future instrument must state the effective date, electorate, powers, limits, legal/custody arrangements, recall procedures, emergency response, dispute resolution and amendment rules.
+**All governance remains advisory unless and until a separately defined governance arrangement is explicitly adopted and implemented by the founder-led project or its duly authorized successor.** Even a unanimous advisory ballot does not create binding authority. A future binding charter must be separately drafted, publicly reviewed, independently security-assessed, and explicitly adopted through a defined transition process selected by the founder-led project. That future instrument must state the effective date, electorate, powers, limits, legal/custody arrangements, recall procedures, emergency response, dispute resolution and amendment rules.
 
-No founder veto, automatic holder plutocracy, compulsory staking or fixed council seats are authorized by this draft. Initial project coordination remains responsible for its own infrastructure and assets, subject to existing legal and operational rights.
+The founder retains final selection authority over the governance design during the formative phase; this is not a veto within an enacted community voting system because no such system exists. No automatic holder plutocracy, compulsory staking or fixed council seats are authorized. Project coordination remains responsible for its own infrastructure and assets, subject to existing legal and operational rights.
 
 ## 6. Treasury, miners and protocol safeguards
 

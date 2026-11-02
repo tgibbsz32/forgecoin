@@ -1,5 +1,7 @@
 # ForgeCoin project status — October 26, 2026
 
+> **November 2 local recovery:** The latest recovered Windows development files, isolated test evidence, pool-settlement prototype, and exact source patch are indexed in the [local preservation handoff](docs/handoffs/local-preservation-2026-11-02/README.md). This is not mainnet launch approval; the main branch runtime still needs the frozen network integration.
+
 The selected mainnet is genesis-frozen and **not launched**. [Current parameters and tokenomics](docs/CURRENT_MAINNET.md) are authoritative for documentation. The main branch still carries the legacy runtime implementation; the new-mainnet implementation in draft PR #111 remains unmerged. Documentation publication is not network activation.
 
 ## Completed evidence and open gates

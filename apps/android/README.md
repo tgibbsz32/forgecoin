@@ -1,6 +1,6 @@
 # ForgeCoin Android — candidate UI, NOT a public miner or wallet
 
-The project includes the updated dark navy/cyan Android UI matching the ForgeCoin website with branding, read-only browser links to the pool dashboard, pool observer and staged block explorer, and disabled controls for native wallet creation/restoration, transfers, RandomX solo/pool mining, and Solana/mFRG.
+The project includes the updated dark navy/cyan Android UI matching the ForgeCoin website with branding, read-only browser links to the pool dashboard, pool observer and verified ForgeCoin mainnet-status page (rather than an unapproved raw-IP explorer), and disabled controls for native wallet creation/restoration, transfers, RandomX solo/pool mining, and Solana/mFRG.
 
 **Not ready for release.** The only previously available Android native executable was a legacy ARM64 daemon from the retired P2P validation project, and is deliberately NOT shipped in the source tree or final preview APK. The current MainActivity intentionally disables node startup and all financial/mining operations. NodeService is legacy source retained for future porting, not authorized to run. No real new-mainnet wallet, RandomX miner or block acceptance has been verified.
 

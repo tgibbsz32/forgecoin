@@ -45,6 +45,9 @@ jobs:
           gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
             -o /tmp/frg-reorg-lmdb-test services/official_pool/tests/test_reorg_reconciliation_lmdb.c -llmdb
           /tmp/frg-reorg-lmdb-test
+          gcc -std=c11 -O2 -pedantic -Wall -Wextra -Werror \
+            -o /tmp/frg-persistent-hold services/official_pool/tests/test_persistent_reorg_quarantine.c -llmdb
+          /tmp/frg-persistent-hold
           gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
             -o /tmp/frg-canonical-headers services/official_pool/tests/test_canonical_headers.c -ljson-c
           /tmp/frg-canonical-headers

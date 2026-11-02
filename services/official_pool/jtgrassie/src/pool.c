@@ -71,6 +71,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frg_pplns_accounting.h"
 #include "frg_canonical_headers.h"
 #include "frg_reconcile_policy.h"
+#include "frg_accounting_quarantine.h"
 #include "forkoff.h"
 #include "growbag.h"
 #include "uthash.h"
@@ -334,6 +335,8 @@ static MDB_dbi db_blocks;
 static MDB_dbi db_balance;
 static MDB_dbi db_payments;
 static MDB_dbi db_properties;
+/* Runtime latch is immediate; durable lockout lives in LMDB properties. */
+static bool frg_accounting_held;
 static BN_CTX *bn_ctx;
 static BIGNUM *base_diff;
 static pool_stats_t pool_stats;
@@ -652,7 +655,25 @@ database_init(const char* data_dir)
     mdb_set_compare(txn, db_balance, compare_string);
 
     rc = mdb_txn_commit(txn);
-    return rc;
+    if (rc)
+        return rc;
+    /* The pool must never restart when an earlier credited-block reorg
+     * marked the ledger unsafe. No automatic clearing is permitted.
+     */
+    MDB_txn *audit = NULL;
+    if ((rc = pdb_txn_begin(env, NULL, MDB_RDONLY, &audit)))
+        return rc;
+    bool held = false;
+    rc = frg_quarantine_read(audit, db_properties, &held, NULL);
+    mdb_txn_abort(audit);
+    if (rc || held)
+    {
+        frg_accounting_held = true;
+        log_fatal("FRG ledger quarantine is active or unreadable: "
+                  "refusing startup; manually audit matured rewards first");
+        return rc ? rc : EACCES;
+    }
+    return 0;
 }
 
 static void
@@ -877,30 +898,50 @@ balance_add(const char *address, uint64_t amount, MDB_txn *parent)
         MDB_val new_val = { sizeof(amount), (void*)&amount };
         if ((rc = mdb_cursor_put(cursor, &key, &new_val, 0)))
         {
-            err = mdb_strerror(rc);
-            log_error("%s", err);
+            log_error("Failed to create miner/fee balance: %s", mdb_strerror(rc));
+            mdb_cursor_close(cursor);
+            mdb_txn_abort(txn);
+            return rc;
         }
     }
     else if (rc == 0)
     {
         log_trace("Updating existing balance entry");
-        uint64_t current_amount = *(uint64_t*)val.mv_data;
-        current_amount += amount;
+        if (val.mv_size != sizeof(uint64_t))
+        {
+            log_error("Malformed stored miner/fee balance; refusing ledger update");
+            mdb_cursor_close(cursor);
+            mdb_txn_abort(txn);
+            return MDB_BAD_VALSIZE;
+        }
+        uint64_t current_amount = 0;
+        memcpy(&current_amount, val.mv_data, sizeof(current_amount));
+        if (!frg_balance_credit_safe(current_amount, amount, &current_amount))
+        {
+            log_error("Miner/fee balance overflow; refusing ledger update");
+            mdb_cursor_close(cursor);
+            mdb_txn_abort(txn);
+            return EOVERFLOW;
+        }
         MDB_val new_val = {sizeof(current_amount), (void*)&current_amount};
         if ((rc = mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT)))
         {
-            err = mdb_strerror(rc);
-            log_error("%s", err);
+            log_error("Failed to update miner/fee balance: %s", mdb_strerror(rc));
+            mdb_cursor_close(cursor);
+            mdb_txn_abort(txn);
+            return rc;
         }
     }
     else
     {
         err = mdb_strerror(rc);
         log_error("%s", err);
+        mdb_cursor_close(cursor);
         mdb_txn_abort(txn);
         return rc;
     }
 
+    mdb_cursor_close(cursor);
     rc = mdb_txn_commit(txn);
     return rc;
 }
@@ -1022,6 +1063,8 @@ payout_block(block_t *block, MDB_txn *parent)
 static int
 process_blocks(block_t *blocks, size_t count, uint64_t observed_tip_height)
 {
+    if (frg_accounting_held)
+        return EACCES;
     if (!abattoir)
         return 0;
 
@@ -1041,6 +1084,18 @@ process_blocks(block_t *blocks, size_t count, uint64_t observed_tip_height)
         err = mdb_strerror(rc);
         log_error("%s", err);
         return rc;
+    }
+    /* Test the durable hold inside this writer transaction to serialize
+     * with any other process attempting to persist a reorg alert.
+     */
+    bool held = false;
+    rc = frg_quarantine_read(txn, db_properties, &held, NULL);
+    if (rc || held)
+    {
+        frg_accounting_held = true;
+        mdb_txn_abort(txn);
+        log_error("FRG pool ledger held: skipping all canonical credits");
+        return rc ? rc : EACCES;
     }
     if ((rc = mdb_cursor_open(txn, db_blocks, &cursor)))
     {
@@ -1090,8 +1145,21 @@ process_blocks(block_t *blocks, size_t count, uint64_t observed_tip_height)
                 log_error("Previously credited block is no longer canonical or block status is invalid; "
                           "abort this accounting batch; manual review required at height %"PRIu64,
                           sb->height);
+                /* Abort all earlier credits in this batch BEFORE writing a
+                 * separate durable quarantine marker.
+                 */
+                const uint64_t conflict_height = sb->height;
                 mdb_cursor_close(cursor);
                 mdb_txn_abort(txn);
+                frg_accounting_held = true;
+                const int mark_rc = frg_quarantine_mark(
+                    env, db_properties, conflict_height);
+                if (mark_rc)
+                {
+                    log_fatal("FRG accounting quarantine could not be persisted: %s; "
+                              "terminating pool process", mdb_strerror(mark_rc));
+                    exit(EXIT_FAILURE);
+                }
                 return EPROTO;
             }
             if (action == FRG_RECONCILE_DEFER ||
@@ -2412,6 +2480,24 @@ send_payments(void)
 {
     if (*config.upstream_host || config.disable_payouts)
         return 0;
+    /* In a future reviewed payout build the durable LMDB quarantine must
+     * be checked before any wallet transfer is even considered.
+     */
+    if (frg_accounting_held)
+        return EACCES;
+    MDB_txn *hold_txn = NULL;
+    int hold_rc = pdb_txn_begin(env, NULL, MDB_RDONLY, &hold_txn);
+    if (hold_rc)
+        return hold_rc;
+    bool held = false;
+    hold_rc = frg_quarantine_read(hold_txn, db_properties, &held, NULL);
+    mdb_txn_abort(hold_txn);
+    if (hold_rc || held)
+    {
+        frg_accounting_held = true;
+        log_error("FRG payouts blocked by durable reorganization quarantine");
+        return hold_rc ? hold_rc : EACCES;
+    }
 #ifndef FRG_TESTED_WALLET_PAYOUTS
     /* This fork has NOT demonstrated native 8-decimal wallet payouts.
      * Until that test and a separate release build are approved, never call
@@ -4934,7 +5020,7 @@ int main(int argc, char **argv)
     if ((err = database_init(config.data_dir)))
     {
         log_fatal("Failed to initialize database. Return code: %d", err);
-        goto cleanup;
+        return EXIT_FAILURE;
     }
 
     bstack_new(&bst, BLOCK_TEMPLATES_MAX, sizeof(block_template_t),

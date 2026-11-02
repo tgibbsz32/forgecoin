@@ -39,6 +39,18 @@ frg_pplns_share_atomic(uint64_t share_difficulty, uint64_t block_difficulty,
     return true;
 }
 
+/* All miner and operator ledger increments must retain integer precision.
+ * In particular, a malicious/corrupt existing balance cannot wrap around.
+ */
+static inline bool
+frg_balance_credit_safe(uint64_t existing, uint64_t increment, uint64_t *total)
+{
+    if (!total || increment > UINT64_MAX - existing)
+        return false;
+    *total = existing + increment;
+    return true;
+}
+
 /* If shares cannot account for the full candidate reward, do not write
  * an unlocked block and silently strand the undistributed remainder.
  */

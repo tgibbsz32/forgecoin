@@ -1,6 +1,6 @@
 # Native pool credited-block historical audit — November 2, 2026
 
-**Status:** Prelaunch source-only hardening in [PR #196](https://github.com/tgibbsz32/forgecoin/pull/196). Does not activate FRG mining, Stratum, wallet transfers, Oracle infrastructure, or consensus. The frozen 20261026 mainnet remains locked.
+**Status:** Prelaunch source-only hardening merged in [PR #196](https://github.com/tgibbsz32/forgecoin/pull/196), with x86_64 and ARM64 compile/link and standalone native fixtures passing. **Not deployed or runtime-accepted.** Does not activate FRG mining, Stratum, wallet transfers, Oracle infrastructure, or consensus. The frozen 20261026 mainnet remains locked.
 
 ## Why this is necessary
 

@@ -15,6 +15,14 @@ class PrelaunchWiring(unittest.TestCase):
         scan = s[s.index("bool Blockchain::scan_outputkeys_for_indexes"):]
         self.assertLess(scan.index("forgecoin_prelaunch::output_allowed"), scan.index("vis.handle_output"))
         self.assertIn("output_index.height", scan)
+    def test_fixed_difficulty_override_is_rejected_on_mainnet(self):
+        core = source("src/cryptonote_core/cryptonote_core.cpp")
+        init = core[core.index("const difficulty_type fixed_difficulty = command_line::get_arg(vm, arg_fixed_difficulty);"):]
+        self.assertIn("m_nettype == MAINNET && fixed_difficulty != 0", init)
+        self.assertIn("Mainnet consensus forbids --fixed-difficulty", init)
+        self.assertLess(init.index("if (m_nettype == MAINNET && fixed_difficulty != 0)"),
+                        init.index("m_blockchain_storage.init(db.release()"))
+
     def test_native_miner_and_template_paths_are_locked(self):
         s = source("src/cryptonote_basic/miner.cpp")
         start = s[s.index("bool miner::start("):]

@@ -2103,9 +2103,10 @@ rpc_on_frq_historical_credit(const char *data, rpc_callback_t *callback)
     frg_history_pending = false;
     json_object *root = data ? json_tokener_parse(data) : NULL;
     json_object *result = NULL, *status = NULL, *header = NULL;
+    json_object *rpc_error = NULL;
     enum frg_history_verdict verdict = FRG_HISTORY_UNVERIFIED;
     if (root && json_object_is_type(root, json_type_object) &&
-        !json_object_object_get_ex(root, "error", NULL) &&
+        !json_object_object_get_ex(root, "error", &rpc_error) &&
         frg_json_member(root, "result", json_type_object, &result) &&
         frg_json_member(result, "status", json_type_string, &status) &&
         !strcmp(json_object_get_string(status), "OK") &&
@@ -3346,6 +3347,14 @@ timer_on_30s(int fd, short kind, void *ctx)
         upstream_send_ping();
     struct timeval timeout = { .tv_sec = 30, .tv_usec = 0 };
     evtimer_add(timer_30s, &timeout);
+}
+
+static void
+timer_on_history(int fd, short kind, void *ctx)
+{
+    struct timeval timeout = {.tv_sec = 2, .tv_usec = 0};
+    frg_history_poll(); /* one bounded historical RPC per timer, never a wallet RPC */
+    evtimer_add(timer_history, &timeout);
 }
 
 static void
@@ -4993,6 +5002,15 @@ run(void)
     {
         timer_10m = evtimer_new(pool_base, timer_on_10m, NULL);
         timer_on_10m(-1, EV_TIMEOUT, NULL);
+        timer_history = evtimer_new(pool_base, timer_on_history, NULL);
+        if (!timer_history)
+        {
+            log_fatal("FRG history audit timer creation failed; refusing pool startup");
+            goto bail;
+        }
+        /* Payouts start held; no historical proof is assumed on restart. */
+        struct timeval audit_start = {.tv_sec = 2, .tv_usec = 0};
+        evtimer_add(timer_history, &audit_start);
     }
 
     if (*config.upstream_host)

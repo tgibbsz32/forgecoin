@@ -55,7 +55,7 @@
 
 ## Next-stage mFRG token, treasuries and governance
 
-miniFORGE (mFRG) is a separate standard Solana SPL asset with a revised **500M target fixed supply**: **50M staged fundraising inventory** (including an initial 5M pilot), **100M operations, 100M grants, 85M staking incentives, 60M liquidity, 65M engineering/security, 15M founder immediately unlocked, 15M founder-beneficial team-labeled vesting in months 13–36, and 10M emergency**. All nine buckets are distinct and the two founder buckets belong to the same person. No token sale, mainnet mint verification or staking is active. See [lifetime tokenomics](../MFRG_LIFETIME_TOKENOMICS_500M.md).
+miniFORGE (mFRG) is a separate standard Solana SPL asset with a revised **500M target fixed supply**: **50M staged fundraising inventory** (including an initial 5M pilot), **100M operations, 100M grants, 85M staking incentives, 60M liquidity, 65M engineering/security, 15M founder immediately unlocked, 15M founder-beneficial team-labeled vesting in months 13–36, and 10M emergency**. All nine buckets are distinct and the two founder buckets belong to the same person. No token sale, mainnet mint verification or staking is active. See [lifetime tokenomics](../MFRG_50M_CITY_TOKENOMICS.md).
 
 The project intends to choose and publish the governance framework **before any authorized mFRG distribution begins**; no particular number of representatives, miner bond, mFRG voting scheme or quorum is ratified. Older wrapped-FRG and fixed-seat roadmaps are superseded. See [technical roadmap](../../ROADMAP.md), [mFRG sale page](../miniforge-sale.html), [treasury specification](../MINIFORGE_SPL_TREASURIES.md) and [governance design](../../governance-charter.md).
 

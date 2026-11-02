@@ -146,7 +146,7 @@ Both 3% buckets belong to **the same founder**. The deferred 15M unlock **625,00
 
 The 85M reward reserve is finite, does not secure FRG's PoW chain, and does not guarantee APY. Prospective 30/90/180/365-day staking locks, weekly accrued claims and seven-day post-expiry cooldown remain subject to audit and approval. Liquidity needs separately acquired matching assets. Optional token burns would apply only to designated mFRG service fees, **not ordinary SPL transfers**. Project assets and founder benefits must be disclosed separately.
 
-See the [complete lifetime tokenomics and release table](MFRG_LIFETIME_TOKENOMICS_500M.md), [treasury custody summary](MINIFORGE_SPL_TREASURIES.md), [planned website sale](miniforge-sale.html), and [future architecture](SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md).
+See the [complete lifetime tokenomics and release table](MFRG_50M_CITY_TOKENOMICS.md), [treasury custody summary](MINIFORGE_SPL_TREASURIES.md), [planned website sale](miniforge-sale.html), and [future architecture](SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md).
 
 ## Governance milestone
 

@@ -676,6 +676,13 @@ namespace cryptonote
       0
     };
     const difficulty_type fixed_difficulty = command_line::get_arg(vm, arg_fixed_difficulty);
+    // Never permit the inherited testing-only override to weaken real FRG
+    // mainnet consensus, including after the temporary prelaunch lock lifts.
+    if (m_nettype == MAINNET && fixed_difficulty != 0)
+    {
+      MERROR("Mainnet consensus forbids --fixed-difficulty");
+      return false;
+    }
     r = m_blockchain_storage.init(db.release(), m_nettype, m_offline, regtest ? &regtest_test_options : test_options, fixed_difficulty, get_checkpoints);
     CHECK_AND_ASSERT_MES(r, false, "Failed to initialize blockchain storage");
 

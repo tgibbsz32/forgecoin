@@ -14,6 +14,7 @@ on:
       - 'services/official_pool/jtgrassie/src/**'
       - 'tests/desktop/**'
       - 'tools/audit_host_ports.py'
+      - 'tools/audit_oracle_prelaunch_config.py'
       - 'docs/NETWORK_PORTS.md'
       - 'docs/CURRENT_MAINNET.md'
       - '.github/workflows/desktop-frozen-mainnet-endpoints.yml'
@@ -27,6 +28,7 @@ on:
       - 'services/official_pool/jtgrassie/src/**'
       - 'tests/desktop/**'
       - 'tools/audit_host_ports.py'
+      - 'tools/audit_oracle_prelaunch_config.py'
       - '.github/workflows/desktop-frozen-mainnet-endpoints.yml'
   workflow_dispatch:
 

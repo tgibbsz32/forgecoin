@@ -12,7 +12,7 @@ The selected mainnet is genesis-frozen and **not launched**. [Current parameters
 
 ## Delivery direction
 
-The first planned post-launch integration is a user-deposit-backed, redeemable 1:1 Solana wFRG bridge. The preferred later privacy upgrade is an in-place FCMP++/CARROT hard fork preserving native FRG history and balances; a separate successor and voluntary, supply-conserving migration are the fallback. Later work includes native atomic swaps, backed private stable assets, TSS/MPC private trades, L2 settlement and L3 applications.
+After native FRG launch verification and the formal adoption of governance procedures, the project intends a **50M standard Solana SPL miniFORGE (mFRG)** token (5M presale, 5M DEX liquidity, 40M combined ecosystem/staking/collateral reserve) and an **audited 1 FRG : 1 eligible mFRG backed bridge** to support faster Solana transfers, supported DEXs, optional finite-reserve staking and purchases of CITY packs in ForgeCoin's planned Discover Your City game. Native FRG backing must independently cover every mFRG represented as 1:1 redeemable; a fixed 50M SPL supply caps bridge capacity even as FRG's tail emission continues. No mint, reserves, bridge, DEX pool, staking, game checkout or sale is verified active. The preferred later native privacy upgrade is an in-place FCMP++/CARROT hard fork preserving FRG history and balances; additional proposals include swaps, secured L2 and L3 services.
 
 <small>Proposed future upgrades; implementation and timing are not guaranteed.</small>
 

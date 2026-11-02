@@ -8,6 +8,10 @@
 
 > **Safety:** No new-mainnet genesis, real mining, block submission, public share crediting or payouts are authorized by this documentation. The hosted `/pool/` page is a readiness page, **not a working public mining pool**.
 
+## Mission and planned Solana extension
+
+ForgeCoin prioritizes independent, privacy-focused RandomX mining and native FRG verification. After mainnet release gates and formal community governance procedures, the intended **50M mFRG standard SPL token** would support a fully reserved **1 FRG : 1 eligible mFRG bridge**, faster Solana ecosystem transfers, supported DEX liquidity, optional finite-reserve staking and purchases of USD-priced CITY packs in ForgeCoin's planned **Discover Your City** game. Every token described as 1:1 redeemable requires independently verifiable native FRG backing. No token mint, bridge, staking, DEX liquidity, game checkout or sale is active. See [current tokenomics](../MFRG_50M_CITY_TOKENOMICS.md) and [roadmap](../../ROADMAP.md).
+
 ## Start here
 
 | Page | Purpose |

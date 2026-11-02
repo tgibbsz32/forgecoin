@@ -38,7 +38,7 @@ ForgeCoin includes multiple codebases with **different maturity levels**. Do not
 - `services/governance_api/`, `GOVERNANCE.md`, `governance-charter.md`: governance experiments and policy drafting. Do not treat mock/proposed votes as consensus authority.
 - Oracle ARM64 VM hosts older development-chain node/explorer and static public pool page; existing live services must not be repointed or retired without verified backups and rollback.
 - Trust boundaries: wallet secrets never enter website, miner telemetry or synthetic test evidence; consensus RPC must not be exposed to Internet clients; credentials are not public addresses; a published SHA-256 alone does not prove artifact origin.
-- The proposed Solana bridge is **future research**, not an existing network, pool, native token issuance path, or custody service.
+- **Planned mFRG Solana extension:** future 50M six-decimal SPL supply (5M presale, 5M DEX liquidity and 40M combined staking/collateral/ecosystem), reviewed only after native FRG release and published governance. Intended services: faster Solana transfers, supported DEX trading, optional finite-reserve staking, verified mFRG purchases of CITY packs in ForgeCoin's Discover Your City game, and a fully reserve-backed **1 FRG : 1 eligible mFRG** bridge. One native FRG must be independently verified in custody per mFRG represented as redeemable; reserve and liability proofs, lock/release, chain finality, 8-to-6 decimal precision, signer review and withdrawal safety are mandatory. These are proposed and not deployed, and the 50M SPL supply cap restricts bridge capacity despite native FRG tail issuance.
 
 ## Where to start investigating
 

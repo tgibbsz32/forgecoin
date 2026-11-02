@@ -13,7 +13,7 @@ See [current network and economic specification](../CURRENT_MAINNET.md), [machin
 | Pool and explorer | Old hosted explorer/pool readiness pages are separate; no approved new-mainnet public pool or payout service |
 | Economics | 50M primary reference, 8 decimals, perpetual 0.20 FRG tail, no fixed cap; planned 1% pool operator fee |
 | Genesis output | 11.92092895 FRG, unlock height 60; permanent unspendability unresolved |
-| Governance | Framework undecided; owner intends to select and publish it before any authorized mFRG distribution begins; no fixed seat model or binding treasury votes |
-| Post-launch initiatives | Separate proposed 500M mFRG fixed-supply policy: 50M fundraising, 100M operations, 100M ecosystem, 85M staking rewards, 60M liquidity, 65M engineering/security, 30M founder-beneficial (15M immediate + 15M vesting months 13–36), 10M emergency; distribution not live; FCMP++/CARROT in-place hard fork research and later L1/L2/L3 |
+| Governance | Framework undecided; owner intends to select and publish it before mFRG introduction, minting, conversion or distribution; no fixed seat model or binding treasury votes |
+| Post-launch initiatives | **Proposed 50M six-decimal Solana SPL mFRG**: 5M initial sale, 5M DEX/liquidity, 40M combined ecosystem/staking/collateral reserve. Intended audited **1 FRG : 1 eligible mFRG** native-reserve bridge for faster Solana transfers, supported DEXs, optional staking and purchases of CITY packs in ForgeCoin's planned Discover Your City game. Governance must be established before mFRG introduction; no mint, backing, bridge, DEX, staking, game checkout or sale is live. FCMP++/CARROT research remains later |
 
 Read [roadmap and release gates](Roadmap.md). Historical test reports retain original dates and are not approval to launch, mine or change services. User wallets and keys remain private.

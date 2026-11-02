@@ -52,4 +52,4 @@ Before production issuance, independently verify any existing mainnet mint, tota
 
 The related **checkout prototype PR #122** was drafted for old 5M inventory and a USDC-only payment flow, and **must be audited and reconciled separately** before its logic can be merged into any distribution backend. Cryptocurrency swaps can still create securities, tax, money-transmission and sanctions obligations; the public sale remains disabled.
 
-See [canonical tokenomics](../../docs/MFRG_LIFETIME_TOKENOMICS_500M.md), [technical sale gates](../../docs/MINIFORGE_SALE_MECHANISM.md), and [native FRG release state](../../docs/CURRENT_MAINNET.md).
+See [canonical tokenomics](../../docs/MFRG_50M_CITY_TOKENOMICS.md), [technical sale gates](../../docs/MINIFORGE_SALE_MECHANISM.md), and [native FRG release state](../../docs/CURRENT_MAINNET.md).

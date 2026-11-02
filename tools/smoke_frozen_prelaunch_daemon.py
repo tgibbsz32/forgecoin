@@ -216,6 +216,35 @@ def run(binary: Path, manifest: dict, max_seconds: int) -> None:
                     proc.kill()
                     proc.wait(timeout=8)
 
+        # A separate disposable startup must refuse the inherited testing-only
+        # difficulty override before any blockchain consensus is initialized.
+        fixed_dir = Path(tmp) / "fixed-difficulty-refusal"
+        fixed_dir.mkdir()
+        fixed_log = Path(tmp) / "fixed-difficulty-output.log"
+        cmd_fixed = [
+            str(binary.resolve()), "--offline", "--non-interactive",
+            "--no-zmq", "--no-igd", "--fixed-difficulty", "1",
+            "--p2p-bind-ip", "127.0.0.1", "--p2p-bind-port", str(take_free_port()),
+            "--rpc-bind-ip", "127.0.0.1", "--rpc-bind-port", str(take_free_port()),
+            "--data-dir", str(fixed_dir),
+            "--log-file", str(fixed_dir / "forgecoin.log"),
+        ]
+        with fixed_log.open("wb") as handle:
+            rejected_proc = subprocess.run(
+                cmd_fixed, cwd=tmp, stdin=subprocess.DEVNULL,
+                stdout=handle, stderr=subprocess.STDOUT,
+                timeout=30, env={**os.environ, "HOME": tmp},
+                check=False,
+            )
+        fixed_output = fixed_log.read_text(encoding="utf-8", errors="replace")
+        native_output = fixed_dir / "forgecoin.log"
+        if native_output.is_file():
+            fixed_output += native_output.read_text(encoding="utf-8", errors="replace")
+        if (rejected_proc.returncode == 0 or
+                "Mainnet consensus forbids --fixed-difficulty" not in fixed_output):
+            raise AssertionError("Fixed-difficulty mainnet override did not fail through consensus guard")
+        print("PASS: --fixed-difficulty cannot start an FRG mainnet daemon", flush=True)
+
 
 def main() -> None:
     cli = argparse.ArgumentParser()

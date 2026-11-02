@@ -5,6 +5,14 @@
 // is displayed. Miner addresses, payouts, cookies and wallet secrets are absent.
 (() => {
   const byId = (id) => document.getElementById(id);
+  // Account-free address lookup is intentionally disabled until a verified,
+  // read-only per-address pool API has been integrated and audited.
+  document.getElementById("public-address-lookup")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const result = document.getElementById("public-address-result");
+    if (result) result.textContent = "Per-address FRG mining statistics are not yet available: the verified pool API is not deployed. No account is required when it becomes available.";
+  });
+
   const values = [
     "stat-pool-rate", "stat-network-rate", "stat-miners", "stat-blocks",
     "stat-height", "stat-difficulty", "stat-round", "stat-last-block",

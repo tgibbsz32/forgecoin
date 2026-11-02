@@ -2,8 +2,6 @@
 
 > **Current mFRG policy (November 2026):** 50,000,000 total mFRG: 5M presale, 5M liquidity, 40M combined ecosystem/staking/collateral reserve. Proposed flat presale $0.12/mFRG; maximum $600,000 gross if all 5M sell. Proceeds: 90% project, 10% founders (half immediate, half over six months). No founder token allocation. No sale or mint authorized. [Current policy](docs/MFRG_50M_CITY_TOKENOMICS.md) · [Discover Your City](docs/discover-your-city.html).
 
-
-
 > **Current mainnet specification:** [October 26 frozen identity, tokenomics and release status](docs/CURRENT_MAINNET.md). Public launch is not authorized.
 
 ![ForgeCoin mark](docs/images/forgecoin-logo.png)
@@ -14,7 +12,11 @@ ForgeCoin’s selected October 26 mainnet is genesis-frozen and unlaunched. The 
 
 ## Mission
 
-ForgeCoin aims to provide private, CPU-accessible peer-to-peer digital cash that people can validate, mine, and explore on their own computers without relying on a central custodian or hosted block-explorer website.
+ForgeCoin's mission is to build independently verifiable, privacy-preserving, CPU-mined peer-to-peer money on its native FRG network and extend its utility through a planned Solana miniFORGE (mFRG) token. **After native network validation and the formal adoption of governance procedures**, the project intends an independently audited **1 FRG : 1 mFRG reserve-backed bridge** for eligible assets, faster Solana-side transfers, supported decentralized-exchange (DEX) liquidity and trading, optional mFRG staking, and mFRG payments in ForgeCoin's planned **Discover Your City** game for USD-priced CITY packs.
+
+The current proposed mFRG supply is **50,000,000 six-decimal standard Solana SPL tokens**: 5M presale, 5M liquidity and a combined 40M staking/collateral/ecosystem reserve. Native FRG's 50M primary-emission reference is not a cap because tail rewards continue. To call mFRG 1:1 FRG-redeemable, **every eligible outstanding mFRG—including presale, liquidity or reward inventories presented as backed—must correspond to one verifiably reserved native FRG**. The maximum bridge capacity cannot exceed native backing or the 50M SPL ceiling. No bridge, mint, redemption, staking, DEX liquidity or game payments are live or guaranteed; Solana does not inherit native FRG transaction privacy.
+
+See [current tokenomics](docs/MFRG_50M_CITY_TOKENOMICS.md), [ecosystem roadmap](ROADMAP.md), [exchange design](docs/MFRG_EXCHANGE_DESIGN.md) and [Discover Your City](docs/discover-your-city.html).
 
 ## Current network parameters
 

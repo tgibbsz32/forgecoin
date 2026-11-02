@@ -2,7 +2,7 @@
 
 [Current mainnet specification and release status](CURRENT_MAINNET.md). The October 26 identity is frozen and unlaunched; main-branch runtime remains legacy pending separate implementation review.
 
-Version 0.3 — October 28, 2026 (mFRG lifetime policy revision)
+Version 0.4 — November 2, 2026 (revised mFRG utility and 1:1 Solana bridge intentions)
 
 ## Abstract
 
@@ -12,7 +12,7 @@ ForgeCoin is presently in its bootstrap stage. The selected mainnet is unlaunche
 
 ## Mission
 
-ForgeCoin aims to provide private, CPU-accessible peer-to-peer digital cash that people can validate, mine, and explore on their own computers without relying on a central custodian or hosted block-explorer website.
+ForgeCoin aims to deliver privacy-preserving, CPU-accessible peer-to-peer money with independent native FRG validation, then extend its utility to Solana through the planned miniFORGE (mFRG) token. Its intended ecosystem includes **1 FRG : 1 eligible mFRG audited reserve-backed interoperability**, faster Solana transfers, supported DEXs, opt-in finite-reserve staking, and mFRG purchases of USD-priced CITY packs in ForgeCoin's planned Discover Your City game. These are future goals after native launch validation and the formal establishment of governance, not live conversion rights or verified deployments.
 
 The project follows four operating principles:
 
@@ -20,6 +20,8 @@ The project follows four operating principles:
 2. Transaction privacy should be the default rather than an optional feature.
 3. Mining should remain accessible on commodity CPUs through RandomX.
 4. Consensus changes should be published in source, reviewed publicly, and activated only through a clearly announced network upgrade.
+5. Any 1:1 representation must carry independently verifiable native FRG reserves for all redeemable units, transparent redemption liabilities and explicit risk disclosures.
+6. Solana utility does not inherit native FRG privacy or guarantee a fixed market exchange price.
 
 ## Architecture
 
@@ -125,32 +127,28 @@ ForgeCoin is not yet an independently audited production network. Its inherited 
 
 ForgeCoin is derived from Monero v0.18.5.1 and CryptoNote code and is distributed under the BSD 3-Clause license included with the source. XMRig, when distributed with a desktop release, remains a separate GPLv3 component with its matching source and license.
 
-## Separate miniFORGE (mFRG) — updated 500M lifetime policy
+## miniFORGE (mFRG) — proposed 50M Solana token and bridge
 
-miniFORGE is an economically separate, **500,000,000 target fixed-supply** standard SPL token (6 decimals) that would support Solana-side adoption, treasury governance, software services, participation incentives and liquidity. This is an approved **project allocation plan**, **not verified mainnet minting, a sale approval, a live staking product or FRG-backed collateral**. There is no fixed FRG/mFRG conversion. FRG retains its own primary-emission reference and continuing tail reward.
+miniFORGE is intended as a **standard six-decimal Solana SPL token** with a **50,000,000 mFRG proposed maximum**, enabling Solana-side transfers and use in supported DEXs, optional staking and ecosystem services. The planned bridge would convert **1 native FRG to 1 eligible redeemable mFRG** with fully verifiable reserves and secure reverse conversion. Neither the bridge nor any redemption right currently exists.
 
-| Proposed purpose | mFRG | Share |
+| Proposed allocation | mFRG | Share |
 | --- | ---: | ---: |
-| Staged crypto-denominated fundraising | 50,000,000 | 10% |
-| Long-term operations/development | 100,000,000 | 20% |
-| Ecosystem adoption/grants | 100,000,000 | 20% |
-| Staking/participation rewards | 85,000,000 | 17% |
-| Liquidity | 60,000,000 | 12% |
-| Engineering/security | 65,000,000 | 13% |
-| **Founder, freely unlocked immediately** | **15,000,000** | **3%** |
-| **Founder-beneficial team-labeled vesting, months 13–36** | **15,000,000** | **3%** |
-| Emergency | 10,000,000 | 2% |
-| **Total** | **500,000,000** | **100%** |
+| Initial presale inventory | 5,000,000 | 10% |
+| Future DEX/liquidity reserve | 5,000,000 | 10% |
+| Combined staking, collateral and ecosystem/game reserve | 40,000,000 | 80% |
+| **Total proposed fixed supply** | **50,000,000** | **100%** |
 
-Both 3% buckets belong to **the same founder**. The deferred 15M unlock **625,000 mFRG monthly from month 13 through 36**. Fundraising can exchange mFRG for **USDC/SOL or other expressly approved crypto**, with 5M pilot, 15M additional year 1, 20M years 2–3 and 10M years 4–10. No live price, purchase facility, authority revocation or verified mainnet custody is claimed. The sale must meet independent engineering, legal and accounting gates.
+The 40M is a **single combined ceiling** pending approved suballocations. No founder token allocation exists under the present proposal. Proposed sale terms are **$0.12/mFRG** for up to 5M presale tokens, a $600,000 illustrative gross ceiling, and 90% project / 10% founder share of actual proceeds, with founder share half immediately and half in six monthly releases. Sale terms do not prove FRG backing or fix a future DEX market price.
 
-The 85M reward reserve is finite, does not secure FRG's PoW chain, and does not guarantee APY. Prospective 30/90/180/365-day staking locks, weekly accrued claims and seven-day post-expiry cooldown remain subject to audit and approval. Liquidity needs separately acquired matching assets. Optional token burns would apply only to designated mFRG service fees, **not ordinary SPL transfers**. Project assets and founder benefits must be disclosed separately.
+**Technical and economic dependencies:** Each mFRG represented as 1:1 redeemable—including any presale, liquidity or staking units sold or distributed as backed—must correspond to one independently verifiable native FRG in secure custody. The 50M fixed SPL supply caps total eligible bridge capacity despite native FRG's continuing tail issuance. A pre-minted SPL token with revoked mint authority needs audited lock/release inventory, not unbounded mint-on-deposit. FRG uses eight decimals while mFRG uses six; conversion logic needs explicit dust, rounding and fee rules. Bridge security, chain-finality/reorg handling, proof-of-reserves, solvency audits, operator governance, emergency procedures and legal review are prerequisites. An unbacked fungible allocation cannot also promise 1:1 redemption.
 
-See the [complete lifetime tokenomics and release table](MFRG_50M_CITY_TOKENOMICS.md), [treasury custody summary](MINIFORGE_SPL_TREASURIES.md), [planned website sale](miniforge-sale.html), and [future architecture](SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md).
+**Intended uses:** mFRG transfers on Solana, trading through supported DEX liquidity pools with independently funded counterpart assets, voluntary staking incentives from a finite governed reserve (no guaranteed APY), and optional mFRG payments for USD-priced CITY packs in ForgeCoin's planned **Discover Your City** game. The server must verify finalized payments and credit CITY exactly once; all mFRG received for game purchases is allocated to the ecosystem treasury. Solana transfers are transparent and do not inherit native FRG privacy.
+
+No mint, sale, bridge, reserve, DEX liquidity, staking, game checkout or price is verified active. See [tokenomics and bridge conditions](MFRG_50M_CITY_TOKENOMICS.md), [treasury design](MINIFORGE_SPL_TREASURIES.md), [exchange design](MFRG_EXCHANGE_DESIGN.md), [sale status](miniforge-sale.html) and [game integration](discover-your-city.html).
 
 ## Governance milestone
 
-Governance rules, treasury signers, conflicts-of-interest protections, approvals and public accountability must be adopted **before any approved mFRG distribution**, not after one has begun. Native FRG node consensus cannot be commanded by mFRG token votes. Former representative-chamber proposals do not establish binding voting rights.
+Governance rules, treasury signers, conflicts-of-interest protections, approvals and public accountability must be determined and published **before mFRG introduction, minting, sale, bridge activation, staking or distribution**, not after one has begun. Native FRG node consensus cannot be commanded by mFRG token votes. Former representative-chamber proposals do not establish binding voting rights.
 
 ## Proposed FCMP++/CARROT privacy upgrades
 

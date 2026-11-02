@@ -59,7 +59,7 @@ Develop proposal submission, member/miner participation, eligibility, decision a
 
 ## Milestone F — Optional mFRG after governance
 
-Current separate 50M SPL mFRG proposal: 5M prospective presale, 5M liquidity and 40M ecosystem/staking/collateral reserve. Proposed $0.12/mFRG price and 90/10 project/founder proceeds are planning terms only. Previous 500M and five-round proposals are superseded. No sale/mint is authorized. See [roadmap](../../ROADMAP.md) and [current token proposal](../MFRG_50M_CITY_TOKENOMICS.md).
+Current 50M standard SPL mFRG proposal: 5M prospective presale, 5M DEX liquidity and a combined 40M ecosystem/staking/collateral reserve. Intended uses include faster Solana transfers, supported DEX trading, optional finite-reserve staking, and mFRG payments for CITY packs in ForgeCoin's planned Discover Your City game. Planned **1 FRG : 1 eligible mFRG** interoperability requires audited native FRG reserves for every redeemable token, including any presale/liquidity/staking supply presented as backed, and separately reviewed escrow/redemption mechanisms. The 50M mFRG ceiling caps bridging even as native FRG tail emission continues. Proposed $0.12/mFRG sale and 90/10 project/founder proceeds remain proposals. Older 500M and five-round terms are superseded; no mint, sale, bridge or staking is active. See [roadmap](../../ROADMAP.md) and [current token proposal](../MFRG_50M_CITY_TOKENOMICS.md).
 
 ## Intended future L1, L2 and possible L3 architecture
 

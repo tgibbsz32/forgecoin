@@ -18,10 +18,14 @@
 - Only after Phase 2, consider the current **50,000,000 six-decimal standard Solana SPL mFRG** proposal: 5M initial presale, 5M future liquidity, 40M combined ecosystem/staking/collateral reserve.
 - Proposed flat presale price is $0.12/mFRG; maximum $600,000 gross if all 5M sell. Proposed proceeds 90% project / 10% founder, half founder share immediate and half over six months. No separate founder token allocation under the current proposal.
 - Require independent legal, custody, payment-verification, supply/account reconciliation and security review before any authorization. The earlier 500M allocations, five-round price ladder and 80/20 proceeds split are superseded.
-- No sale, mint, bridge, staking, backing, price guarantee or token rights are active.
+- **Intended utility:** 1 FRG : 1 eligible mFRG reserve-backed bridge/redemption; faster Solana ecosystem transfers; supported DEX swaps/liquidity; optional finite-reserve staking; and mFRG payments for USD-priced CITY packs in ForgeCoin's Discover Your City game. These capabilities are development objectives, not live entitlements.
+- **Backing gate:** independently verify one available native FRG for each mFRG advertised as 1:1 redeemable, including presale/DEX/staking inventory where applicable; reconcile liabilities, prevent double counting, design audited custody/lock-and-release mechanics, support FRG's 8 decimals versus SPL's 6, and cap bridge capacity below both the 50M mFRG ceiling and proven FRG reserves. Native FRG tail issuance continues indefinitely and is not entirely bridgeable by assumption.
+- No sale, mint, bridge, redemption, staking, backing, DEX liquidity, game checkout, market-price guarantee or token rights are active.
 
 ## Phase 4 — Governed treasuries and ecosystem
-- Evaluate optional liquidity, staking, collateral, community grants and game integration under approved governance and independently audited custody, signing and release controls.
+- Implement reviewed Solana wallet interoperability and audited FRG ↔ mFRG reserve-backed transfers with custody, finality, reorg, escrow, redemption and independent proof-of-reserves reporting. A 1:1 unit ratio is not a DEX market-price peg.
+- Add separately provisioned Solana DEX liquidity, optional staking funded from the finite combined reserve, collateral and grants under approved governance.
+- Integrate optional mFRG checkout in ForgeCoin's Discover Your City game: USD-priced CITY packs, finalized-payment verification, exactly-once CITY credit and 100% of received mFRG to the designated ecosystem treasury. Never trust screenshots or client-side payment claims.
 
 ## Phase 5 — Native FCMP++ / CARROT privacy research
 - Research full-chain membership proofs, curve-tree databases, generalized Bulletproofs, CARROT addressing, wallet/mempool/consensus validation and deep-reorg performance.

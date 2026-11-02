@@ -62,6 +62,32 @@ class SelectedPorts(unittest.TestCase):
         self.assertIn("expected_daemon_rpc_port=39481", explorer)
         self.assertNotIn("19481", explorer)
 
+    def test_pool_and_explorer_staging_listeners_remain_private(self):
+        pool = src("services/official_pool/jtgrassie/pool.conf")
+        for item in ("pool-listen = 127.0.0.1", "pool-port = 4242",
+                     "webui-listen = 127.0.0.1", "webui-port = 4243",
+                     "rpc-host = 127.0.0.1", "rpc-port = 39481",
+                     "wallet-rpc-host = 127.0.0.1", "wallet-rpc-port = 0",
+                     "disable-payouts = 1"):
+            self.assertIn(item, pool)
+        explorer = src("apps/explorer/forgecoin-explorer.service")
+        self.assertIn("--bind 127.0.0.1:19800", explorer)
+        self.assertNotIn("--bind 0.0.0.0:", explorer)
+        nginx = src("apps/explorer/nginx.conf")
+        self.assertIn("proxy_pass http://127.0.0.1:19800", nginx)
+        installer = src("apps/explorer/deploy.sh")
+        self.assertIn("Legacy explorer installer DISABLED", installer)
+        self.assertIn("exit 2", installer)
+
+    def test_android_staging_explorer_is_not_an_unverified_raw_ip(self):
+        activity = src("apps/android/app/src/main/java/org/forgecoin/p2ptest/MainActivity.java")
+        self.assertIn("https://tgibbsz32.github.io/forgecoin/current-mainnet.html", activity)
+        self.assertNotIn("https://150.136.209.227/", activity)
+        node = src("apps/android/app/src/main/java/org/forgecoin/p2ptest/NodeService.java")
+        self.assertIn('"--rpc-bind-ip", "127.0.0.1"', node)
+        self.assertIn('"--p2p-bind-ip", "127.0.0.1"', node)
+        self.assertIn('"--no-zmq"', node)
+
     def test_windows_apps_keep_native_and_local_services_separate(self):
         classic = src("apps/desktop/Program.cs")
         tauri = src("apps/desktop-tauri/src-tauri/src/engine.rs")

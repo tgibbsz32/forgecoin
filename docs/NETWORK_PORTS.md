@@ -62,15 +62,34 @@ from the project workstation; HTTP 200 was returned, and the published page
 showed native ports **39480/39481/39482**, Windows wallet RPC **39484**,
 and XMRig telemetry **39483**.
 
-A read-only SSH check of the previously documented Oracle host was **not
-authorized by the available SSH key** (`Permission denied (publickey)`).
-Therefore, the actual remote service process command lines, firewall bindings,
-legacy daemon listeners, pool Stratum listener and reverse proxy remain
-**unverified**. No server configuration or network rule was changed. When
-authorized access is restored, inspect `ss -ltn`, relevant service units, native
-daemon configuration, pool config, explorer RPC URL and firewall rules
-**before** applying reviewed changes. Do not expose daemon RPC, ZMQ or wallet
-RPC to the public internet and do not start mining merely to confirm connectivity.
+An authorized read-only Oracle SSH inspection **succeeded later on November 2** using
+the Dell's pre-existing Oracle identity. The earlier key-rejected attempt is
+superseded. The installed `forgecoin-mainnet-20261026.service` points at
+**P2P 39480, loopback daemon RPC 39481, loopback ZMQ 39482**, and has
+`ConditionPathExists=/etc/forgecoin/approved-mainnet-launch.json`; it was
+**disabled and inactive**. A separate older `forgecoin.service` was also
+**disabled and inactive**, but still contains **19480/19481** in its unit
+and difficulty-upgrade drop-in and targets a **legacy binary/database**.
+**Do not retarget or start that legacy service** as a shortcut to mainnet.
+
+The live Oracle INPUT firewall still contains an **ACCEPT for retired
+19480/TCP** and **no ACCEPT for selected 39480/TCP**. This is a real
+configuration inconsistency, not a running public node: no FRG P2P/RPC/
+ZMQ port was listening. nginx was listening on 80/443; the explorer's
+Gunicorn was listening on **127.0.0.1:19800**. The explorer service
+was active, while the selected native chain service remained inactive.
+An exact-rule firewall cleanup attempt was **blocked by remote-command
+permissions before execution**, so **no live firewall change was made**.
+The old allow rule remains present; public 39480 must stay closed until
+an independently approved mainnet cutover. Verification also does not
+establish OCI cloud-side security lists or live payout readiness.
+
+The new **read-only** `tools/audit_oracle_prelaunch_config.py` detects
+legacy service settings, unsafe active/enabled launch services, missing
+selected-port or launch guards, and insecure IPv4 INPUT allows. It
+does not change the firewall, daemon, systemd configuration or wallet.
+An authorized operator must separately review and apply any firewall
+cleanup; the historical service remains archived/disabled.
 
 The active app/service source cross-check is in the dedicated
 `tests/desktop/test_network_port_contract.py` regression attached to desktop

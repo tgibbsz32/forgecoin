@@ -16,6 +16,7 @@ from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
 TARGET_SECONDS = 120
+FROZEN_GENESIS_HASH = '4bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c'
 STATE_VERSION = 1
 
 
@@ -70,6 +71,9 @@ def parse_header(raw):
 
 
 def take_snapshot(url, window=64):
+    genesis = parse_header(rpc(url, 'get_block_header_by_height', {'height': 0})['block_header'])
+    if genesis['height'] != 0 or genesis['hash'] != FROZEN_GENESIS_HASH:
+        raise ValueError('node does not match frozen ForgeCoin genesis')
     tip = parse_header(rpc(url, 'get_last_block_header')['block_header'])
     start = max(0, tip['height'] - window + 1)
     raw = rpc(url, 'get_block_headers_range', {'start_height': start,
@@ -147,7 +151,10 @@ def main(argv=None):
         parser.error('at least two distinct localhost RPC tunnel endpoints are required')
     if not 8 <= args.window <= 256:
         parser.error('window must be 8..256')
-    urls = {str(i): validate_url(u) for i, u in enumerate(args.node)}
+    try:
+        urls = {str(i): validate_url(u) for i, u in enumerate(args.node)}
+    except ValueError as exc:
+        parser.error(str(exc))
     state = Path(args.state)
     try:
         prior = json.loads(state.read_text()) if state.exists() else {'version': STATE_VERSION, 'nodes': {}}

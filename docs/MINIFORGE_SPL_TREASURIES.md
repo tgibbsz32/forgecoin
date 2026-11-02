@@ -2,7 +2,7 @@
 
 **Updated October 28, 2026.** This page supersedes the previously proposed **50M mFRG** three-bucket allocation. **No Solana mainnet mint, funded vaults, staking, price, active sale or verified issuance is established by this documentation.**
 
-The **authoritative detailed allocation, release schedule, founder disclosure, locking, staking, liquidity, burns, crypto-denominated fundraising and legal risk gates** are in the [500M mFRG lifetime tokenomics policy](MFRG_LIFETIME_TOKENOMICS_500M.md).
+The **authoritative detailed allocation, release schedule, founder disclosure, locking, staking, liquidity, burns, crypto-denominated fundraising and legal risk gates** are in the [500M mFRG lifetime tokenomics policy](MFRG_50M_CITY_TOKENOMICS.md).
 
 ## New fixed-supply target: 500,000,000 mFRG (6 decimals)
 

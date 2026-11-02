@@ -69,3 +69,15 @@ The isolated daemon smoke test now submits this **historically accepted, correct
 - CI now independently compiles and runs this executable on Ubuntu for every integration push and PR. Its CI result must be confirmed separately.
 
 This regression increases numerical coverage, **but it is not proof of an actual multi-node synchronized 90+ block chain**. The launch-lock build intentionally cannot mine such a chain; a separately reviewed disposable test-enabled binary and independent consensus tests are required before unlocking public network mining. No change to the agreed frozen consensus parameters was made.
+
+## Mainnet fixed-difficulty override hardening
+
+Code review identified an inherited daemon `--fixed-difficulty` testing option that could reach `Blockchain::init` while the network type is MAINNET. Nonzero fixed difficulty bypasses the normal height-based difficulty selector. It must not be accepted on real FRG MAINNET, including once the separate prelaunch mining lock is lifted.
+
+A new fail-closed `core::init` check refuses `--fixed-difficulty` when `m_nettype == MAINNET` and the requested value is nonzero, **before** blockchain storage initializes. Existing FAKECHAIN/test-network behavior is unchanged. The source regression verifies this ordering, and the isolated daemon smoke starts a second loopback-only disposable process using `--fixed-difficulty 1`. It requires a nonzero exit and the explicit native error `Mainnet consensus forbids --fixed-difficulty`. A mere parse error or unrelated failed start is not sufficient.
+
+The local Dell test run passed 8 mainnet source tests and 24 native pool source tests, and Python syntax checks passed. The new full daemon build and runtime denial must independently pass CI before this safeguard is considered verified.
+
+### Independent difficulty-test CI dependencies
+
+The numerical `frozen_difficulty_policy.cpp` test passed in the WSL ForgeCoinBuild environment. Clean GitHub policy runners first lacked Boost multiprecision headers, then libsodium crypto headers; both are needed by the actual production `cryptonote_basic/difficulty.h` header dependency chain. The policy CI explicitly installs `libboost-dev` and `libsodium-dev` prior to compiling the native regression. These initial CI failures are build-environment dependencies, not a change to the frozen difficulty parameters. Check the latest run for confirmation.

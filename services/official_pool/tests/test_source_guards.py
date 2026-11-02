@@ -123,7 +123,7 @@ class NativeBackendPreflight(unittest.TestCase):
 
     def test_native_reorg_freezes_credited_blocks_and_checks_tip_maturity(self):
         self.assertIn('#include "frg_reconcile_policy.h"', self.pool)
-        self.assertIn("BLOCK_UNLOCKED == FRG_SAVED_UNLOCKED", self.pool)
+        self.assertIn("(int)BLOCK_UNLOCKED == (int)FRG_SAVED_UNLOCKED", self.pool)
         core = self.pool.split("static int\nprocess_blocks(", 1)[1].split(
             "static void\nupdate_pool_hr(", 1
         )[0]

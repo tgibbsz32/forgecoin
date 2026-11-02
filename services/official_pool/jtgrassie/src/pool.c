@@ -144,9 +144,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 enum block_status { BLOCK_LOCKED, BLOCK_UNLOCKED, BLOCK_ORPHANED };
-_Static_assert(BLOCK_LOCKED == FRG_SAVED_LOCKED &&
-               BLOCK_UNLOCKED == FRG_SAVED_UNLOCKED &&
-               BLOCK_ORPHANED == FRG_SAVED_ORPHANED,
+_Static_assert((int)BLOCK_LOCKED == (int)FRG_SAVED_LOCKED &&
+               (int)BLOCK_UNLOCKED == (int)FRG_SAVED_UNLOCKED &&
+               (int)BLOCK_ORPHANED == (int)FRG_SAVED_ORPHANED,
                "Native stored block statuses must match reconciliation policy");
 enum stratum_mode { MODE_NORMAL, MODE_SELF_SELECT };
 enum msgbin_type  { BIN_PING, BIN_CONNECT, BIN_DISCONNECT, BIN_SHARE,

@@ -39,8 +39,8 @@ At target 120 seconds, estimated equilibrium hashrate is difficulty / 120 H/s. T
 
 ## Implemented read-only observer (source-only prototype; not deployed)
 
-- [`tools/forgecoin_chain_risk.py`](../tools/forgecoin_chain_risk.py) compares two or more **trusted** node header ranges from *distinct* local RPC endpoints. Independent remote nodes must be accessed by separate reviewed SSH tunnels to localhost. It detects conflicting same-height hashes, observed local history changes, height rollback, stale tips, gaps and incomplete RPC responses. No RPC writes, private keys, network consensus modification, automatic pause or checkpoint.
-- [`tools/test_forgecoin_chain_risk.py`](../tools/test_forgecoin_chain_risk.py) contains offline regression tests. Nine local deterministic tests passed before the source was committed; this is **not** an integration test against frozen candidate daemons.
+- [`tools/forgecoin_chain_risk.py`](../tools/forgecoin_chain_risk.py) compares two or more **trusted** node header ranges from *distinct* local RPC endpoints. Independent remote nodes must be accessed by separate reviewed SSH tunnels to localhost. It checks the selected frozen genesis hash on each poll and detects conflicting same-height hashes, observed local history changes, height rollback, stale tips, gaps and incomplete RPC responses. No RPC writes, private keys, network consensus modification, automatic pause or checkpoint.
+- [`tools/test_forgecoin_chain_risk.py`](../tools/test_forgecoin_chain_risk.py) contains offline regression tests. Ten local deterministic tests passed before source finalization; this is **not** an integration test against frozen candidate daemons.
 - Example after approved test nodes and tunnels are available (ports are *local tunnel endpoints*, not a change in selected mainnet port contract):
 
 ```sh

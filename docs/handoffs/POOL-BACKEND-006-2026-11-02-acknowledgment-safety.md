@@ -25,4 +25,11 @@
 4. The SQLite settlement journal is **not connected** to authoritative pool LMDB, and wallet payouts remain deliberately compile-disabled.
 5. The independent source/ABI security review, actual native mature transfer and payout tests, and matching Windows/ARM64 release builds are still pending.
 
-Continue by evaluating the clean Linux GitHub Actions results, then reconcile the frozen consensus branch and independently test canonical block state transitions. Do not disable safeguards merely to obtain a green build.
+## Post-push independent GitHub Actions evidence
+
+At source commit [`098717a67ca9a66a6780390a1899db43b6b75048`](https://github.com/tgibbsz32/forgecoin/commit/098717a67ca9a66a6780390a1899db43b6b75048):
+
+- [Native Linux object compile run 41397595543](https://github.com/tgibbsz32/forgecoin/actions/runs/41397595543): **SUCCESS**. Verified native C/C++, bridge and web UI object compilation on clean Ubuntu x86_64, plus the explicit absence of a linked executable. This overcomes the Windows-created WSL worktree include-path limitation; it is **not a pool runtime or payout pass**.
+- [Official compatibility preflight run 41397595467](https://github.com/tgibbsz32/forgecoin/actions/runs/41397595467): **SUCCESS**. Ubuntu and Windows source tests passed; standalone monetary C tests and the native JSON-C block-submission acknowledgment fixture compiled and passed on Linux.
+
+Continue by reconciling the frozen consensus branch and independently testing canonical block state transitions. Do not disable safeguards merely to obtain a green build.

@@ -67,6 +67,6 @@ On-chain minted supply is **not circulating supply**. Proving the allocations re
 6. Validate the remaining seven earmarked mFRG treasury allocations and the independent non-mFRG **USDC/SOL proceeds** treasury.
 7. Obtain legal, accounting and smart-contract review before any mFRG-for-crypto exchange, staking or cross-chain program.
 
-See [current lifetime tokenomics](MFRG_LIFETIME_TOKENOMICS_500M.md), [nine-account treasury and vesting gates](MFRG_TREASURY_VESTING_GATES.md), [desktop non-transactional config](../apps/desktop/config/miniFORGE.mainnet.plan.json), and [Step 08 handoff](handoffs/MFRG_500M_STEP_08_OFFLINE_SALE_BACKEND_2026-10-28.md).
+See [current lifetime tokenomics](MFRG_50M_CITY_TOKENOMICS.md), [nine-account treasury and vesting gates](MFRG_TREASURY_VESTING_GATES.md), [desktop non-transactional config](../apps/desktop/config/miniFORGE.mainnet.plan.json), and [Step 08 handoff](handoffs/MFRG_500M_STEP_08_OFFLINE_SALE_BACKEND_2026-10-28.md).
 
 **Sources:** [Solana parsed RPC response structures](https://solana.com/docs/rpc/json-structures), [reading a mint account from the network](https://solana.com/docs/intro/quick-start/reading-from-network), and [mint/freeze authority revocation](https://solana.com/docs/tokens/basics/set-authority).

@@ -8,4 +8,4 @@ Discover Your City is a planned multiplayer real-world city/property simulation.
 
 **Native FRG** is a separate mined asset. The native 50M primary emission reference is not a hard cap under the documented tail reward. A future FRG↔mFRG 1:1-backed bridge is only a proposal, not an active conversion or guarantee.
 
-**Historical documentation notice:** Files named `MFRG_LIFETIME_TOKENOMICS_500M.md` and related 500M predeployment artifacts document superseded assumptions. Do not use them as executable minting or distribution instructions.
+**Historical documentation notice:** Files named `MFRG_50M_CITY_TOKENOMICS.md` and related 500M predeployment artifacts document superseded assumptions. Do not use them as executable minting or distribution instructions.

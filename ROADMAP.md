@@ -6,6 +6,7 @@
 - Resolve genesis-output unspendability, frozen consensus identity, RandomX/LWMA90 verification and cross-platform reproducible builds. Use P2P 39480, RPC 39481, ZMQ 39482.
 - Test Windows/Android wallet-miner, accepted native solo and pool shares/blocks, payouts, chain maturity, explorer and Oracle monitoring.
 - Native FRG: 50M primary-emission reference (not a hard cap), 0.20 FRG perpetual block tail; mining rewards accrue to miners. Official pool fee: planned 1% on eligible pooled rewards.
+- **Prelaunch 51% resilience (non-consensus):** diversify independent miners/pools/peers, compare independent chain observers, alert on reorgs and difficulty anomalies, preserve the existing deep-reorg pool payout quarantine and test full 61+ block reconciliation. Tari-compatible FRG-parent merge mining remains isolated feasibility research; FRG-as-Monero-auxiliary is a separately audited future hard-fork proposal. [Security decision and sources](docs/SECURITY_51_PERCENT_AND_TARI_MERGE_MINING_2026-11-02.md) · [Implementation issue](https://github.com/tgibbsz32/forgecoin/issues/194).
 - Gate: independently reviewed, repeatable release and end-to-end mining evidence before public launch.
 
 ## Phase 2 — Determine and publish governance procedures before mFRG

@@ -90,7 +90,7 @@ class NativeBackendPreflight(unittest.TestCase):
             reconciliation.count("Block status ledger write failed; aborting all credits"),
             4,
         )
-        self.assertEqual(reconciliation.count("mdb_txn_abort(txn);"), 7)
+        self.assertEqual(reconciliation.count("mdb_txn_abort(txn);"), 8)
         self.assertIn("return rc;", reconciliation)
         self.assertIn("aborting canonical reconciliation batch", reconciliation)
 
@@ -145,6 +145,51 @@ class NativeBackendPreflight(unittest.TestCase):
         self.assertIn("frg_reward_mature(saved_height, tip_height)", helper)
         self.assertIn("FRG_RECONCILE_ABORT_DEEP_REORG", helper)
         self.assertIn("FRG_RECONCILE_MARK_ORPHAN", helper)
+
+    def test_deep_reorg_quarantine_persists_and_blocks_restart_and_payments(self):
+        self.assertIn('#include "frg_accounting_quarantine.h"', self.pool)
+        self.assertIn("static bool frg_accounting_held;", self.pool)
+        initialize = self.pool.split("static int\ndatabase_init(", 1)[1].split(
+            "static void\ndatabase_close(", 1
+        )[0]
+        self.assertIn("frg_quarantine_read(audit, db_properties, &held, NULL)", initialize)
+        self.assertIn("return rc ? rc : EACCES;", initialize)
+        core = self.pool.split("static int\nprocess_blocks(", 1)[1].split(
+            "static void\nupdate_pool_hr(", 1
+        )[0]
+        self.assertIn("frg_quarantine_read(txn, db_properties, &held, NULL)", core)
+        self.assertIn("frg_accounting_held = true;", core)
+        self.assertIn("frg_quarantine_mark(", core)
+        self.assertIn("exit(EXIT_FAILURE);", core)
+        hold = core.split("const uint64_t conflict_height = sb->height;", 1)[1]
+        self.assertLess(hold.index("mdb_txn_abort(txn);"), hold.index(
+            "frg_quarantine_mark("
+        ))
+        send = self.pool.split("static int\nsend_payments(void)", 1)[1].split(
+            "static ", 1
+        )[0]
+        self.assertIn("frg_quarantine_read(hold_txn, db_properties, &held, NULL)", send)
+        self.assertIn("payouts blocked by durable reorganization quarantine", send)
+        header = (VENDOR / "src/frg_accounting_quarantine.h").read_text(encoding="utf-8")
+        self.assertIn("FRG_QUARANTINE_PROPERTY", header)
+        self.assertIn("MDB_BAD_VALSIZE", header)
+        self.assertIn("MDB_NOOVERWRITE", header)
+        self.assertNotIn("frg_quarantine_clear(", header)
+
+    def test_balance_add_must_abort_on_write_failure_or_uint64_overflow(self):
+        ledger = self.pool.split("static int\nbalance_add(", 1)[1].split(
+            "static int\npayout_block(", 1
+        )[0]
+        self.assertIn("frg_balance_credit_safe(", ledger)
+        self.assertIn("if (val.mv_size != sizeof(uint64_t))", ledger)
+        self.assertIn("return MDB_BAD_VALSIZE;", ledger)
+        self.assertIn("return EOVERFLOW;", ledger)
+        self.assertIn("Failed to create miner/fee balance", ledger)
+        self.assertIn("Failed to update miner/fee balance", ledger)
+        self.assertGreaterEqual(ledger.count("mdb_txn_abort(txn);"), 5)
+        self.assertNotIn("current_amount += amount;", ledger)
+        helper = (VENDOR / "src/frg_pplns_accounting.h").read_text(encoding="utf-8")
+        self.assertIn("increment > UINT64_MAX - existing", helper)
 
     def test_miner_balance_uses_8_decimal_integer_json(self):
         self.assertIn('mb / FRG_ATOMIC_UNITS, mb % FRG_ATOMIC_UNITS', self.webui)

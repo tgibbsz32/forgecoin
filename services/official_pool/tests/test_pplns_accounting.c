@@ -53,6 +53,18 @@ static void caps_and_bounds(void)
     assert(!frg_pplns_fully_accounted(1, 0));
 }
 
+static void balance_credit_overflow_rejects(void)
+{
+    uint64_t value = UINT64_C(123);
+    assert(frg_balance_credit_safe(0, 0, &value) && value == 0);
+    assert(frg_balance_credit_safe(UINT64_MAX-1, 1, &value)
+           && value == UINT64_MAX);
+    value = 123;
+    assert(!frg_balance_credit_safe(UINT64_MAX, 1, &value));
+    assert(value == 123);
+    assert(!frg_balance_credit_safe(1, 1, NULL));
+}
+
 static void invalid_inputs_fail_closed(void)
 {
     uint64_t out = UINT64_C(7);
@@ -73,6 +85,7 @@ int main(void)
     precise_rounding_and_fee();
     caps_and_bounds();
     invalid_inputs_fail_closed();
+    balance_credit_overflow_rejects();
     puts("PASS: capped native PPLNS share allocations; 1% ledger conservation; malformed inputs reject");
     return 0;
 }

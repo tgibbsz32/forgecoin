@@ -32,7 +32,7 @@ class PortListenerAudit(unittest.TestCase):
         self.assertTrue(all(e["severity"] == "warning" for e in output["alerts"]))
 
     def test_exposing_sensitive_services_is_an_error(self):
-        for port in (39481, 39482, 39483, 39484):
+        for port in (39481, 39482, 39483, 39484, 4242, 4243, 19800):
             with self.subTest(port=port):
                 output = audit_host_ports.inspect(sample(f"0.0.0.0:{port}"))
                 self.assertTrue(output["fail"])

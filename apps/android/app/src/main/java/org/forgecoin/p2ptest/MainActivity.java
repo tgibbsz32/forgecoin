@@ -73,7 +73,7 @@ public class MainActivity extends Activity {
         explore.addView(label("Read-only web tools. Statistics must be treated as unavailable until the production network and pool are validated.",13,MUTED));
         link("Pool dashboard", "https://tgibbsz32.github.io/forgecoin/pool.html",explore);
         link("Pool observer / statistics", "https://tgibbsz32.github.io/forgecoin/pool-observer.html",explore);
-        link("Block explorer (staging)", "https://150.136.209.227/",explore);
+        link("FRG mainnet status (explorer not launched)", "https://tgibbsz32.github.io/forgecoin/current-mainnet.html",explore);
         LinearLayout partners=panel(root);
         partners.addView(label("PARTNER OFFERS",17,CYAN));
         partners.addView(label("Advertisement: ForgeCoin may earn a commission from purchases made through partner links. No offers are active unless listed on the website.",12,MUTED));

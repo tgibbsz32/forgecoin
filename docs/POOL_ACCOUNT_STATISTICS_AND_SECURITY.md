@@ -1,6 +1,6 @@
-# ForgeCoin mining pool statistics, worker accounts and payout controls
+# ForgeCoin mining pool statistics and public address lookup
 
-**Engineering requirements, not currently running production services.** The pool and Pool Observer pages provide detailed metric inventory and offline mining calculators. Live pool readings, login, registration, pool wallet balance adjustments, transaction signing and payout changes are disabled until the FRG-native backend is deployed, integrated and audited.
+**Engineering requirements, not currently running production services.** The pool and Pool Observer pages provide detailed metric inventory and offline mining calculators. Live pool readings, payout changes, transaction signing and account administration are disabled until the FRG-native backend is deployed, integrated and audited.
 
 ## Observability coverage
 
@@ -12,19 +12,17 @@
 
 The static pages currently contain **57 detailed public metric placeholders and 22 additional observer metric placeholders** plus existing overview and calculator fields. Missing metrics display “Unavailable,” never zero or fabricated readings. Only a reviewed read-only data provider may assert the FRG mainnet identity and freshness. The public JS contract is frg-pool-stats-v1; it requires HTTPS, same-origin endpoint, exact chain identity, explicit ready/source fields and observedAt within 120 seconds. Real backend output must follow that contract.
 
-## Account design: address + worker aliases + password + wallet proof
+## Public-address mining statistics — no account required
 
-The user wants FRG-native addresses, workers and passwords for private dashboards and payout changes. These are valid requirements, but a **public address is not proof of ownership**. Do not enable unauthenticated address-based private data or destination changes.
+**Product decision:** Miners and visitors may look up a miner's read-only pool statistics simply by entering the public native FRG payout address used for mining. No registration, login, password, wallet signature, membership status or identity verification is required to **view** these records. The public address is a lookup key, not authentication or proof of wallet ownership.
 
-1. **Enroll a payout address:** server issues a cryptographically random, one-time, short-lived challenge bound to the exact FRG address, current hostname, nonce and intent. Owner signs it through a reviewed native FRG wallet signing mechanism; verifier checks using native signature verification (not Solana or Bitcoin signature formats). Fail closed until live FRG-compatible wallet-signing verification is tested. Do not collect recovery seeds or wallet passwords on the website.
-2. **Password:** owner sets a *separate pool account password* hashed with Argon2id or reviewed equivalent, with per-account salt, policy and rate limiting. No plaintext storage or credential logging. Require second-factor protection for high-impact payout changes where possible.
-3. **Worker access:** register unique aliases and optional per-worker credentials/tokens; hash or safely derive pool authentication material, scope workers to one verified miner account and enforce connection quotas. Stratum accepted-share evidence, not owner self-report, determines hashrate and rewards.
-4. **Session auth:** HTTPS-only Secure, HttpOnly and SameSite cookies; short session age; CSRF defenses, rotation, lockout and replay protections; no cross-origin private responses; account enumeration controls and robust failure statuses.
-5. **My account dashboard:** list and detail worker names, 5m/1h/24h/7d hashrate windows, accepted/rejected/stale shares, recent job events, last-seen, downtime, share reward allocation, immature/unpaid/paid FRG, threshold, payment schedules, transaction hashes and confirmations, fees and adjustments/reorgs. Private history is never available by entering someone else's public payout address.
-6. **Change payout threshold:** CSRF-protected authenticated request with enforced numeric min/max, recomputation of valid maturity/dust, cooldown and append-only audit trail. Changes must not mutate previously accrued round weights.
-7. **Change payout destination:** require recent authentication, a challenge signed from the *current* payout wallet **and** a new-address control proof, challenge uniqueness, notifications when feasible, a hold period, anti-race transaction controls, rejection of in-flight payout mutation, audited approval, and explicit user review before activation. Address access alone is insufficient.
-8. **Account recovery:** fresh native-wallet challenge plus cooldown and notification; no password reset just because a request names an address or worker. Operator administrative overrides require multi-approver logging.
-9. **Payout signing:** isolate hot wallet daemon RPC from the frontend and public API. Treat private pool account password solely as account authentication, not wallet spending authorization. Native wallet signer must enforce caps and idempotent queued instructions, sufficient coin maturity, paid/unpaid reconciliation, reorg rollback and disaster recovery. Pool admin may freeze outgoing signing safely without changing shares.
+The read-only address lookup should show, where the verified backend supports it: 5m/1h/24h hashrate, workers and last-seen status, accepted/rejected/stale shares, round contribution, immature/unpaid/paid FRG, confirmed payout transactions, payout history and next estimated payout. Mark unsupported or unavailable values clearly; never fabricate balances or shares.
+
+**Privacy:** Anyone who knows an address can see the statistics published for that address. Do not publish IP addresses, worker passwords, session tokens, private keys, wallet seeds, view keys or internal operator records. Worker aliases may reveal information, so consider masking aliases or allowing privacy-preserving worker labels. Rate-limit queries and avoid unnecessary logging of searched addresses.
+
+**Security boundary:** Public lookup must be read-only and must not permit changing payout destinations, payout thresholds or account configuration. Any future sensitive modification requires separate wallet-control verification and a reviewed authorization workflow. The user does not need such a workflow merely to view mining statistics.
+
+**Deployment gate:** The current public website and preview bridge do not expose a verified native FRG per-address statistics API. Implement and test the pool-side address-indexed read-only API, FRG amount conversion, payout reconciliation, data freshness, CORS/HTTPS, input validation and rate limiting before enabling live results. Never proxy unaudited `miner_balance` values or imply that a public address can authorize payout changes.
 
 ## Operational release gates
 

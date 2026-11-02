@@ -2,6 +2,8 @@
 
 **Updated November 1, 2026. Order: native FRG → governance procedures → optional mFRG → future ecosystem and privacy upgrades.** Proposed features and dates are not guaranteed. Native mainnet release and mFRG distribution remain unauthorized until required gates are met.
 
+[Current project status](docs/project-status.html) · [51% security and merged-mining research](docs/SECURITY_51_PERCENT_AND_TARI_MERGE_MINING_2026-11-02.md).
+
 ## Phase 1 — Verify native FRG mainnet and mining
 - Resolve genesis-output unspendability, frozen consensus identity, RandomX/LWMA90 verification and cross-platform reproducible builds. Use P2P 39480, RPC 39481, ZMQ 39482.
 - Test Windows/Android wallet-miner, accepted native solo and pool shares/blocks, payouts, chain maturity, explorer and Oracle monitoring.

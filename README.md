@@ -1,5 +1,8 @@
 # ForgeCoin
 
+> **Current mFRG policy (November 2026):** 50,000,000 total mFRG: 5M presale, 5M liquidity, 40M combined ecosystem/staking/collateral reserve. Proposed flat presale $0.12/mFRG; maximum $600,000 gross if all 5M sell. Proceeds: 90% project, 10% founders (half immediate, half over six months). No founder token allocation. No sale or mint authorized. [Current policy](docs/MFRG_50M_CITY_TOKENOMICS.md) · [Discover Your City](docs/discover-your-city.html). Historical 500M figures below are superseded and must not be used for deployment.
+
+
 > **Adopted mFRG pilot sale planning figures (October 28, 2026):** 5M mFRG in five equal rounds at $0.08/$0.10/$0.12/$0.14/$0.16, yielding a **maximum $600,000 gross** if fully subscribed. Intended 80% project / 20% founder proceeds allocation ($120,000 founder total, half immediately and half over six months). These figures are **not an active offering, promised proceeds or permission to receive funds**. See [fixed pilot pricing and all nine token allocations](PILOT_PRICE_AND_USE_OF_PROCEEDS.md).
 
 
@@ -13,7 +16,7 @@ ForgeCoin is an experimental, privacy-preserving, proof-of-work cryptocurrency d
 
 ForgeCoin’s selected October 26 mainnet is genesis-frozen and unlaunched. The old chains are retired. Main-branch runtime code still reflects the legacy implementation; new-mainnet source remains under review in draft PR #111.
 
-## Current assets and mFRG economic policy (October 28, 2026)
+## Historical assets and mFRG economic policy (October 28, 2026 — superseded)
 
 **ForgeCoin (FRG)** is the separate native RandomX-mined privacy chain. Its **50,000,000 FRG primary-emission reference is not a hard cap**; the documented consensus has a 0.20 FRG per 120-second block tail reward. Native mainnet activation is still gated by public-release checks.
 

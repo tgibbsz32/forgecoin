@@ -54,6 +54,11 @@ jobs:
           gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
             -o /tmp/frg-maturity-test services/official_pool/tests/test_reward_maturity.c
           /tmp/frg-maturity-test
+      - name: Compile and test capped PPLNS allocation and 1% fee conservation
+        run: |
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
+            -o /tmp/frg-pplns-test services/official_pool/tests/test_pplns_accounting.c -lm
+          /tmp/frg-pplns-test
       - name: Install JSON-C headers for fail-closed block-acknowledgment fixture
         run: |
           sudo apt-get update -qq

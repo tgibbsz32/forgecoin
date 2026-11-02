@@ -50,6 +50,12 @@ jobs:
           gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
             -o /tmp/frg-maturity-test-arm64 services/official_pool/tests/test_reward_maturity.c
           /tmp/frg-maturity-test-arm64
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
+            -o /tmp/frg-pplns-test-arm64 services/official_pool/tests/test_pplns_accounting.c -lm
+          /tmp/frg-pplns-test-arm64
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
+            -o /tmp/frg-lmdb-ledger-test-arm64 services/official_pool/tests/test_lmdb_ledger_rollback.c -llmdb
+          /tmp/frg-lmdb-ledger-test-arm64
           bash -n services/official_pool/tools/build-native-static.sh
           make -B -n -s -C services/official_pool/jtgrassie compile-check \
             TYPE=release ARCH=aarch64 FORGECOIN_ROOT="$PWD" \

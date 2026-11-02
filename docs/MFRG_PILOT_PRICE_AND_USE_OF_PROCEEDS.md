@@ -1,3 +1,9 @@
+# HISTORICAL DOCUMENT — SUPERSEDED; NOT CURRENT TOKENOMICS
+
+**Do not use these 500M supply figures, tiered prices, founder token allocations or 80/20 proceeds for any sale, mint, checkout, treasury transaction or marketing.** The adopted planning revision is [50M mFRG and CITY utility](MFRG_50M_CITY_TOKENOMICS.md): 5M presale at proposed $0.12 flat price, 5M liquidity, 40M combined ecosystem reserve; proposed gross proceeds 90% project / 10% founders (half immediately and half over six months). The following is preserved solely as historical decision and engineering context.
+
+---
+
 # miniFORGE — Adopted Pilot Sale Pricing and Allocation Purposes
 
 **Policy decision: 2026-10-28.** The project's intended price ladder is fixed for *planning and implementation specifications*, subject to lawful offering review, deployment acceptance and final owner authorization. Fixed policy figures do **not** guarantee that tokens sell, obligate buyers, establish fair value, or create a currently open offering.

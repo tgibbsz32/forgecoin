@@ -12,7 +12,7 @@
 
 The **pilot cap stays at 5M**, even though the reserve allocated to fundraising over years 1–10 is 50M. Increasing it requires a separately approved offering, contract and audit; do not change the old cap to 50M by global search and replace.
 
-The nine-category allocation and 30-year budgets are in [canonical tokenomics](../../docs/MFRG_LIFETIME_TOKENOMICS_500M.md). This includes **30M (6%) founder-beneficial mFRG**: 15M immediately liquid and 15M labelled “team” yet beneficially owned by the same founder, unlocking 625k monthly during months 13–36. The remaining 450M non-fundraising supply is not sale inventory.
+The nine-category allocation and 30-year budgets are in [canonical tokenomics](../../docs/MFRG_50M_CITY_TOKENOMICS.md). This includes **30M (6%) founder-beneficial mFRG**: 15M immediately liquid and 15M labelled “team” yet beneficially owned by the same founder, unlocking 625k monthly during months 13–36. The remaining 450M non-fundraising supply is not sale inventory.
 
 ## Source layout and safety
 

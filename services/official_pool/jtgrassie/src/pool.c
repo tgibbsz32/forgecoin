@@ -2018,6 +2018,213 @@ rpc_on_block_headers_range(const char* data, rpc_callback_t *callback)
     json_object_put(root);
 }
 
+/* The native pool ledger is a DUPFIXED height->block_t LMDB database.
+ * Scan all credited records, including duplicate heights; never silently
+ * skip corrupt or unknown entries. The scan cursor is intentionally volatile:
+ * after any restart no payout can proceed until a fresh complete pass.
+ */
+typedef struct frg_history_request_t
+{
+    block_t stored;
+    uint64_t sequence;
+    uint64_t index;
+    uint64_t total;
+    uint64_t ledger_epoch;
+} frg_history_request_t;
+
+static int
+frg_history_select(block_t *selected, bool *has_selection, uint64_t *total)
+{
+    if (!selected || !has_selection || !total) return EINVAL;
+    *has_selection = false;
+    *total = 0;
+    MDB_txn *txn = NULL;
+    MDB_cursor *cursor = NULL;
+    int rc = pdb_txn_begin(env, NULL, MDB_RDONLY, &txn);
+    if (rc) return rc;
+    rc = mdb_cursor_open(txn, db_blocks, &cursor);
+    if (rc) { mdb_txn_abort(txn); return rc; }
+    MDB_cursor_op op = MDB_FIRST;
+    MDB_val key = {0, NULL}, value = {0, NULL};
+    while ((rc = mdb_cursor_get(cursor, &key, &value, op)) == 0)
+    {
+        op = MDB_NEXT;
+        if (key.mv_size != sizeof(uint64_t) ||
+            value.mv_size != sizeof(block_t) || !key.mv_data || !value.mv_data)
+        {
+            rc = EPROTO;
+            break;
+        }
+        block_t item = {0};
+        uint64_t key_height = 0;
+        memcpy(&item, value.mv_data, sizeof(item));
+        memcpy(&key_height, key.mv_data, sizeof(key_height));
+        if (item.height != key_height || item.status > BLOCK_ORPHANED ||
+            !frg_fixed_hash64(item.hash) || !frg_fixed_hash64(item.prev_hash))
+        {
+            rc = EPROTO;
+            break;
+        }
+        if (item.status != BLOCK_UNLOCKED) continue;
+        if (!item.difficulty || !item.reward || *total == UINT64_MAX)
+        {
+            rc = EPROTO;
+            break;
+        }
+        if (*total == frg_history_cursor)
+        {
+            *selected = item;
+            *has_selection = true;
+        }
+        ++*total;
+    }
+    mdb_cursor_close(cursor);
+    mdb_txn_abort(txn);
+    return rc == MDB_NOTFOUND ? 0 : rc;
+}
+
+static void
+frg_history_unverified(const char *why)
+{
+    log_error("FRG complete credited-block history audit unverified: %s; no payouts", why);
+    frg_history_sweep_verified = false;
+    frg_history_cursor = 0;
+    frg_history_last_count = 0;
+}
+
+static void
+rpc_on_frq_historical_credit(const char *data, rpc_callback_t *callback)
+{
+    const frg_history_request_t *expected =
+        callback ? (const frg_history_request_t *)callback->data : NULL;
+    if (!expected || !frg_history_pending ||
+        expected->sequence != frg_history_request_sequence)
+        return; /* stale response after timer timeout: never mark verified */
+    frg_history_pending = false;
+    json_object *root = data ? json_tokener_parse(data) : NULL;
+    json_object *result = NULL, *status = NULL, *header = NULL;
+    enum frg_history_verdict verdict = FRG_HISTORY_UNVERIFIED;
+    if (root && json_object_is_type(root, json_type_object) &&
+        !json_object_object_get_ex(root, "error", NULL) &&
+        frg_json_member(root, "result", json_type_object, &result) &&
+        frg_json_member(result, "status", json_type_string, &status) &&
+        !strcmp(json_object_get_string(status), "OK") &&
+        frg_json_member(result, "block_header", json_type_object, &header))
+    {
+        verdict = frg_history_compare(header, expected->stored.height,
+                                      expected->stored.hash, expected->stored.prev_hash,
+                                      expected->stored.difficulty, expected->stored.reward);
+    }
+    if (root) json_object_put(root);
+    if (verdict == FRG_HISTORY_CONFLICT)
+    {
+        /* Existing credit and/or a prior payout can no longer be trusted.
+         * The quarantine must survive restart; never clear automatically.
+         */
+        frg_accounting_held = true;
+        frg_history_sweep_verified = false;
+        const int rc = frg_quarantine_mark(env, db_properties, expected->stored.height);
+        if (rc)
+        {
+            log_fatal("Cannot persist credited-history reorg quarantine: %s", mdb_strerror(rc));
+            exit(EXIT_FAILURE);
+        }
+        log_error("PERSISTENT FRG POOL QUARANTINE: previously credited height %"PRIu64
+                  " disagrees with canonical RPC response", expected->stored.height);
+        return;
+    }
+    if (verdict != FRG_HISTORY_MATCH)
+    {
+        frg_history_unverified("invalid/unavailable historical block RPC");
+        return;
+    }
+    if (expected->ledger_epoch != frg_history_epoch ||
+        expected->total != frg_history_last_count ||
+        expected->index != frg_history_cursor)
+    {
+        frg_history_unverified("ledger changed while history audit was in flight");
+        return;
+    }
+    ++frg_history_cursor;
+    if (frg_history_cursor == expected->total)
+    {
+        frg_history_sweep_verified = true;
+        frg_history_cursor = 0; /* schedule another full retrospective cycle */
+        log_info("Full FRG credited-block history audit passed: %"PRIu64" entries",
+                 expected->total);
+    }
+}
+
+static void
+frg_history_poll(void)
+{
+    if (!abattoir || frg_accounting_held) return;
+    if (frg_history_pending)
+    {
+        const time_t now = time(NULL);
+        if (now < frg_history_requested_at ||
+            difftime(now, frg_history_requested_at) <= (double)config.rpc_timeout + 5)
+            return;
+        frg_history_pending = false;
+        ++frg_history_request_sequence; /* reject any late callback */
+        frg_history_unverified("historical RPC timed out");
+    }
+    block_t selected = {0};
+    bool found = false;
+    uint64_t total = 0;
+    const int rc = frg_history_select(&selected, &found, &total);
+    if (rc)
+    {
+        frg_history_unverified("LMDB credited-history selection failed");
+        return;
+    }
+    if (total != frg_history_last_count)
+    {
+        frg_history_last_count = total;
+        frg_history_cursor = 0;
+        frg_history_sweep_verified = false;
+        /* A newly credited record may precede the last checked candidate;
+         * restart the pass rather than count it as already inspected.
+         */
+        return;
+    }
+    if (total == 0)
+    {
+        frg_history_sweep_verified = true;
+        return; /* no credited funds yet */
+    }
+    if (!found)
+    {
+        frg_history_unverified("credited-history index out of range");
+        return;
+    }
+    frg_history_request_t *expected = calloc(1, sizeof(*expected));
+    if (!expected)
+    {
+        frg_history_unverified("no memory for audit callback");
+        return;
+    }
+    expected->stored = selected;
+    expected->index = frg_history_cursor;
+    expected->total = total;
+    expected->ledger_epoch = frg_history_epoch;
+    expected->sequence = ++frg_history_request_sequence;
+    char body[RPC_BODY_MAX] = {0};
+    rpc_get_request_body(body, "get_block_header_by_height", "sd",
+                         "height", selected.height);
+    rpc_callback_t *callback = rpc_callback_new(
+        rpc_on_frq_historical_credit, expected, 0);
+    if (!callback)
+    {
+        free(expected);
+        frg_history_unverified("no memory for audit RPC");
+        return;
+    }
+    frg_history_pending = true;
+    frg_history_requested_at = time(NULL);
+    rpc_request(pool_base, body, callback);
+}
+
 static void
 rpc_on_block_template(const char* data, rpc_callback_t *callback)
 {

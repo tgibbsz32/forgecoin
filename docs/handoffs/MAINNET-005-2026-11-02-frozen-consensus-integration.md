@@ -41,3 +41,17 @@ The original PR #185 native x86_64 daemon compile/link CI passed (run [414008080
 The integration now includes `tools/smoke_frozen_prelaunch_daemon.py` and a post-build runner step. The script refuses any manifest that enables mainnet release, pool payouts, public Stratum, or prelaunch mining. It launches the linked `forged` on fresh disposable data, with offline mode, no ZMQ, loopback-only P2P/RPC, randomly chosen localhost ports and bounded process lifetime. It reads `get_info` and genesis `get_block_header_by_height` and asserts frozen hash/nonce/height, calls `getblocktemplate` and `start_mining` without expecting success, verifies the chain still has only genesis, and always terminates the process.
 
 **Evidence is pending for the new runtime smoke until its revised CI run completes.** RPC failure alone is not proof of hostile, fully valid submitted blocks being rejected, and this smoke does not test alternative branches, real mining, coinbase spend exclusions, persistence or payout maturity. Those remain mandatory integration gates.
+
+## Historical block replay fixture
+
+The QA workstation retained a pre-guard *isolated* MAINNET-identity chain with an accepted height-1 block, and the original Windows daemon binary previously matched SHA-256 `3efaf014c7fdfcea167630f1884abee2defd40f28f1e725b6c0a8fcede5b5c37`. On November 2, a disposable LMDB **copy** was opened through localhost RPC using that prior binary; `get_block` exported the serialized public block. The untouched original QA database was not modified for export and no wallet file, seed or private key was included. The block was independently checked via height/hash/parent/reward/difficulty header queries.
+
+- Fixture: `tests/mainnet/fixtures/isolated_20261026_block1.json`
+- Previously accepted block hash: `9755a4f129f97b7865e5897e79abf5fea89dec2ba776d53fb9d01942b9f7ba9e`
+- Genesis parent: `4bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c`
+- Recorded difficulty: `500000`; reward: `2384185222` atomic FRG; serialized length: 124 bytes
+- Serialized block SHA-256: `9031680cf33d31fa484033ee1f0a23ceaab390e5f5004b0149a263b37efcc4d8`
+
+The isolated daemon smoke test now submits this **historically accepted, correctly formatted block** to a fresh prelaunch-locked genesis-only daemon. The expected result is the RPC error `Block not accepted` and a chain remaining at height 1; an error claiming the payload is malformed does **not** satisfy the gate. This is a meaningful main-chain rejection check but does not test alternative forks, real coinbase spending rings, reorgs, payout maturity, or public synchronization. The revised CI job must pass before claiming this runtime behavior is verified.
+
+**Source of truth:** draft PR #185, branch `integration/frozen-mainnet-prelaunch-20261102`. Merge into main only after the full runtime and consensus acceptance requirements are met; never bypass the lock to make the public chain accept this old test block.

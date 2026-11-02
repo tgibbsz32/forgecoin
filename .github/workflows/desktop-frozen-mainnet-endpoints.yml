@@ -3,11 +3,14 @@ name: ForgeCoin desktop frozen mainnet endpoint safety
 on:
   push:
     branches:
+      - main
       - 'integration/desktop-retired-peer-ports-*'
     paths:
       - 'apps/desktop/**'
       - 'apps/desktop-tauri/**'
       - 'tests/desktop/**'
+      - 'docs/NETWORK_PORTS.md'
+      - 'docs/CURRENT_MAINNET.md'
       - '.github/workflows/desktop-frozen-mainnet-endpoints.yml'
   pull_request:
     paths:

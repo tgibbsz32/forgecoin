@@ -68,3 +68,8 @@ jobs:
           gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
             -o /tmp/frg-submit-receipt-test services/official_pool/tests/test_block_submit_receipt.c -ljson-c
           /tmp/frg-submit-receipt-test
+      - name: Verify native canonical header range rejects partial and disconnected responses
+        run: |
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
+            -o /tmp/frg-canonical-headers services/official_pool/tests/test_canonical_headers.c -ljson-c
+          /tmp/frg-canonical-headers

@@ -93,6 +93,32 @@ class NativeBackendPreflight(unittest.TestCase):
         self.assertEqual(reconciliation.count("mdb_txn_abort(txn);"), 5)
         self.assertIn("return rc;", reconciliation)
 
+    def test_canonical_header_range_requires_complete_anchored_response(self):
+        self.assertIn('#include "frg_canonical_headers.h"', self.pool)
+        callback = self.pool.split(
+            "rpc_on_block_headers_range(const char* data, rpc_callback_t *callback)", 1
+        )[1].split("static void\nrpc_on_block_template(", 1)[0]
+        self.assertIn("frg_canonical_headers_valid(headers, expected->start", callback)
+        self.assertIn("Incomplete, inconsistent or stale canonical header range", callback)
+        self.assertIn("block_t verified[BLOCK_HEADERS_RANGE] = {0};", callback)
+        self.assertIn("process_blocks(verified, headers_len)", callback)
+        self.assertIn("#if BLOCK_HEADERS_RANGE != FRG_CANONICAL_HEADERS_MAX", self.pool)
+        self.assertIn("if (process_blocks(verified, headers_len))", callback)
+        self.assertNotIn("process_blocks(block_headers_range, BLOCK_HEADERS_RANGE)", callback)
+        self.assertNotIn("block_headers_range[i]", callback)
+        self.assertIn("if (!expected ||", callback)
+        schedule = self.pool.split("frg_mature_header_window(", 1)[1].split(
+            "json_object_put(root);", 1
+        )[0]
+        self.assertIn("expected->start = start", schedule)
+        self.assertIn("expected->end = end", schedule)
+        self.assertIn("rpc_on_block_headers_range, expected, 0", schedule)
+        header = (VENDOR / "src/frg_canonical_headers.h").read_text(encoding="utf-8")
+        self.assertIn("FRG_CANONICAL_HEADERS_MAX 10", header)
+        self.assertIn("json_object_array_length(", header)
+        self.assertIn("strcmp(parent, prior_hash)", header)
+        self.assertIn("requested_start + (uint64_t)i", header)
+
     def test_miner_balance_uses_8_decimal_integer_json(self):
         self.assertIn('mb / FRG_ATOMIC_UNITS, mb % FRG_ATOMIC_UNITS', self.webui)
         self.assertIn('mb = balance;', self.webui)

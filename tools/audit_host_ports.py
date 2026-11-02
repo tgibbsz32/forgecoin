@@ -19,6 +19,9 @@ SENSITIVE = {
     39482: "ZMQ RPC",
     39483: "XMRig local statistics",
     39484: "Windows wallet RPC",
+    4242: "official pool prelaunch Stratum",
+    4243: "official pool prelaunch web UI",
+    19800: "explorer Gunicorn backend",
 }
 RETIRED = {19480: "retired P2P", 19481: "retired daemon RPC", 19482: "retired ZMQ RPC"}
 P2P = 39480

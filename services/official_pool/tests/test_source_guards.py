@@ -30,7 +30,7 @@ class NativeBackendPreflight(unittest.TestCase):
         self.assertIn("FRG_ATOMIC_UNITS UINT64_C(100000000)", self.currency)
         self.assertIn("FRG_COIN_DECIMALS 8", self.currency)
         self.assertRegex(self.chain, r"CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX\s*=\s*90;")
-        self.assertIn("#define MAINNET_ADDRESS_PREFIX 90", self.pool)
+        self.assertIn("#define MAINNET_ADDRESS_PREFIX 190", self.pool)
         self.assertIn("#define BLOCK_TIME 120", self.pool)
 
     def test_backend_payout_threshold_never_uses_float_units(self):
@@ -52,7 +52,7 @@ class NativeBackendPreflight(unittest.TestCase):
             "pool-listen": "127.0.0.1",
             "webui-listen": "127.0.0.1",
             "rpc-host": "127.0.0.1",
-            "rpc-port": "19481",
+            "rpc-port": "39481",
             "wallet-rpc-host": "127.0.0.1",
             "wallet-rpc-port": "0",
             "disable-payouts": "1",
@@ -73,6 +73,25 @@ class NativeBackendPreflight(unittest.TestCase):
         self.assertIn('"tx_hash_list"', self.pool)
         self.assertIn("No transaction-hash evidence in wallet response", self.pool)
         self.assertIn("json_object_array_length(hashes) == 0", self.pool)
+
+    def test_frozen_mainnet_runtime_identity_gate(self):
+        xmr = (VENDOR / "src/xmr.cpp").read_text(encoding="utf-8")
+        self.assertIn("frg_matches_frozen_mainnet", xmr)
+        self.assertIn("!frg_matches_frozen_mainnet()", self.pool)
+        self.assertIn("config.rpc_port != 39481", self.pool)
+        for value in ("== 190", "== 191", "== 192", "== 39480", "== 39481", "== 39482"):
+            self.assertIn(value, xmr)
+        # Old consensus is NOT secretly treated as the new chain.
+        self.assertRegex(self.chain, r"CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX\s*=\s*90;")
+
+    def test_fail_closed_share_block_and_wallet_paths(self):
+        self.assertIn("nonce must be exactly 8 hex characters", self.pool)
+        self.assertIn("Rejected low-difficulty shares must not inflate", self.pool)
+        self.assertIn("Block submission unconfirmed", self.pool)
+        self.assertIn("Malformed wallet payout response; balances unchanged", self.pool)
+        self.assertIn("Wallet payout failed or ambiguous; no balance debits", self.pool)
+        self.assertIn('"tx_hash_list"', self.pool)
+        self.assertIn("No transaction-hash evidence in wallet response", self.pool)
 
     def test_runtime_rejects_unsafe_user_configs(self):
         self.assertIn("#ifndef FRG_REVIEWED_PUBLIC_POOL", self.pool)

@@ -41,6 +41,31 @@ class NativeBackendPreflight(unittest.TestCase):
         self.assertIn("return amount / UINT64_C(100);", self.currency)
         self.assertNotIn("amount * config.pool_fee", self.pool)
 
+    def test_complete_credited_history_audit_is_fail_closed(self):
+        """Historical validation supplements, not replaces, recent 10-header maturity checks."""
+        self.assertIn('#include "frg_credited_history_audit.h"', self.pool)
+        self.assertIn('#include "frg_credited_ledger_scan.h"', self.pool)
+        self.assertIn("frg_history_scan_credited(", self.pool)
+        self.assertIn("get_block_header_by_height", self.pool)
+        self.assertIn("rpc_on_frq_historical_credit", self.pool)
+        self.assertIn("FRG_HISTORY_CONFLICT", self.pool)
+        self.assertIn("frg_quarantine_mark(env, db_properties, expected->stored.height)", self.pool)
+        self.assertIn("frg_history_sweep_verified = false;", self.pool)
+        self.assertIn("frg_history_epoch++;", self.pool)
+        self.assertIn("!frg_history_sweep_verified || frg_history_pending", self.pool)
+        self.assertIn("timer_on_history", self.pool)
+        self.assertIn("frg_history_requested_at", self.pool)
+        self.assertIn("frg_history_request_sequence", self.pool)
+        self.assertIn("frg_history_unverified", self.pool)
+        self.assertIn("#ifndef FRG_TESTED_WALLET_PAYOUTS", self.pool)
+        self.assertIn("#ifndef FRG_REVIEWED_PUBLIC_POOL", self.pool)
+        scan = (VENDOR / "src/frg_credited_ledger_scan.h").read_text(encoding="utf-8")
+        self.assertIn("MDB_NEXT", scan)  # includes DUPFIXED blocks sharing a height
+        self.assertIn("value.mv_size != sizeof(frg_history_saved_t)", scan)
+        self.assertIn("item.height != key_height", scan)
+        self.assertIn("item.status != FRG_HISTORY_UNLOCKED", scan)
+        self.assertIn("return rc == MDB_NOTFOUND ? 0 : rc;", scan)
+
     def test_native_maturity_policy_is_wired_at_both_unlock_paths(self):
         self.assertIn('#include "frg_reward_maturity.h"', self.pool)
         self.assertIn("frg_reward_mature(block->height, height)", self.pool)

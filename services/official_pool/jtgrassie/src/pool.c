@@ -2106,7 +2106,8 @@ rpc_on_frq_historical_credit(const char *data, rpc_callback_t *callback)
     json_object *rpc_error = NULL;
     enum frg_history_verdict verdict = FRG_HISTORY_UNVERIFIED;
     if (root && json_object_is_type(root, json_type_object) &&
-        !json_object_object_get_ex(root, "error", &rpc_error) &&
+        (!json_object_object_get_ex(root, "error", &rpc_error) ||
+         (rpc_error && json_object_is_type(rpc_error, json_type_null))) &&
         frg_json_member(root, "result", json_type_object, &result) &&
         frg_json_member(result, "status", json_type_string, &status) &&
         !strcmp(json_object_get_string(status), "OK") &&

@@ -67,6 +67,13 @@ class ChainRiskTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 m.parse_header(bad)
 
+    def test_reject_wrong_genesis(self):
+        from unittest.mock import patch
+        bad_genesis = header(0)
+        with patch.object(m, 'rpc', return_value={'block_header': bad_genesis}):
+            with self.assertRaisesRegex(ValueError, 'frozen ForgeCoin genesis'):
+                m.take_snapshot('http://localhost:39481/json_rpc')
+
     def test_failed_rpc_not_persisted(self):
         from unittest.mock import patch
         from tempfile import TemporaryDirectory

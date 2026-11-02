@@ -57,6 +57,9 @@ jobs:
             -o /tmp/frg-lmdb-ledger-test-arm64 services/official_pool/tests/test_lmdb_ledger_rollback.c -llmdb
           /tmp/frg-lmdb-ledger-test-arm64
           gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
+            -o /tmp/frg-reorg-lmdb-test-arm64 services/official_pool/tests/test_reorg_reconciliation_lmdb.c -llmdb
+          /tmp/frg-reorg-lmdb-test-arm64
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
             -o /tmp/frg-canonical-headers-arm64 services/official_pool/tests/test_canonical_headers.c -ljson-c
           /tmp/frg-canonical-headers-arm64
           bash -n services/official_pool/tools/build-native-static.sh

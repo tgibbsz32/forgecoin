@@ -70,6 +70,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frg_reward_maturity.h"
 #include "frg_pplns_accounting.h"
 #include "frg_canonical_headers.h"
+#include "frg_reconcile_policy.h"
 #include "forkoff.h"
 #include "growbag.h"
 #include "uthash.h"
@@ -143,6 +144,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 enum block_status { BLOCK_LOCKED, BLOCK_UNLOCKED, BLOCK_ORPHANED };
+_Static_assert((int)BLOCK_LOCKED == (int)FRG_SAVED_LOCKED &&
+               (int)BLOCK_UNLOCKED == (int)FRG_SAVED_UNLOCKED &&
+               (int)BLOCK_ORPHANED == (int)FRG_SAVED_ORPHANED,
+               "Native stored block statuses must match reconciliation policy");
 enum stratum_mode { MODE_NORMAL, MODE_SELF_SELECT };
 enum msgbin_type  { BIN_PING, BIN_CONNECT, BIN_DISCONNECT, BIN_SHARE,
                     BIN_BLOCK, BIN_STATS, BIN_BALANCE };
@@ -297,6 +302,7 @@ typedef struct frg_headers_request_t
 {
     uint64_t start;
     uint64_t end;
+    uint64_t tip_height;
 } frg_headers_request_t;
 
 typedef struct rpc_callback_t rpc_callback_t;
@@ -1014,7 +1020,7 @@ payout_block(block_t *block, MDB_txn *parent)
 }
 
 static int
-process_blocks(block_t *blocks, size_t count)
+process_blocks(block_t *blocks, size_t count, uint64_t observed_tip_height)
 {
     if (!abattoir)
         return 0;
@@ -1058,18 +1064,39 @@ process_blocks(block_t *blocks, size_t count)
             {
                 if (rc != MDB_NOTFOUND)
                 {
-                    err = mdb_strerror(rc);
-                    log_error("Error fetching block at height: %"PRIu64
-                            ", error: %d", ib->height, err);
+                    log_error("Error fetching block at height %"PRIu64": %s; "
+                              "aborting canonical reconciliation batch",
+                              ib->height, mdb_strerror(rc));
+                    mdb_cursor_close(cursor);
+                    mdb_txn_abort(txn);
+                    return rc;
                 }
-                else if (!found)
+                if (!found)
                     log_trace("No stored block at height: %"PRIu64, ib->height);
                 break;
             }
             op = MDB_NEXT_DUP;
             found++;
             block_t *sb = (block_t*)val.mv_data;
-            if (sb->status != BLOCK_LOCKED)
+            const bool matching_hash = !memcmp(ib->hash, sb->hash, 64);
+            const bool matching_parent = !memcmp(ib->prev_hash, sb->prev_hash, 64);
+            const enum frg_reconcile_action action = frg_reconcile_block(
+                    sb->status, sb->height, ib->height, observed_tip_height,
+                    matching_hash, matching_parent,
+                    (ib->status & BLOCK_ORPHANED) != 0);
+            if (action == FRG_RECONCILE_ABORT_DEEP_REORG ||
+                action == FRG_RECONCILE_ABORT_INVALID)
+            {
+                log_error("Previously credited block is no longer canonical or block status is invalid; "
+                          "abort this accounting batch; manual review required at height %"PRIu64,
+                          sb->height);
+                mdb_cursor_close(cursor);
+                mdb_txn_abort(txn);
+                return EPROTO;
+            }
+            if (action == FRG_RECONCILE_DEFER ||
+                action == FRG_RECONCILE_ALREADY_CREDITED ||
+                action == FRG_RECONCILE_ALREADY_ORPHANED)
                 continue;
             block_t nb;
             memcpy(&nb, sb, sizeof(block_t));
@@ -1856,7 +1883,8 @@ rpc_on_block_header_by_height(const char* data, rpc_callback_t *callback)
     block_t rb;
     JSON_GET_OR_WARN(block_header, result, json_type_object);
     response_to_block(block_header, &rb);
-    process_blocks(&rb, 1);
+    if (process_blocks(&rb, 1, pool_stats.network_height))
+        log_error("Startup mature-block reconciliation refused; no reward credit confirmed");
     json_object_put(root);
 }
 
@@ -1904,7 +1932,7 @@ rpc_on_block_headers_range(const char* data, rpc_callback_t *callback)
     const size_t headers_len = json_object_array_length(headers);
     for (size_t i = 0; i < headers_len; ++i)
         response_to_block(json_object_array_get_idx(headers, i), &verified[i]);
-    if (process_blocks(verified, headers_len))
+    if (process_blocks(verified, headers_len, expected->tip_height))
         log_error("Validated canonical header range could not be reconciled; credits not confirmed");
     json_object_put(root);
 }
@@ -2179,6 +2207,7 @@ rpc_on_last_block_header(const char* data, rpc_callback_t *callback)
         {
             expected->start = start;
             expected->end = end;
+            expected->tip_height = top->height;
             rpc_callback_t *cb2 = rpc_callback_new(
                     rpc_on_block_headers_range, expected, 0);
             if (!cb2)

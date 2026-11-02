@@ -3585,7 +3585,23 @@ post_hash:
     if (can_store)
     {
         int rc = 0;
-        pthread_rwlock_rdlock(&rwlock_acc);
+        share_t share = {0,0,{0},0};
+        share.height = bt->height;
+        share.difficulty = job->target;
+        strcpy(share.address, client->address);
+        share.timestamp = now;
+
+        /* Never acknowledge/credit a share if durable LMDB storage failed.
+         * This is necessary but not sufficient for fully atomic round
+         * accounting or canonical block/payout reconciliation. */
+        log_debug("Storing share with difficulty: %"PRIu64, share.difficulty);
+        if ((rc = store_share(share.height, &share)))
+        {
+            log_error("Failed to store share: %s", mdb_strerror(rc));
+            send_validation_error(client, "share storage unavailable");
+            return;
+        }
+        pthread_rwlock_wrlock(&rwlock_acc);
         account_t *account = NULL;
         HASH_FIND_STR(accounts, client->address, account);
         if (account)
@@ -3600,21 +3616,16 @@ post_hash:
         pthread_rwlock_unlock(&rwlock_acc);
         if (!account)
         {
-            send_validation_error(client, "no registered account");
+            /* This inconsistency requires operator reconciliation. Stop
+             * normal share acknowledgment instead of pretending success. */
+            log_error("Stored share without a registered account");
+            send_validation_error(client, "account reconciliation required");
             return;
         }
         if (client->bad_shares)
             client->bad_shares--;
-        share_t share = {0,0,{0},0};
-        share.height = bt->height;
-        share.difficulty = job->target;
-        strcpy(share.address, client->address);
-        share.timestamp = now;
         if (!upstream_event)
             pool_stats.round_hashes += share.difficulty;
-        log_debug("Storing share with difficulty: %"PRIu64, share.difficulty);
-        if ((rc = store_share(share.height, &share)))
-            log_warn("Failed to store share: %s", mdb_strerror(rc));
         char body[STATUS_BODY_MAX] = {0};
         stratum_get_status_body(body, client->json_id, "OK");
         evbuffer_add(output, body, strlen(body));

@@ -2,7 +2,7 @@
 
 **October 28, 2026 · Step 10 / offline planning only**
 
-This runbook is a **non-transactional implementation specification**, not evidence that any mFRG mint, treasury, payment facility, founder transfer, staking account, vesting contract, or approval exists on Solana mainnet. The project's 500M mFRG proposal is recorded in [lifetime tokenomics](MFRG_LIFETIME_TOKENOMICS_500M.md). The [mint-verification procedure](MFRG_SOLANA_MINT_VERIFICATION.md) remains the prerequisite to every real on-chain action.
+This runbook is a **non-transactional implementation specification**, not evidence that any mFRG mint, treasury, payment facility, founder transfer, staking account, vesting contract, or approval exists on Solana mainnet. The project's 500M mFRG proposal is recorded in [lifetime tokenomics](MFRG_50M_CITY_TOKENOMICS.md). The [mint-verification procedure](MFRG_SOLANA_MINT_VERIFICATION.md) remains the prerequisite to every real on-chain action.
 
 ## 1. Nine separately accountable token inventories
 

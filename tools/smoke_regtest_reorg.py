@@ -181,6 +181,9 @@ def run(binary: Path, manifest: dict, max_seconds: int) -> None:
             if info(a_rpc)["height"] != 4 or info(b_rpc)["height"] != 6:
                 raise AssertionError("Initial divergent chain heights unexpected")
             print("PASS: independent FAKECHAIN forks with distinct height-1 blocks", flush=True)
+            # Native RandomX initialization is separate from P2P convergence;
+            # do not count time spent mining toward the reorganization timeout.
+            deadline = time.monotonic() + max_seconds
 
             # Reopen only node A with one explicit local B peer. --keep-fakechain
             # is essential: restarting must preserve the 3 mined A blocks.

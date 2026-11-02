@@ -28,6 +28,15 @@
 - Add separately provisioned Solana DEX liquidity, optional staking funded from the finite combined reserve, collateral and grants under approved governance.
 - Integrate optional mFRG checkout in ForgeCoin's Discover Your City game: USD-priced CITY packs, finalized-payment verification, exactly-once CITY credit and 100% of received mFRG to the designated ecosystem treasury. Never trust screenshots or client-side payment claims.
 
+## Proposed future merged mining — unapproved R&D, not native launch scope
+
+Two **distinct** possible mining integrations are research proposals only. The native FRG launch remains independent RandomX PoW, with its frozen consensus rules and 120-second target. No Tari/XMR earnings, merged-mining pool, miner toggle, chain security benefit, activation height or launch date is promised.
+
+1. **FRG parent / Tari auxiliary (FRG + Tari):** investigate modifying a *patched* Tari RandomXM proxy to place Tari's auxiliary commitment into an FRG block's coinbase and mine both from one RandomX job. FRG's Monero-derived RPC/template and coinbase formats make a disposable-chain compatibility study reasonable, but Tari accepts the parent hashing blob/RandomX seed only if its actual proof and seed validation permit it. Changes to Tari, upstream approval, FRG pool accounting and miner job routing may be required. This **does not import Monero or Tari hashrate into FRG**; it could create an additional miner incentive if supported and economically worthwhile.
+2. **Monero parent / FRG auxiliary (XMR + FRG):** investigate a properly audited FRG AuxPoW consensus extension so participating Monero miners can also solve FRG blocks. This could increase genuine FRG honest work *only if miners and pools adopt it*. It changes FRG block-validity and chain-selection rules, hence requires a separate specification, cryptographic review, stressnet and coordinated **hard fork**, not a wallet/pool toggle. Design coinbase commitment, deterministic RandomX seed binding, proof-of-work target, duplicate/replay protection, alternative-chain/reorg safety and fair difficulty accounting.
+
+Tari currently runs multiple independent PoW lanes; those algorithms, policies and reward splits should not be copied into FRG by implication. Any merged-mining security claims must be demonstrated with decentralized participating hashrate and pool distribution. See [Tari/XMR feasibility and 51% safety plan](docs/SECURITY_51_PERCENT_AND_TARI_MERGE_MINING_2026-11-02.md), [Tari implemented RFC](https://rfc.tari.com/RFC-0132_Merge_Mining_Monero), [open implementation issue](https://github.com/tgibbsz32/forgecoin/issues/194). These remain proposals, **not guaranteed upgrades**.
+
 ## Phase 5 — Native FCMP++ / CARROT privacy research
 - Research full-chain membership proofs, curve-tree databases, generalized Bulletproofs, CARROT addressing, wallet/mempool/consensus validation and deep-reorg performance.
 - Prefer a reviewed supply-conserving in-place hard fork if safe; independent cryptographic audit and explicit activation approval are required.

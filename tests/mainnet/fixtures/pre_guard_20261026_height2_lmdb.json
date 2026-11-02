@@ -1,0 +1,10 @@
+{
+  "accepted_block1_hash": "9755a4f129f97b7865e5897e79abf5fea89dec2ba776d53fb9d01942b9f7ba9e",
+  "chain_height": 2,
+  "compressed_sha256": "fbad21ad292ff65a5cc9ccb236a1679f7c869433a981311891aab472882ff608",
+  "compressed_size": 2613,
+  "description": "Only public native LMDB chain data from isolated pre-guard 20261026 height-2 QA; no wallet, key, or certificate",
+  "genesis_hash": "4bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c",
+  "uncompressed_sha256": "19e72205edff97569a2c1fb657b20e4bb449f80f66586bbb8e17049f3f9dfade",
+  "uncompressed_size": 126976
+}

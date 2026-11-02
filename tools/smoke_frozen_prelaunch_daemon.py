@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import gzip
 import hashlib
 import json
 import os
@@ -216,8 +217,9 @@ def run(binary: Path, manifest: dict, max_seconds: int) -> None:
                     proc.kill()
                     proc.wait(timeout=8)
 
-        # A separate disposable startup must refuse the inherited testing-only
-        # difficulty override before any blockchain consensus is initialized.
+        # A second disposable startup must refuse the old testing-only
+        # difficulty override. Without this policy, a future mainnet unlock
+        # would let an operator silently bypass intended difficulty rules.
         fixed_dir = Path(tmp) / "fixed-difficulty-refusal"
         fixed_dir.mkdir()
         fixed_log = Path(tmp) / "fixed-difficulty-output.log"
@@ -237,13 +239,62 @@ def run(binary: Path, manifest: dict, max_seconds: int) -> None:
                 check=False,
             )
         fixed_output = fixed_log.read_text(encoding="utf-8", errors="replace")
-        native_output = fixed_dir / "forgecoin.log"
+        native_output = (fixed_dir / "forgecoin.log")
         if native_output.is_file():
             fixed_output += native_output.read_text(encoding="utf-8", errors="replace")
         if (rejected_proc.returncode == 0 or
                 "Mainnet consensus forbids --fixed-difficulty" not in fixed_output):
             raise AssertionError("Fixed-difficulty mainnet override did not fail through consensus guard")
         print("PASS: --fixed-difficulty cannot start an FRG mainnet daemon", flush=True)
+
+        # Reopen a strictly disposable copy of the *previously accepted*
+        # height-2 mainnet-identity chain. The new prelaunch runtime must
+        # refuse it before any peer connection, RPC listener or mining.
+        # This fixture contains only chain LMDB data, never wallet files.
+        fixture_root = ROOT / "tests/mainnet/fixtures"
+        stored = json.loads((fixture_root / "pre_guard_20261026_height2_lmdb.json").read_text(encoding="utf-8"))
+        compressed = (fixture_root / "pre_guard_20261026_height2_data.mdb.gz").read_bytes()
+        if (stored.get("chain_height") != 2
+                or stored.get("genesis_hash") != genesis
+                or stored.get("accepted_block1_hash") != fixture["accepted_block_hash"]
+                or stored.get("compressed_size") != len(compressed)
+                or len(compressed) > 20000
+                or hashlib.sha256(compressed).hexdigest() != stored.get("compressed_sha256")):
+            raise AssertionError("Frozen prior-chain fixture provenance mismatch")
+        chain_db = gzip.decompress(compressed)
+        if (len(chain_db) != stored.get("uncompressed_size")
+                or len(chain_db) > 200000
+                or hashlib.sha256(chain_db).hexdigest() != stored.get("uncompressed_sha256")):
+            raise AssertionError("Prior-chain LMDB fixture failed byte-size and hash checks")
+        old_node = Path(tmp) / "nonempty-chain-rejected"
+        (old_node / "lmdb").mkdir(parents=True)
+        (old_node / "lmdb/data.mdb").write_bytes(chain_db)
+        old_log = Path(tmp) / "nonempty-chain-output.log"
+        old_cmd = [
+            str(binary.resolve()), "--offline", "--non-interactive", "--no-zmq",
+            "--no-igd", "--p2p-bind-ip", "127.0.0.1",
+            "--p2p-bind-port", str(take_free_port()),
+            "--rpc-bind-ip", "127.0.0.1", "--rpc-bind-port", str(take_free_port()),
+            "--data-dir", str(old_node),
+            "--log-file", str(old_node / "forgecoin.log"),
+        ]
+        with old_log.open("wb") as handle:
+            failed = subprocess.run(
+                old_cmd, cwd=tmp, stdin=subprocess.DEVNULL,
+                stdout=handle, stderr=subprocess.STDOUT,
+                env={**os.environ, "HOME": tmp}, timeout=30, check=False
+            )
+        old_output = old_log.read_text(encoding="utf-8", errors="replace")
+        old_native_log = old_node / "forgecoin.log"
+        if old_native_log.exists():
+            old_output += old_native_log.read_text(encoding="utf-8", errors="replace")
+        expected = "PRELAUNCH: refusing a mainnet database containing blocks beyond genesis"
+        if failed.returncode == 0 or expected not in old_output:
+            raise AssertionError(
+                "Prelaunch node failed to explicitly reject prior height-2 database: "
+                + old_output[-1800:]
+            )
+        print("PASS: mainnet refuses pre-existing height-2 chain database", flush=True)
 
 
 def main() -> None:

@@ -2,6 +2,8 @@
 
 Static source preflight only; not a native daemon build or consensus audit.
 """
+import gzip
+import hashlib
 import json
 import re
 import unittest
@@ -77,6 +79,21 @@ class FrozenMainnetIntegration(unittest.TestCase):
         self.assertRegex(guard,r"output_allowed\(bool mainnet, std::uint64_t creation_height\)")
         self.assertIn("creation_height != 0",guard)
         self.assertIn("scan_outputkeys_for_indexes",self.chain)
+
+    def test_historical_height2_chain_fixture_is_byte_exact(self):
+        fixtures = ROOT / "tests/mainnet/fixtures"
+        m = json.loads((fixtures / "pre_guard_20261026_height2_lmdb.json").read_text(encoding="utf-8"))
+        self.assertEqual(m["genesis_hash"], self.manifest["genesis_hash"])
+        self.assertEqual(m["chain_height"], 2)
+        self.assertEqual(m["accepted_block1_hash"], "9755a4f129f97b7865e5897e79abf5fea89dec2ba776d53fb9d01942b9f7ba9e")
+        packed = (fixtures / "pre_guard_20261026_height2_data.mdb.gz").read_bytes()
+        self.assertEqual(len(packed), 2613)
+        self.assertEqual(len(packed), m["compressed_size"])
+        self.assertEqual(hashlib.sha256(packed).hexdigest(), m["compressed_sha256"])
+        db = gzip.decompress(packed)
+        self.assertEqual(len(db), 126976)
+        self.assertEqual(len(db), m["uncompressed_size"])
+        self.assertEqual(hashlib.sha256(db).hexdigest(), m["uncompressed_sha256"])
 
 if __name__ == "__main__":
     unittest.main()

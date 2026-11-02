@@ -62,7 +62,6 @@ def main():
             assert body["block_header"]["hash"]==MINED
             # Exercise real read-only daemon HTTP paths used by the new
             # payout canonicality verifier (no wallet RPC required).
-            import sys
             sys.path.insert(0,str(REPO))
             from services.pool_settlement.verify_rpc import ReadOnlyRPCVerifier
             observer=ReadOnlyRPCVerifier("http://127.0.0.1:49782",

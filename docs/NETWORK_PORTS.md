@@ -12,7 +12,9 @@ must never be silently reused by new desktop or Android clients.
 | Native ZMQ RPC | **39482/TCP** | **Loopback/private only** for approved native event consumers. Not the wallet RPC and not the pool miner port. |
 | Windows Forms XMRig local statistics HTTP | **39483/TCP** | **Localhost-only** miner telemetry; not the native daemon RPC and not the wallet RPC. |
 | Windows Forms `forge-wallet-rpc` | **39484/TCP** | **Localhost-only** wallet control. The Tauri wallet RPC chooses a separate dynamic local port; never substitute 39482 or 39483. |
-| Pool Stratum and pool web/stats | **Not assigned in this chain port contract** | Configured per pool/service and approved separately. **Do not infer** Stratum is 39480–39484. No public Stratum or payouts authorized. |
+| Pool Stratum (staging only) | **127.0.0.1:4242/TCP** | Default in `services/official_pool/jtgrassie/pool.conf`; **localhost-only, not public Stratum approval**. A public listener requires independent security and release review. |
+| Official pool web UI (staging only) | **127.0.0.1:4243/TCP** | Local/backend-only; expose statistics through a reviewed read-only proxy, not through this listener. |
+| Explorer Gunicorn backend | **127.0.0.1:19800/TCP** | Reverse-proxy upstream; never publish the Python backend listener directly. |
 | Website HTTPS | **443/TCP** when deployed | Reverse proxy service, separate from native daemon RPC. |
 | Local preview | **8080/TCP** where documented | Developer-only example, not an official production listener. |
 

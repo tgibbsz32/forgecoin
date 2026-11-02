@@ -8,6 +8,10 @@ on:
     paths:
       - 'apps/desktop/**'
       - 'apps/desktop-tauri/**'
+      - 'apps/android/app/src/main/java/**'
+      - 'apps/explorer/**'
+      - 'services/official_pool/jtgrassie/pool.conf'
+      - 'services/official_pool/jtgrassie/src/**'
       - 'tests/desktop/**'
       - 'tools/audit_host_ports.py'
       - 'docs/NETWORK_PORTS.md'
@@ -17,6 +21,10 @@ on:
     paths:
       - 'apps/desktop/**'
       - 'apps/desktop-tauri/**'
+      - 'apps/android/app/src/main/java/**'
+      - 'apps/explorer/**'
+      - 'services/official_pool/jtgrassie/pool.conf'
+      - 'services/official_pool/jtgrassie/src/**'
       - 'tests/desktop/**'
       - 'tools/audit_host_ports.py'
       - '.github/workflows/desktop-frozen-mainnet-endpoints.yml'

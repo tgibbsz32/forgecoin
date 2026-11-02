@@ -1,0 +1,56 @@
+name: Android restricted UI preview safety (no release)
+
+on:
+  push:
+    branches:
+      - main
+      - 'integration/android-preview-*'
+    paths:
+      - 'apps/android/**'
+      - 'external/randomx/**'
+      - 'tests/android/**'
+      - 'tools/verify_android_preview_apk.py'
+      - '.github/workflows/android-preview-safety-ci.yml'
+  pull_request:
+    paths:
+      - 'apps/android/**'
+      - 'external/randomx/**'
+      - 'tests/android/**'
+      - 'tools/verify_android_preview_apk.py'
+      - '.github/workflows/android-preview-safety-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  restricted-arm64-preview:
+    name: Build and inspect unsigned-release-blocked ARM64 debug preview
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+      - name: Install pinned Android build tooling
+        run: |
+          sdkmanager --install "platforms;android-35" "build-tools;35.0.0" "cmake;3.22.1" "ndk;27.0.12077973"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Verify source retains disabled wallet and miner controls
+        run: python3 -m unittest discover -s tests/android -p 'test_*.py' -v
+      - name: Build candidate ARM64 debug-only APK
+        working-directory: apps/android
+        run: gradle --no-daemon --stacktrace :app:assembleDebug
+      - name: Inspect APK for forbidden daemon and wallet payloads
+        run: |
+          python3 tools/verify_android_preview_apk.py --apk apps/android/app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging apps/android/app/build/outputs/apk/debug/app-debug.apk | grep "package: name='org.forgecoin.p2ptest.isolatedqa'"
+          echo "PASS: isolated Android debug UI preview, not an FRG mining or wallet release"
+      # Deliberately no artifact upload, release, deploy, signing, or device installation.

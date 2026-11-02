@@ -29,6 +29,7 @@ class FakeDaemon:
         self.status = "OK"
         self.after_template_tip = None
         self.header_wrong = False
+        self.timestamp_varint = b"\x80\x80\x80\x80\x01"
 
     def __call__(self, method, params=None):
         self.calls.append((method, params))
@@ -51,7 +52,9 @@ class FakeDaemon:
                    is not None else extra)
         # Serialized CryptoNote header: major, minor, timestamp(varint), prev, nonce.
         prev = bytes.fromhex(OTHER_TIP if self.header_wrong else self.tip)
-        header = b"\x11\x11\xac\x02" + prev + bytes(4)
+        # Use a five-byte CryptoNote timestamp varint: standard XMRig rx/0
+        # places the nonce at byte 39 (2 version bytes + 5 timestamp + 32).
+        header = b"\x11\x11" + self.timestamp_varint + prev + bytes(4)
         # The daemon mining blob contains a merkle root derived from the miner
         # transaction, so changing coinbase extra_nonce must change this root.
         from hashlib import sha256
@@ -106,7 +109,7 @@ class JobIssueTests(unittest.TestCase):
                                      "00" * 32, native)
         self.assertEqual(result.status, "POW_THRESHOLD_MET_UNCREDITED")
         self.assertEqual(native_calls[0][0], bytes.fromhex(SEED))
-        self.assertEqual(native_calls[0][1][36:40], bytes.fromhex("01020304"))
+        self.assertEqual(native_calls[0][1][39:43], bytes.fromhex("01020304"))
         self.assertEqual(len(native_calls), 1)
         with self.assertRaisesRegex(DaemonJobError, "verification failed"):
             self.issuer.inspect("workerA", job.job_id, "01020304", "00"*32, native)
@@ -177,6 +180,11 @@ class JobIssueTests(unittest.TestCase):
         self.tick = 121
         with self.assertRaisesRegex(DaemonJobError, "expired"):
             self.issuer.inspect("workerA", job.job_id,"01020304","00"*32,forbidden)
+
+    def test_nonstandard_nonce_offset_is_rejected_before_worker_job(self):
+        self.daemon.timestamp_varint = b"\xac\x02"
+        with self.assertRaisesRegex(DaemonJobError, "nonce offset"):
+            self.issuer.issue("workerA", 1)
 
     def test_missing_verifier_does_not_consume_nonce(self):
         job = self.issuer.issue("workerA", 1)

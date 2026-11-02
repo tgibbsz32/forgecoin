@@ -197,6 +197,11 @@ class DaemonJobSource:
                 cursor = _varint(blob, cursor)
         except VerificationError as exc:
             raise DaemonJobError("invalid block hashing header") from exc
+        # XMRig rx/0 patches the nonce at byte 39. A CryptoNote header with a
+        # shorter/different varint offset will make XMRig hash different bytes
+        # than our native verifier. Fail before issuing such jobs.
+        if cursor + 32 != 39:
+            raise DaemonJobError("incompatible XMRig rx/0 nonce offset")
         if (cursor + 36 > len(blob) or cursor + 36 > len(template.blocktemplate_blob)
                 or blob[:cursor + 36] != template.blocktemplate_blob[:cursor + 36]
                 or blob[cursor:cursor + 32] != bytes.fromhex(tip_before[1])):

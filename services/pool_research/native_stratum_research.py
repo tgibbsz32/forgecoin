@@ -13,6 +13,7 @@ import secrets
 from typing import Callable
 
 from .daemon_job_source import DaemonJobError, DaemonJobSource
+from .native_verification_queue import FairNativeVerificationQueue, VerificationQueueError
 from .stratum_protocol import MAX_FRAME_BYTES, ProtocolError, SessionTable
 
 
@@ -39,7 +40,9 @@ class NativeResearchListener:
         self.server = None
         self.writers = set()
         self.tasks = set()
-        self.busy = False
+        self.native_queue = FairNativeVerificationQueue(
+            verifier, max_pending=capacity, wait_timeout=25
+        )
 
     async def start(self) -> int:
         if self.server is not None:
@@ -47,6 +50,7 @@ class NativeResearchListener:
         self.server = await asyncio.start_server(
             self.handle, host="127.0.0.1", port=0, limit=MAX_FRAME_BYTES
         )
+        self.native_queue.start()
         return self.server.sockets[0].getsockname()[1]
 
     async def close(self) -> None:
@@ -58,6 +62,7 @@ class NativeResearchListener:
             writer.close()
         if self.tasks:
             await asyncio.gather(*tuple(self.tasks), return_exceptions=True)
+        await self.native_queue.close()
 
     async def send(self, writer, request_id, *, result=None, error=None) -> None:
         response = {"id": request_id, "jsonrpc": "2.0", "result": result, "error": error}
@@ -114,23 +119,21 @@ class NativeResearchListener:
                                 or params["id"] != connection
                                 or params["job_id"] != current_job.job_id):
                             raise ProtocolError("share belongs to another session/job")
-                        if self.busy:
-                            raise ProtocolError("native verifier busy; retry new request id")
-                        self.busy = True
-                        try:
-                            result = await asyncio.to_thread(
-                                source.inspect, connection, current_job.job_id,
-                                params["nonce"], params["result"], self.verifier
-                            )
-                        finally:
-                            self.busy = False
+                        # FIFO serializes access to a persistent native RandomX
+                        # worker without dropping a second miner's share merely
+                        # because another socket is already hashing. Each socket
+                        # awaits its share; it cannot fill the bounded queue.
+                        result = await self.native_queue.verify(
+                            source, connection, current_job.job_id,
+                            params["nonce"], params["result"]
+                        )
                         if result.status != "POW_THRESHOLD_MET_UNCREDITED":
                             raise ProtocolError("unrecognized native research result")
                         await self.send(writer, req_id, result={
                             "status": "POW_THRESHOLD_MET_UNCREDITED",
                             "credited": False, "submitted_block": False,
                         })
-                except (ProtocolError, DaemonJobError) as exc:
+                except (ProtocolError, DaemonJobError, VerificationQueueError) as exc:
                     await self.send(writer, req_id,
                                     error={"code": -1, "message": str(exc)})
         except (OSError, ValueError, asyncio.TimeoutError):

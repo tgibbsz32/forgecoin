@@ -2,6 +2,8 @@
 
 > **November 2 local recovery:** The latest recovered Windows development files, isolated test evidence, pool-settlement prototype, and exact source patch are indexed in the [local preservation handoff](docs/handoffs/local-preservation-2026-11-02/README.md). This is not mainnet launch approval; the main branch runtime still needs the frozen network integration.
 
+> **November 2 consensus continuation:** [Draft PR #185](https://github.com/tgibbsz32/forgecoin/pull/185) is the current bounded integration of frozen 20261026 native consensus and the source-level prelaunch lock, based on the post-preservation main branch. Its [MAINNET-005 handoff](https://github.com/tgibbsz32/forgecoin/blob/integration/frozen-mainnet-prelaunch-20261102/docs/handoffs/MAINNET-005-2026-11-02-frozen-consensus-integration.md) records local tests and pending native CI. The work remains **unmerged and unapproved for launch** until daemon builds and independent acceptance tests pass.
+
 The selected mainnet is genesis-frozen and **not launched**. [Current parameters and tokenomics](docs/CURRENT_MAINNET.md) are authoritative for documentation. The main branch still carries the legacy runtime implementation; the new-mainnet implementation in draft PR #111 remains unmerged. Documentation publication is not network activation.
 
 ## Completed evidence and open gates

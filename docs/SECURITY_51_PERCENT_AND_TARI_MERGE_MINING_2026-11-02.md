@@ -24,6 +24,14 @@ Tari's current Monero merge-mining proxy intercepts Monero-compatible daemon `ge
 
 **Security warning:** Tari published critical advisory GHSA-jm73-2949-8jcc on 2026-09-22 for attacker-controlled Keccak proof-state forgery in RandomXM. It reports affected versions <=5.7.0-pre.9 and patch 5.7.0-pre.10. No integration may copy or rely on that vulnerable representation; require exact patched-version review and proof-binding negative tests.
 
+## Explicit future network development proposals (November 2, 2026)
+
+**Proposal TARI-MM (FRG parent, Tari auxiliary):** Research simultaneous FRG and Tari RandomX mining via a modified upstream-patched Tari merge-mining proxy. A miner would submit work derived from a modified FRG coinbase including a Tari commitment. Validation must cover the exact FRG parent block template/seed, Tari RandomXM proof binding and Tari auxiliary-chain parameters, pool reward accounting and confirmation. This is **not an implemented capability**, and it would not itself secure FRG with Tari or Monero's hashrate.
+
+**Proposal XMR-AUXPOW (XMR parent, FRG auxiliary):** Study accepting independently checked Monero-parent AuxPoW in FRG consensus. It would require consensus design and hard-fork activation with verification of RandomX key/seed, coinbase commitment, cross-chain domain separation, maximum proof sizes, chain-work accounting and reorganization cases. The availability of Monero mining power does not imply its miners will contribute. Measure real independent participation before claiming any resistance improvement.
+
+Both proposals are optional future development and require published RFCs, testnet/replay tests, external security review, community governance and explicit activation. No production miner switch, public Stratum feature, launch date, yield, or security guarantee is authorized. The priority remains finishing native FRG launch safely.
+
 ## What is cheap and worth doing now (non-consensus)
 
 1. **Miner distribution and pool diversity — high priority.** Make both true solo mining and official pool mining work; facilitate *independent* pools and wallet-controlled mining. Publish verified pool share, miner concentration and network hashrate metrics, without pretending anonymous wallet counts prove unique operators. Alert when one pool/operator appears dominant; mining decentralization is the main protection against majority control.

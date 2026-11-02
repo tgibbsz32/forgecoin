@@ -1,90 +1,50 @@
-# ForgeCoin (FRG) Governance Charter — Proposed Framework
+# ForgeCoin (FRG) Community Governance — Proposed Charter
 
-**Draft proposal — November 1, 2026. Not ratified, not binding, and not an active voting system. All governance structures, weights, milestones and eligibility requirements are subject to change as the FRG miner base, collaborators, contributors, node operators and holders grow.**
+**Draft policy direction — November 1, 2026. Not ratified, binding or implemented. Subject to revision as the network grows.**
 
-## Founder-led selection during the network's formative period
+## Founder-led governance selection
 
-**The founder retains sole decision-making authority over which governance system the project will propose and implement during its founder-led phase**, informed by nonbinding advice, discussion and recommendations from miners, collaborators, contributors, node operators and FRG holders. The founder will assess the network's evolving participation and the long-term **longevity, utility, privacy and resilience** of the FRG network when selecting or revising that system. The four-chamber design and six-month advisory milestone in this document are **illustrative proposals, not irrevocable commitments**. The founder may modify, replace, postpone or withdraw them after considering community guidance and operational/security evidence.
+During the formative phase, the ForgeCoin founder retains final authority to choose, revise, postpone or implement the project's governance framework, informed by community feedback. The purpose is to protect FRG's longevity, utility, privacy and resilience. This authority applies to project-controlled governance and assets, not to independent node consensus or third-party property. Any later delegation of binding authority requires a separately documented and implemented transition.
 
-This founder authority applies to project-controlled governance design, software, communications and assets **within applicable legal and technical limits**. It does not grant power to compel independent nodes or miners to adopt consensus changes, seize third-party assets, override valid blockchain rules, or promise control of infrastructure owned by others. No binding community governance is currently delegated. Any future delegation must be explicitly documented and implemented.
+## 1. FRG first
 
-## 1. Priority, purpose, and jurisdiction
+ForgeCoin (FRG) is the primary RandomX proof-of-work network. Its mining, wallet, node, pool, explorer and adoption efforts take precedence over other assets. FRG's primary-emission reference is 50 million coins (not a hard cap), followed by perpetual 0.20 FRG-per-block tail emission. No founder, ICO or governance premine is authorized.
 
-Native **ForgeCoin (FRG)** is the primary network: a RandomX proof-of-work cryptocurrency with a 50 million FRG primary-emission reference (**not** a hard cap), perpetual 0.20 FRG per-block tail emission, and a planned 1% fee for eligible rewards in the project-operated pool. The network's launch, independent miners, nodes, wallets, explorer, pool and reliability take priority over any auxiliary token.
+miniFORGE (mFRG), Solana integration, sale, bridge, staking, and game payments remain **future proposals only**, subject to review once the FRG network and community mature. No mFRG vote, sale, mint or conversion is authorized by this charter.
 
-This charter defines a future **FRG stakeholder advisory assembly**. It cannot alter blockchain consensus, transfer funds, control private repositories or infrastructure, impose fees, create legal rights, or authorize expenditures by itself. Consensus upgrades still require implementation, security review, compatible releases and voluntary independent node adoption.
+## 2. Single constituency: 100% active community members
 
-**miniFORGE (mFRG)** is a **future development proposal only**. There is no live sale, deployed mint, bridge, guaranteed exchange, staking entitlement, mFRG vote, or automatic approval of prior tokenomics. Any mFRG plan must remain a future proposal, subject to community consultation and the founder's selection of an appropriate governance and approval process; no existing mFRG plan is automatically authorized. No mFRG participation confers FRG governance power.
+**All proposed governance voting weight belongs to eligible active ForgeCoin community members (100%).** No separate miner, holder, contributor, developer or node-operator chamber exists. Those participants can register and participate as community members on equal terms. Mining, holding FRG, running a node or contributing code are not prerequisites for membership and do not create extra votes.
 
-## 2. Advisory assembly and chamber weights
+The initial proposal is **one eligible member, one advisory vote**, with no weighting by hashrate, token balance, hardware, contribution count or account age. No automatic double voting for someone with multiple roles.
 
-The four stakeholder chambers have the following **proposed** shares of aggregate advisory vote weight, totaling 100%:
+## 3. Membership and eligibility — design proposal
 
-| Chamber | Share | Participation basis |
-| --- | ---: | --- |
-| Verified FRG miners | **35%** | Demonstrated proof-of-work contribution over a rolling 90-day eligibility period |
-| FRG holders | **25%** | Privacy-preserving wallet-control and eligibility proofs; no transfer of custody |
-| Recognized contributors and collaborators | **20%** | Independently reviewed technical, security, documentation, localization or ecosystem contributions over the preceding six months |
-| Independent full-node operators | **20%** | At least 60 days of verifiable operation and independent network validation |
+- Membership is free, pseudonymous where feasible, and open to users, miners, holders, developers, collaborators, contributors and node operators.
+- A public forum account (potentially GitHub Discussions) is for discussion and registration, **not proof of a unique human identity**.
+- Proposed eligibility: registration at least 30 days before a voting snapshot plus genuine participation in community or network activities; passive participants should have an accessible way to qualify without public self-disclosure.
+- An election-specific credential and a privacy-respecting anti-duplication process should be developed. Do not require public wallet balances, government identification, seed phrases, private keys or custodial token deposits.
+- Account farms, duplicate registrations and coordinated Sybil identities remain unresolved risks. An independent review and appeal procedure is required before treating any tally as representative.
+- Forum polls, likes, mining screenshots and wallet addresses alone are **not verified elections**.
 
-The percentages distribute **advisory influence**, not mining rewards, FRG ownership, treasury allocations or consensus authority. Participants may qualify for multiple chambers, subject to anti-duplication and conflict disclosures. No fixed number of council seats is implied.
+## 4. Forum and proposals
 
-### Eligibility and privacy
+Use **GitHub Discussions as the proposed initial public forum**, subject to enabling the repository feature. Suggested categories: Announcements; Governance Proposals; Mining & Pools; Development & Security; Community Projects; Advisory Polls. Discussions and polls are nonbinding. Formal FRG Governance Proposals (FGPs) should describe scope, benefits, risks, implementation dependencies, costs, privacy/security implications and alternatives.
 
-A public wallet address is not proof of unique identity, holder balance or miner ownership. Pool accounting, split hashrate, rented infrastructure, multiple nodes and wallet splitting are susceptible to Sybil manipulation. Eligibility mechanisms, privacy-preserving holder proofs, pool attestations, challenge-response, nullifiers, independent review, appeal procedures and affiliation controls **must be designed and audited** before weighted results are described as representative.
+## 5. Timing and advisory-only authority
 
-Initial proposed weighting: capped diminishing-return weight for verified mining contribution; capped square-root weighting for holder eligibility; one verified vote per recognized contributor; and one verified vote per independently controlled node operator. Target a maximum **5% of any chamber's weight per verified participant or affiliated group** where affiliation can be established. These are research targets, not implemented rules; privacy and identity limits may require changes.
+Target the first formal **advisory** round **no earlier than six months after independently verified public FRG mainnet launch**, and only when operational, security, membership-integrity and community-participation readiness checks pass. No calendar date, fixed membership count or automatic activation is promised. If voting integrity is insufficient, use transparent, unweighted public consultation instead.
 
-## 3. Timing of the first governance round
+Proposed consultation cycle: 14 days discussion, 7 days review, eligibility snapshot, 7 days voting. Protocol proposals receive at least 30 days public review. Provisional advisory thresholds: 55% approval for ordinary proposals, 60% for recommended spending policies, 70% for charter recommendations and 75% for consensus-change recommendations, subject to participation and anti-manipulation checks. These are **nonbinding design suggestions**, not adopted voting rules.
 
-The **first advisory governance round is targeted for no earlier than six months after independently verified public FRG mainnet launch**, and **only if readiness checks pass**. No calendar date is set. A missed readiness gate delays the round; there is no automatic activation.
+## 6. Security, treasury and independent consensus
 
-Proposed minimum readiness checks:
+The proposed official mining pool's 1% fee is not an automatic governance tax. No governance treasury, multisignature, staking reward or compulsory fee is authorized here. Project-controlled spending remains under existing lawful custody arrangements until explicitly changed.
 
-- At least six months of stable public FRG operation with no unresolved critical consensus security defect.
-- Verified independent mining, full-node operation, wallet and pool functionality, and a documented incident-response process.
-- Evidence of broad participation, with provisional targets of 100 independently verified full-node operators, 50 independent qualifying miners, 20 recognized contributors, and 200 eligible holder voters. These are targets for assessment, not proof of decentralization.
-- Published mining-pool concentration, infrastructure-provider concentration and geographic distribution assessments where privacy and data permit.
-- Publicly reviewed voter eligibility rules, privacy and Sybil-resistance testing, independent security review, challenge and appeals process, and accessible voting interface.
-- Published notice and public discussion of the first round's scope and ballots.
+No advisory vote can alter consensus, compel node upgrades, activate a hard fork, transfer funds, mint mFRG or impose a protocol rule. Any consensus upgrade requires specifications, testing, review, compatible releases and voluntary independent node adoption.
 
-If these conditions cannot be met safely, conduct an **open, unweighted, nonbinding consultation** instead of claiming a representative four-chamber election.
+## 7. Status and future revisions
 
-## 4. Advisory process
+This document **replaces the earlier four-chamber 35/25/20/20 design and the subsequently discussed two-constituency design**. Neither remains the current proposal. All eligibility details, voting thresholds and the six-month target may be modified as the network grows. The founder will consider community advice before selecting any operational governance mechanism. No binding governance has been ratified.
 
-Anyone may submit an FRG Governance Proposal (FGP) through the public repository or designated public forum. Each FGP should include motivation, scope, affected stakeholders, technical dependencies, risks, costs, alternatives, security/privacy implications and an implementation plan.
-
-Proposed normal cycle: **14 days** open discussion, **7 days** formal review, a published eligibility snapshot, then **7 days** voting. Material protocol or charter proposals receive **at least 30 days** public review. Publish anonymized or privacy-preserving vote totals per chamber, turnout, methodology, disputes, and a clear **NONBINDING ADVISORY** designation.
-
-Suggested advisory decision thresholds (not ratified):
-
-| Advisory proposal | Approval target |
-| --- | --- |
-| Routine community priorities | 55% of valid weighted votes |
-| Proposed voluntary treasury grants or spending policies | 60% |
-| Charter amendment recommendation | 70%, with majority support in at least three chambers |
-| Consensus or hard-fork recommendation | 75%, with majority support in all four chambers |
-
-For ordinary advisory ballots, target at least 20% aggregate eligible voting weight participating and meaningful turnout from at least three chambers. For charter and consensus recommendations, target at least 30% aggregate participation and representation from every chamber. Failure to reach quorum means **no advisory endorsement**, not automatic rejection or authorization.
-
-## 5. Limits on authority and future ratification
-
-**All governance remains advisory unless and until a separately defined governance arrangement is explicitly adopted and implemented by the founder-led project or its duly authorized successor.** Even a unanimous advisory ballot does not create binding authority. A future binding charter must be separately drafted, publicly reviewed, independently security-assessed, and explicitly adopted through a defined transition process selected by the founder-led project. That future instrument must state the effective date, electorate, powers, limits, legal/custody arrangements, recall procedures, emergency response, dispute resolution and amendment rules.
-
-The founder retains final selection authority over the governance design during the formative phase; this is not a veto within an enacted community voting system because no such system exists. No automatic holder plutocracy, compulsory staking or fixed council seats are authorized. Project coordination remains responsible for its own infrastructure and assets, subject to existing legal and operational rights.
-
-## 6. Treasury, miners and protocol safeguards
-
-No native FRG founder/team/ICO/governance premine is authorized. The project-operated mining pool's proposed 1% operator fee is **not automatically a community treasury tax**. Any future voluntary treasury or dedicated fee contribution requires explicit disclosure, custody arrangements, accounting and applicable approvals. No unimplemented multisignature, payout, bonding or staking feature should be presented as live.
-
-A governance vote cannot change RandomX rules, block rewards, tail emission, wallet privacy or node consensus by decree. Protocol proposals require technical specifications, adversarial testing, independent review, coordinated release engineering and actual voluntary adoption.
-
-## 7. Future mFRG decision gate
-
-mFRG and any Solana integration, sale, treasury distribution, game payments, FRG bridge or conversion mechanism remain **unapproved future proposals**. After FRG governance matures, the community may evaluate them through a dedicated FGP with transparent economics, technical feasibility, security audit, legal review, conflicts disclosure, treasury custody and explicit scope of authority. Historical mFRG plans are not binding commitments or an automatic roadmap mandate.
-
-## 8. Publication and revision
-
-Publish this document as a **proposed FRG governance framework**, not as an enacted constitution. Record changes through reviewed pull requests, preserve historical context in Git history, and maintain a public decision log. The first six-month advisory round and any later binding-governance transition are contingent on demonstrated network maturity.
-
-Related: [FRG mainnet specification](docs/CURRENT_MAINNET.md), [technical roadmap](ROADMAP.md), [current project status](docs/project-status.html), [future mFRG proposal](docs/MFRG_50M_CITY_TOKENOMICS.md).
+See [current FRG mainnet](docs/CURRENT_MAINNET.md), [project roadmap](ROADMAP.md) and [website community page](docs/community.html).

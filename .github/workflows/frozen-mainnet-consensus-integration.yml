@@ -62,7 +62,7 @@ jobs:
           PY
 
   native-daemon-build:
-    name: Native x86_64 daemon compile/link only (no execution)
+    name: Native x86_64 daemon build and isolated runtime acceptance
     runs-on: ubuntu-22.04
     timeout-minutes: 55
     steps:
@@ -94,3 +94,8 @@ jobs:
           python3 tools/smoke_frozen_prelaunch_daemon.py \
             --daemon build/consensus-gated/release/bin/forged --max-seconds 90
           echo 'PASS: isolated genesis-only prelaunch smoke; no public networking or payout test'
+      - name: Verify two fresh native peers handshaking on loopback without mining
+        run: |
+          python3 tools/smoke_frozen_prelaunch_peers.py \
+            --daemon build/consensus-gated/release/bin/forged --max-seconds 90
+          echo 'PASS: loopback-only prelaunch P2P handshake; no mining or reorg test'

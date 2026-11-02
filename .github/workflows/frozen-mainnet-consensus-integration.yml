@@ -35,6 +35,11 @@ jobs:
           g++ -std=c++17 -pedantic -Wall -Wextra -Werror -O2 -Isrc \
             tests/mainnet/prelaunch_policy.cpp -o /tmp/frg-prelaunch-policy
           /tmp/frg-prelaunch-policy
+      - name: Exercise native genesis output membership policy
+        run: |
+          g++ -std=c++17 -O2 -pedantic -Wall -Wextra -Werror -Isrc \
+            tests/mainnet/genesis_ring_policy.cpp -o /tmp/frg-genesis-ring-policy
+          /tmp/frg-genesis-ring-policy
       - name: Install Boost multiprecision header for native difficulty test
         run: |
           sudo apt-get update -qq

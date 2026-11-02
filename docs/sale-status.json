@@ -1,6 +1,6 @@
 {
   "schema": "miniforge-sale-status-v1",
-  "updated_utc": "2026-10-28",
+  "updated_utc": "2026-11-01",
   "source": "github-pages-informational-preview",
   "name": "miniFORGE",
   "symbol": "mFRG",
@@ -13,37 +13,36 @@
   "sale_price_usdc": null,
   "sale_start": null,
   "sale_end": null,
-  "supply_total_mfrg": 500000000,
-  "sale_treasury_mfrg": 50000000,
+  "supply_total_mfrg": 50000000,
+  "sale_treasury_mfrg": 5000000,
   "initial_pilot_mfrg": 5000000,
-  "future_liquidity_reserve_mfrg": 60000000,
-  "future_distribution_reserve_mfrg": 390000000,
-  "tokenomics_policy": "MFRG_LIFETIME_TOKENOMICS_500M.md",
+  "future_liquidity_reserve_mfrg": 5000000,
+  "future_distribution_reserve_mfrg": 40000000,
+  "tokenomics_policy": "MFRG_50M_CITY_TOKENOMICS.md",
   "allocation_mfrg": {
-    "fundraising": 50000000,
-    "operations": 100000000,
-    "ecosystem": 100000000,
-    "staking": 85000000,
-    "liquidity": 60000000,
-    "engineering_security": 65000000,
-    "founder_immediate": 15000000,
-    "founder_deferred_team_label": 15000000,
-    "emergency": 10000000
+    "initial_presale": 5000000,
+    "future_liquidity": 5000000,
+    "combined_ecosystem_staking_collateral": 40000000
   },
-  "founder_beneficial_total_mfrg": 30000000,
-  "founder_deferred_vesting": "625000 monthly in months 13–36; same beneficial owner as liquid founder allocation",
   "limitations": [
     "No Solana mainnet mFRG mint address has been published and independently verified.",
-    "No live payment recipient, sale price or execution authorization exists.",
-    "The 500M supply and allocations are policy targets, not verified on-chain balances.",
+    "No live payment recipient, executable quote or sale authorization exists. The $0.12 rate is planning only.",
+    "The 50M supply and allocations are proposed and not verified on-chain balances.",
     "All purchase, payment, swap, wallet signing and fulfillment actions are disabled.",
     "Existing sandbox backend inventory limits and quote code are not production-ready for this policy."
   ],
   "allocation_labels": {
-    "sale_treasury": "50M maximum lifetime crypto-for-mFRG distribution; initial 5M pilot only",
-    "future_liquidity_reserve": "60M liquidity reserve, separate from 85M staking rewards",
-    "future_distribution_reserve": "390M remaining allocations outside fundraising and liquidity"
+    "initial_presale": "5M initial presale inventory",
+    "future_liquidity": "5M future liquidity reserve",
+    "combined_ecosystem_staking_collateral": "40M combined ecosystem, staking and collateral reserve"
   },
   "governance_policy": "Adopt documented signer, disclosure and governance controls before any authorized distribution; mechanism not yet ratified.",
-  "treasury_program_status": "Proposed; custody, release rules, staking and liquidity contracts not active"
+  "treasury_program_status": "Proposed; custody, release rules, staking and liquidity contracts not active",
+  "proposed_flat_sale_price_usd": 0.12,
+  "proposed_gross_proceeds_split": {
+    "project_percent": 90,
+    "founders_percent": 10,
+    "founder_immediate_percent_of_founder_share": 50,
+    "founder_six_month_vesting_percent_of_founder_share": 50
+  }
 }

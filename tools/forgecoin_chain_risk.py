@@ -15,6 +15,8 @@ import time
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
+from forgecoin_chain_history import audit_node
+
 TARGET_SECONDS = 120
 FROZEN_GENESIS_HASH = '4bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c'
 STATE_VERSION = 1
@@ -120,6 +122,13 @@ def assess(snapshots, previous=None, now=None, alert_depth=3, stale_seconds=900)
             events.append({'code': 'stale_tip', 'node': node, 'age_seconds': int(now-tip['timestamp'])})
         if tip['timestamp'] > now + 7200:
             events.append({'code': 'future_timestamp', 'node': node})
+        if old_tip and tip['height'] > old_tip['height'] and old_tip['difficulty'] > 0:
+            # Operational anomaly ONLY; no change to consensus difficulty rules.
+            previous_diff = old_tip['difficulty']
+            if tip['difficulty'] >= previous_diff * 4 or tip['difficulty'] * 4 <= previous_diff:
+                events.append({'code': 'difficulty_jump', 'node': node,
+                               'previous_difficulty': previous_diff,
+                               'difficulty': tip['difficulty'], 'severity': 'warning'})
         if old_tip and tip['height'] == old_tip['height'] and tip['hash'] == old_tip['hash']:
             if now - tip['timestamp'] > TARGET_SECONDS * 3:
                 events.append({'code': 'no_recent_block', 'node': node})
@@ -173,6 +182,15 @@ def main(argv=None):
             print(json.dumps({'status': 'UNVERIFIED', 'events': failures}, sort_keys=True))
             return 2  # Fail closed. Never save incomplete observations as a valid baseline.
         events, new_nodes = assess(observations, old)
+        # Deep reorganizations can occur outside the bounded recent-header
+        # window. Mature historical observations survive across poll cycles.
+        for url, snapshot in observations.items():
+            def fetch_history_header(height):
+                result = rpc(url, 'get_block_header_by_height', {'height': height})
+                return parse_header(result['block_header'])
+            history_events, history_state = audit_node(snapshot, old[url], fetch_history_header)
+            events.extend(dict(event, node=url) for event in history_events)
+            new_nodes[url].update(history_state)
         state.parent.mkdir(parents=True, exist_ok=True)
         fd, tmp = tempfile.mkstemp(prefix='.frg-risk-', dir=str(state.parent))
         try:

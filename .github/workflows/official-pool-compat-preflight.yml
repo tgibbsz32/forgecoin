@@ -62,12 +62,17 @@ jobs:
       - name: Install JSON-C headers for fail-closed block-acknowledgment fixture
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends libjson-c-dev
+          sudo apt-get install -y --no-install-recommends libjson-c-dev liblmdb-dev
       - name: Compile and test native daemon submission response validation
         run: |
           gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
             -o /tmp/frg-submit-receipt-test services/official_pool/tests/test_block_submit_receipt.c -ljson-c
           /tmp/frg-submit-receipt-test
+      - name: Validate real LMDB 60-height reward, orphan, and deep-reorg decision boundaries
+        run: |
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
+            -o /tmp/frg-reorg-lmdb-test services/official_pool/tests/test_reorg_reconciliation_lmdb.c -llmdb
+          /tmp/frg-reorg-lmdb-test
       - name: Verify native canonical header range rejects partial and disconnected responses
         run: |
           gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \

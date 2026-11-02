@@ -22,7 +22,7 @@ ForgeCoin’s selected October 26 mainnet is genesis-frozen and unlaunched. The 
 
 **miniFORGE (mFRG)** is a separate proposed Solana SPL token with **500,000,000 target fixed supply** (6 decimals). Allocations: 50M (10%) staged crypto-denominated fundraising; 100M (20%) long-term operations; 100M (20%) adoption; 85M (17%) staking/participation; 60M (12%) liquidity; 65M (13%) engineering/security; **15M (3%) founder unlocked at launch**; **15M (3%) founder-beneficial team-labeled vesting, 625k monthly months 13–36**; 10M (2%) emergency.
 
-No Solana mainnet mint, fixed-supply authority, sale, staking, LP or price is verified active by this documentation. **mFRG is neither native FRG nor a wrapped, redeemable or pegged FRG asset.** See [full 500M lifetime policy](docs/MFRG_LIFETIME_TOKENOMICS_500M.md), [treasury overview](docs/MINIFORGE_SPL_TREASURIES.md), [sale readiness](docs/MINIFORGE_SALE_MECHANISM.md), [website](docs/miniforge-tokenomics.html) and [mainnet release state](docs/CURRENT_MAINNET.md).
+No Solana mainnet mint, fixed-supply authority, sale, staking, LP or price is verified active by this documentation. **mFRG is neither native FRG nor a wrapped, redeemable or pegged FRG asset.** See [full 500M lifetime policy](docs/MFRG_50M_CITY_TOKENOMICS.md), [treasury overview](docs/MINIFORGE_SPL_TREASURIES.md), [sale readiness](docs/MINIFORGE_SALE_MECHANISM.md), [website](docs/miniforge-tokenomics.html) and [mainnet release state](docs/CURRENT_MAINNET.md).
 
 ## Mission
 

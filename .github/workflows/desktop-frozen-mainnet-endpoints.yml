@@ -9,6 +9,7 @@ on:
       - 'apps/desktop/**'
       - 'apps/desktop-tauri/**'
       - 'tests/desktop/**'
+      - 'tools/audit_host_ports.py'
       - 'docs/NETWORK_PORTS.md'
       - 'docs/CURRENT_MAINNET.md'
       - '.github/workflows/desktop-frozen-mainnet-endpoints.yml'
@@ -17,6 +18,7 @@ on:
       - 'apps/desktop/**'
       - 'apps/desktop-tauri/**'
       - 'tests/desktop/**'
+      - 'tools/audit_host_ports.py'
       - '.github/workflows/desktop-frozen-mainnet-endpoints.yml'
   workflow_dispatch:
 

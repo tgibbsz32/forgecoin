@@ -75,3 +75,35 @@ The active app/service source cross-check is in the dedicated
 draft PR #186, with independent GitHub CI. The compiled frozen-native source
 and its runtime identity checks remain in draft PR #185. The old installed binaries
 have **not** been replaced or certified.
+
+## Read-only host listener audit
+
+When an authorized operator has shell access **on the Oracle host itself**, from
+a working copy of this repository run:
+
+```bash
+python3 tools/audit_host_ports.py --json
+```
+
+The script reads `ss -H -ltn` locally; it makes **no network connections**,
+does not start/stop services, and never edits firewalls. It reports any
+listeners using the retired 19480/19481/19482 ports as errors and flags
+non-loopback bindings on daemon RPC 39481, ZMQ 39482, XMRig statistics
+39483 or Windows wallet RPC 39484 as errors. External P2P listening on 39480
+is a warning requiring separate launch authorization, not an automatic change.
+
+To examine previously captured `ss -H -ltn` output without SSH access:
+
+```bash
+python3 tools/audit_host_ports.py --ss-file /path/to/saved-ss.txt --json
+```
+
+Exit status **0** means the observed listeners produced no error alerts,
+**2** means unsafe/deprecated listeners were detected, and **3** indicates
+the local socket query failed. **A clean report does not establish that
+services are correctly configured, firewall rules are safe, or the network
+is launch-ready.** Also inspect service units, RPC authentication, reverse
+proxy, firewall and external reachability before approval.
+
+The parser and severity rules have standalone offline tests under
+`tests/desktop/test_host_ports.py` in the main CI workflow.

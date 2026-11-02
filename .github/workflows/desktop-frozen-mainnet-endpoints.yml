@@ -1,0 +1,70 @@
+name: ForgeCoin desktop frozen mainnet endpoint safety
+
+on:
+  push:
+    branches:
+      - 'integration/desktop-retired-peer-ports-*'
+    paths:
+      - 'apps/desktop/**'
+      - 'apps/desktop-tauri/**'
+      - 'tests/desktop/**'
+      - '.github/workflows/desktop-frozen-mainnet-endpoints.yml'
+  pull_request:
+    paths:
+      - 'apps/desktop/**'
+      - 'apps/desktop-tauri/**'
+      - 'tests/desktop/**'
+      - '.github/workflows/desktop-frozen-mainnet-endpoints.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-and-frontend:
+    name: Endpoint guards and desktop frontend build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Validate frozen chain desktop defaults and port separation
+        run: python -m unittest discover -s tests/desktop -p 'test_*.py' -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/desktop-tauri/package-lock.json
+      - name: Build TypeScript and Vite Tauri UI
+        working-directory: apps/desktop-tauri
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build
+
+  windows-forms-compile:
+    name: Compile Windows Forms desktop (no binary publication)
+    runs-on: windows-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile Windows Forms with native Framework compiler
+        shell: pwsh
+        run: |
+          $src = Join-Path $PWD 'apps/desktop'
+          $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
+          if (!(Test-Path $compiler)) { throw 'Required .NET Framework C# compiler unavailable' }
+          $dest = Join-Path $env:RUNNER_TEMP 'ForgeCoin-Desktop-Endpoint-Check.exe'
+          $manifest = Join-Path $src 'app.manifest'
+          $program = Join-Path $src 'Program.cs'
+          $wallet = Join-Path $src 'SolanaWallet.cs'
+          $vault = Join-Path $src 'SolanaVault.cs'
+          & $compiler /nologo /target:winexe /optimize+ /platform:anycpu `
+            "/win32manifest:$manifest" "/out:$dest" `
+            /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll `
+            /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll `
+            $program $wallet $vault
+          if ($LASTEXITCODE -ne 0) { throw 'Windows Forms source compilation failed' }
+          if (!(Test-Path $dest)) { throw 'Compiled executable missing' }
+          Write-Output 'PASS: Windows Forms source compiled with separated RPC/stat ports'

@@ -35,6 +35,10 @@ jobs:
           g++ -std=c++17 -pedantic -Wall -Wextra -Werror -O2 -Isrc \
             tests/mainnet/prelaunch_policy.cpp -o /tmp/frg-prelaunch-policy
           /tmp/frg-prelaunch-policy
+      - name: Install Boost multiprecision header for native difficulty test
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends libboost-dev
       - name: Compile and exercise real frozen difficulty and LWMA code
         run: |
           g++ -std=c++17 -O2 -pedantic -Wall -Wextra -Werror -Isrc -Icontrib/epee/include \

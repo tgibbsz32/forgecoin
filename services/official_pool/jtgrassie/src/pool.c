@@ -67,6 +67,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "log.h"
 #include "webui.h"
 #include "frg_currency.h"
+#include "frg_reward_maturity.h"
 #include "forkoff.h"
 #include "growbag.h"
 #include "uthash.h"
@@ -1979,7 +1980,7 @@ startup_payout(uint64_t height)
         if (!upstream_event)
             pool_stats.last_block_found = block->timestamp;
 
-        if (block->height + 60 > height)
+        if (!frg_reward_mature(block->height, height))
             continue;
         if (block->status != BLOCK_LOCKED)
             continue;
@@ -2081,10 +2082,11 @@ rpc_on_last_block_header(const char* data, rpc_callback_t *callback)
     rpc_callback_t *cb1 = rpc_callback_new(rpc_on_block_template, 0, 0);
     rpc_request(pool_base, body, cb1);
 
-    if (height_changed && top->height >= BLOCK_HEADERS_RANGE + 60 - 1)
+    uint64_t start = 0;
+    uint64_t end = 0;
+    if (height_changed && frg_mature_header_window(
+            top->height, BLOCK_HEADERS_RANGE, &start, &end))
     {
-        uint64_t end = top->height - 60;
-        uint64_t start = end - BLOCK_HEADERS_RANGE + 1;
         rpc_get_request_body(body, "get_block_headers_range", "sdsd",
                 "start_height", start, "end_height", end);
         rpc_callback_t *cb2 = rpc_callback_new(

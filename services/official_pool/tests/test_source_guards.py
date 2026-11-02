@@ -41,6 +41,18 @@ class NativeBackendPreflight(unittest.TestCase):
         self.assertIn("return amount / UINT64_C(100);", self.currency)
         self.assertNotIn("amount * config.pool_fee", self.pool)
 
+    def test_native_maturity_policy_is_wired_at_both_unlock_paths(self):
+        self.assertIn('#include "frg_reward_maturity.h"', self.pool)
+        self.assertIn("frg_reward_mature(block->height, height)", self.pool)
+        self.assertIn("frg_mature_header_window(", self.pool)
+        # Overflow-safe subtraction is mandatory; the old sum could wrap.
+        self.assertNotIn("block->height + 60 > height", self.pool)
+        self.assertNotIn("top->height - 60;", self.pool)
+        header = (VENDOR / "src/frg_reward_maturity.h").read_text(encoding="utf-8")
+        self.assertIn("FRG_MINED_REWARD_UNLOCK_WINDOW UINT64_C(60)", header)
+        self.assertIn("tip_height - block_height", header)
+        self.assertIn("last < count - UINT64_C(1)", header)
+
     def test_miner_balance_uses_8_decimal_integer_json(self):
         self.assertIn('mb / FRG_ATOMIC_UNITS, mb % FRG_ATOMIC_UNITS', self.webui)
         self.assertIn('mb = balance;', self.webui)

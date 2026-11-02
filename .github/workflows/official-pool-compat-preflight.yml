@@ -49,6 +49,11 @@ jobs:
         run: gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 -o /tmp/frg-money-test services/official_pool/tests/test_currency.c
       - name: Assert parser, overflow and integer pool fee
         run: /tmp/frg-money-test
+      - name: Compile and execute native 60-block maturity and header-window boundaries
+        run: |
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
+            -o /tmp/frg-maturity-test services/official_pool/tests/test_reward_maturity.c
+          /tmp/frg-maturity-test
       - name: Install JSON-C headers for fail-closed block-acknowledgment fixture
         run: |
           sudo apt-get update -qq

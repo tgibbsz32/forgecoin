@@ -70,6 +70,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frg_reward_maturity.h"
 #include "frg_pplns_accounting.h"
 #include "frg_canonical_headers.h"
+#include "frg_credited_history_audit.h"
 #include "frg_reconcile_policy.h"
 #include "frg_accounting_quarantine.h"
 #include "forkoff.h"
@@ -323,6 +324,7 @@ static struct event_base *pool_base;
 static struct event *listener_event;
 static struct event *timer_30s;
 static struct event *timer_10m;
+static struct event *timer_history;
 static struct event *timer_template;
 static struct event *signal_usr1;
 static time_t template_triggered;
@@ -337,6 +339,15 @@ static MDB_dbi db_payments;
 static MDB_dbi db_properties;
 /* Runtime latch is immediate; durable lockout lives in LMDB properties. */
 static bool frg_accounting_held;
+/* Every credited candidate must be rechecked across a complete scan after
+ * startup or new credit. This does not establish consensus finality. */
+static bool frg_history_sweep_verified;
+static bool frg_history_pending;
+static uint64_t frg_history_cursor;
+static uint64_t frg_history_last_count;
+static uint64_t frg_history_epoch;
+static uint64_t frg_history_request_sequence;
+static time_t frg_history_requested_at;
 static BN_CTX *bn_ctx;
 static BIGNUM *base_diff;
 static pool_stats_t pool_stats;
@@ -960,6 +971,8 @@ payout_block(block_t *block, MDB_txn *parent)
         log_error("Cannot credit mature pool rewards: verified 1%% fee wallet absent");
         return EINVAL;
     }
+    frg_history_sweep_verified = false; /* newly credited candidate requires full re-audit */
+    frg_history_epoch++;
     log_info("Allocating validated block rewards at height: %"PRIu64, block->height);
     int rc = 0;
     char *err = NULL;
@@ -2483,8 +2496,11 @@ send_payments(void)
     /* In a future reviewed payout build the durable LMDB quarantine must
      * be checked before any wallet transfer is even considered.
      */
-    if (frg_accounting_held)
+    if (frg_accounting_held || !frg_history_sweep_verified || frg_history_pending)
+    {
+        log_error("FRG payouts blocked until entire credited-block history is independently audited");
         return EACCES;
+    }
     MDB_txn *hold_txn = NULL;
     int hold_rc = pdb_txn_begin(env, NULL, MDB_RDONLY, &hold_txn);
     if (hold_rc)
@@ -4796,6 +4812,8 @@ cleanup(void)
         event_free(timer_30s);
     if (timer_10m)
         event_free(timer_10m);
+    if (timer_history)
+        event_free(timer_history);
     if (timer_template)
         event_free(timer_template);
     if (listener_event)

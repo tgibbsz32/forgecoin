@@ -37,6 +37,23 @@ Tari's current Monero merge-mining proxy intercepts Monero-compatible daemon `ge
 
 At target 120 seconds, estimated equilibrium hashrate is difficulty / 120 H/s. The specified 400,000 floor corresponds to ~3,333 H/s and the 500,000 initial target to ~4,167 H/s **as a mathematical equivalence, not measured live hashrate**. Neither number is an anti-51% threshold. Attacker risk depends on the *actual independently controlled honest and adversarial hashpower*, their sustained work and economic incentives. Avoid publishing a synthetic `security percentage` from pool API samples.
 
+## Implemented read-only observer (source-only prototype; not deployed)
+
+- [`tools/forgecoin_chain_risk.py`](../tools/forgecoin_chain_risk.py) compares two or more **trusted** node header ranges from *distinct* local RPC endpoints. Independent remote nodes must be accessed by separate reviewed SSH tunnels to localhost. It detects conflicting same-height hashes, observed local history changes, height rollback, stale tips, gaps and incomplete RPC responses. No RPC writes, private keys, network consensus modification, automatic pause or checkpoint.
+- [`tools/test_forgecoin_chain_risk.py`](../tools/test_forgecoin_chain_risk.py) contains offline regression tests. Nine local deterministic tests passed before the source was committed; this is **not** an integration test against frozen candidate daemons.
+- Example after approved test nodes and tunnels are available (ports are *local tunnel endpoints*, not a change in selected mainnet port contract):
+
+```sh
+python tools/forgecoin_chain_risk.py \
+  --node http://127.0.0.1:39481/json_rpc \
+  --node http://127.0.0.1:39581/json_rpc \
+  --state ./local-chain-risk-state.json
+python -m unittest discover -s tools -p 'test_forgecoin_chain_risk.py'
+```
+
+- Exit 0 = observations returned with no alarms (NOT chain finality or evidence of safety); exit 1 = alert(s); exit 2 = unverified/error. First execution establishes an observation baseline. State file is deliberately local and contains no secrets. Observing only a bounded header window cannot prove there were no prior deep reorganizations.
+- The watcher is **not scheduled, deployed, integrated with pool payouts or wired to alert delivery**. Until live release gates are satisfied, use only disposable/authorized test nodes. Independently authenticated observations and response playbooks are still outstanding.
+
 ## Experiment matrix before accepting FRG/Tari integration
 
 - **FRG parent chain validity:** produce real isolated FRG block templates with coinbase extra commitment, prove both unmodified and modified parent blocks accepted under frozen selected FRG rules, and test rejection of malformed extra fields.

@@ -56,11 +56,15 @@ jobs:
           $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
           if (!(Test-Path $compiler)) { throw 'Required .NET Framework C# compiler unavailable' }
           $dest = Join-Path $env:RUNNER_TEMP 'ForgeCoin-Desktop-Endpoint-Check.exe'
+          $manifest = Join-Path $src 'app.manifest'
+          $program = Join-Path $src 'Program.cs'
+          $wallet = Join-Path $src 'SolanaWallet.cs'
+          $vault = Join-Path $src 'SolanaVault.cs'
           & $compiler /nologo /target:winexe /optimize+ /platform:anycpu `
-            "/win32manifest:$src/app.manifest" "/out:$dest" `
+            "/win32manifest:$manifest" "/out:$dest" `
             /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll `
             /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll `
-            "$src/Program.cs" "$src/SolanaWallet.cs" "$src/SolanaVault.cs"
+            $program $wallet $vault
           if ($LASTEXITCODE -ne 0) { throw 'Windows Forms source compilation failed' }
           if (!(Test-Path $dest)) { throw 'Compiled executable missing' }
           Write-Output 'PASS: Windows Forms source compiled with separated RPC/stat ports'

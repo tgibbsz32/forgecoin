@@ -1,0 +1,84 @@
+"""Offline deterministic regression tests; never touch a live daemon."""
+import unittest
+import forgecoin_chain_risk as m
+
+
+def header(height, branch='a', timestamp=1_000_000):
+    hx = lambda x: format(x, '064x')
+    prefix = 0 if branch == 'a' else 10000
+    return {'height': height, 'hash': hx(height+1+prefix),
+            'prev_hash': hx(height+prefix) if height else '0'*64,
+            'timestamp': timestamp, 'difficulty': 500000}
+
+
+def snap(start, end, branch='a'):
+    hs = {str(h): header(h, branch) for h in range(start, end+1)}
+    return {'tip': hs[str(end)], 'headers': hs}
+
+
+class ChainRiskTests(unittest.TestCase):
+    def test_normal(self):
+        prev = {'a': snap(1, 5), 'b': snap(1, 5)}
+        current = {'a': snap(3, 6), 'b': snap(3, 6)}
+        events, _ = m.assess(current, prev, now=1_000_100)
+        self.assertEqual(events, [])
+
+    def test_detect_deep_observed_reorg(self):
+        old = {'a': snap(1, 8)}
+        changed = snap(1, 8)
+        # New branch has a common ancestor at 4 and consistent continuation at 5..8.
+        for h in range(5, 9):
+            changed['headers'][str(h)] = header(h, 'b')
+        changed['tip'] = changed['headers']['8']
+        events, _ = m.assess({'a': changed}, old, now=1_000_100)
+        self.assertEqual(events[0]['code'], 'observed_reorg')
+        self.assertEqual(events[0]['minimum_depth'], 4)
+        self.assertEqual(events[0]['severity'], 'critical')
+
+    def test_two_node_conflict(self):
+        events, _ = m.assess({'a': snap(3, 6), 'b': snap(3, 6, 'b')}, now=1_000_100)
+        self.assertIn('node_divergence', [x['code'] for x in events])
+
+    def test_height_rollback_stale(self):
+        events, _ = m.assess({'a': snap(1, 3)}, {'a': snap(1, 5)}, now=1_002_000)
+        self.assertIn('height_rollback', [x['code'] for x in events])
+        self.assertIn('stale_tip', [x['code'] for x in events])
+
+    def test_no_overlap(self):
+        events, _ = m.assess({'a': snap(1, 3), 'b': snap(6, 8)}, now=1_000_100)
+        self.assertIn('no_overlap', [x['code'] for x in events])
+
+    def test_history_gap_not_marked_safe(self):
+        events, _ = m.assess({'a': snap(100, 107)}, {'a': snap(1, 8)}, now=1_000_100)
+        self.assertIn('history_gap', [x['code'] for x in events])
+
+    def test_endpoint_validation(self):
+        self.assertEqual(m.validate_url('http://localhost:39481/json_rpc'), 'http://localhost:39481/json_rpc')
+        for url in ('http://evil.example:39481/json_rpc', 'http://alice:pw@127.0.0.1:39481/json_rpc',
+                    'http://127.0.0.1:39481/json_rpc?x=1'):
+            with self.assertRaises(ValueError):
+                m.validate_url(url)
+
+    def test_parse_header_validation(self):
+        h = header(5)
+        self.assertEqual(m.parse_header(h)['difficulty'], 500000)
+        for bad in ({**h, 'difficulty': -1}, {**h, 'hash': 'not a hash'},
+                    {**h, 'height': True}, {**h, 'timestamp': None}):
+            with self.assertRaises(ValueError):
+                m.parse_header(bad)
+
+    def test_failed_rpc_not_persisted(self):
+        from unittest.mock import patch
+        from tempfile import TemporaryDirectory
+        from pathlib import Path
+        with TemporaryDirectory() as d:
+            state = Path(d) / 'state.json'
+            with patch.object(m, 'take_snapshot', side_effect=OSError('offline')):
+                out = m.main(['--node', 'http://localhost:39481', '--node', 'http://localhost:39581',
+                              '--state', str(state)])
+            self.assertEqual(out, 2)
+            self.assertFalse(state.exists())
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -1,6 +1,6 @@
 # ForgeCoin documentation and project direction
 
-**Current proposed mFRG policy (November 1, 2026):** 50,000,000 standard Solana SPL mFRG, six decimals; 5,000,000 initial presale (10%), 5,000,000 future liquidity (10%), 40,000,000 combined staking/collateral/ecosystem reserve (80%). This revises the October 28 500M plan. **No single fixed presale price has been finally verified**, and no mint, payment, sale or staking operation is authorized. Legacy 500M plans, test fixtures and implementation assumptions require migration before any deployment.
+**Current proposed mFRG policy (November 1, 2026):** 50,000,000 standard Solana SPL mFRG, six decimals; 5,000,000 initial presale (10%), 5,000,000 future liquidity (10%), 5,000,000 founders (10%; 50% unlocked at launch, 50% vested over six months), 35,000,000 combined staking/collateral/ecosystem reserve (70%). This revises the October 28 500M plan. **No single fixed presale price has been finally verified**, and no mint, payment, sale or staking operation is authorized. Legacy 500M plans, test fixtures and implementation assumptions require migration before any deployment.
 
 [Revised 50M tokenomics](MFRG_50M_CITY_TOKENOMICS.md) | [Tokenomics website](miniforge-tokenomics.html) | [Discover Your City and mFRG integration](discover-your-city.html) | [Current status](project-status.html) | [Sale status](miniforge-sale.html) | [Native FRG specification](CURRENT_MAINNET.md) | [Whitepaper](WHITEPAPER.md) | [Roadmap](../ROADMAP.md)
 

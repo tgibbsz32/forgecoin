@@ -15,6 +15,8 @@ from pathlib import Path
 import subprocess
 import tempfile
 import time
+import urllib.error
+import urllib.request
 
 from smoke_frozen_prelaunch_daemon import call_rpc, require_result, take_free_port
 
@@ -90,14 +92,32 @@ def wait_ready(proc: subprocess.Popen, port: int, deadline: float) -> dict:
 
 
 def mine(port: int, address: str, amount: int, nonce: int) -> list[str]:
-    response = require_result(
-        call_rpc(port, "generateblocks", {
+    # Generating a native RandomX block may exceed the ordinary 2-second
+    # smoke RPC timeout due to dataset initialization, even at difficulty 1.
+    payload = {
+        "jsonrpc": "2.0", "id": "isolated-regtest-only",
+        "method": "generateblocks",
+        "params": {
             "amount_of_blocks": amount,
             "wallet_address": address,
             "prev_block": "",
             "starting_nonce": nonce,
-        }), "generateblocks",
+        },
+    }
+    request = urllib.request.Request(
+        f"http://127.0.0.1:{port}/json_rpc",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
     )
+    try:
+        with urllib.request.urlopen(request, timeout=100) as reply:
+            raw = reply.read(1_000_001)
+    except urllib.error.HTTPError as exc:
+        raw = exc.read(1_000_001)
+    if len(raw) > 1_000_000:
+        raise AssertionError("Regtest RPC response exceeds bounded local limit")
+    response = require_result(json.loads(raw), "generateblocks")
     blocks = response.get("blocks")
     if not isinstance(blocks, list) or len(blocks) != amount:
         raise AssertionError("Regtest generateblocks did not mine the required blocks")

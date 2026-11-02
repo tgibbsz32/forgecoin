@@ -10,9 +10,16 @@ class Parser(HTMLParser):
 class Checks(unittest.TestCase):
     def test_status_and_allocation(self):
         page=(ROOT/"docs/project-status.html").read_text()
-        for expected in ("500,000,000","50,000,000","100,000,000","85,000,000","60,000,000","65,000,000","15,000,000","10,000,000","not yet been deployed","same beneficial owner","not guaranteed"):
-            self.assertIn(expected,page)
-        self.assertIn("No live mint address",page)
+        # Current 50M policy and release gates, not the superseded 500M draft.
+        for expected in ("50,000,000 mFRG", "5M presale (10%)",
+                         "5M future liquidity (10%)",
+                         "40M combined staking/collateral/ecosystem (80%)",
+                         "$0.12", "90% project / 10% founders",
+                         "Development / prelaunch", "No authorized mFRG sale",
+                         "Future mining-security proposals",
+                         "independently reviewed hard fork"):
+            self.assertIn(expected, page)
+        self.assertNotIn("500,000,000 mFRG", page)
     def test_internal_links(self):
         p=Parser();p.feed((ROOT/"docs/project-status.html").read_text())
         for href in p.links:

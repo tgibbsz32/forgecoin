@@ -69,6 +69,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frg_currency.h"
 #include "frg_reward_maturity.h"
 #include "frg_pplns_accounting.h"
+#include "frg_canonical_headers.h"
 #include "forkoff.h"
 #include "growbag.h"
 #include "uthash.h"
@@ -85,6 +86,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAINNET_ADDRESS_PREFIX 190 /* Frozen 20261026 mainnet; old prefix 90 is invalid */
 #define TESTNET_ADDRESS_PREFIX 53
 #define BLOCK_HEADERS_RANGE 10
+#if BLOCK_HEADERS_RANGE != FRG_CANONICAL_HEADERS_MAX
+#error "FRG pool header window must match the strict canonical range validator"
+#endif
 #define DB_INIT_SIZE 0x140000000 /* 5G */
 #define DB_GROW_SIZE 0xA0000000 /* 2.5G */
 #define DB_COUNT_MAX 10
@@ -289,6 +293,12 @@ typedef struct payment_t
     char address[ADDRESS_MAX];
 } payment_t;
 
+typedef struct frg_headers_request_t
+{
+    uint64_t start;
+    uint64_t end;
+} frg_headers_request_t;
+
 typedef struct rpc_callback_t rpc_callback_t;
 typedef void (*rpc_callback_fun)(const char*, rpc_callback_t*);
 typedef void (*rpc_datafree_fun)(void*);
@@ -311,7 +321,7 @@ static struct event *signal_usr1;
 static time_t template_triggered;
 static uint32_t extra_nonce;
 static uint32_t instance_id;
-static block_t block_headers_range[BLOCK_HEADERS_RANGE];
+/* Header-range responses are validated into a local buffer per RPC reply. */
 static MDB_env *env;
 static MDB_dbi db_shares;
 static MDB_dbi db_blocks;
@@ -1877,14 +1887,25 @@ rpc_on_block_headers_range(const char* data, rpc_callback_t *callback)
     }
 
     JSON_GET_OR_WARN(headers, result, json_type_array);
-    size_t headers_len = json_object_array_length(headers);
-    for (size_t i=0; i<headers_len; i++)
+    /* Bind the response to this exact request, not a shared global buffer.
+     * A short range could otherwise replay previous block headers, while
+     * an oversized one would overrun the fixed-size array.
+     */
+    const frg_headers_request_t *expected =
+        callback ? (const frg_headers_request_t *)callback->data : NULL;
+    if (!expected || !frg_canonical_headers_valid(headers, expected->start,
+                                                  expected->end))
     {
-        json_object *header = json_object_array_get_idx(headers, i);
-        block_t *bh = &block_headers_range[i];
-        response_to_block(header, bh);
+        log_error("Incomplete, inconsistent or stale canonical header range; no reward credit");
+        json_object_put(root);
+        return;
     }
-    process_blocks(block_headers_range, BLOCK_HEADERS_RANGE);
+    block_t verified[BLOCK_HEADERS_RANGE] = {0};
+    const size_t headers_len = json_object_array_length(headers);
+    for (size_t i = 0; i < headers_len; ++i)
+        response_to_block(json_object_array_get_idx(headers, i), &verified[i]);
+    if (process_blocks(verified, headers_len))
+        log_error("Validated canonical header range could not be reconciled; credits not confirmed");
     json_object_put(root);
 }
 
@@ -2149,9 +2170,25 @@ rpc_on_last_block_header(const char* data, rpc_callback_t *callback)
     {
         rpc_get_request_body(body, "get_block_headers_range", "sdsd",
                 "start_height", start, "end_height", end);
-        rpc_callback_t *cb2 = rpc_callback_new(
-                rpc_on_block_headers_range, 0, 0);
-        rpc_request(pool_base, body, cb2);
+        frg_headers_request_t *expected = malloc(sizeof(*expected));
+        if (!expected)
+        {
+            log_error("Cannot allocate canonical-header range context; no reward credit");
+        }
+        else
+        {
+            expected->start = start;
+            expected->end = end;
+            rpc_callback_t *cb2 = rpc_callback_new(
+                    rpc_on_block_headers_range, expected, 0);
+            if (!cb2)
+            {
+                log_error("Cannot allocate canonical-header callback; no reward credit");
+                free(expected);
+            }
+            else
+                rpc_request(pool_base, body, cb2);
+        }
     }
 
     json_object_put(root);

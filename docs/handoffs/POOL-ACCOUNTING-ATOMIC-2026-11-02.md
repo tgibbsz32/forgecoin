@@ -52,14 +52,24 @@ configuration (`disable-payouts=1`, wallet RPC port 0).
 - The source regression asserts that `payout_block` actually calls the helper,
   requires a fee wallet, aborts LMDB on fee errors, and does not unlock partial
   share allocations.
-- Local `gcc -std=c11 -O2 -Wall -Wextra -Werror -pedantic` tests and 26 Python
-  pool source checks passed. Independent x86_64 and AArch64 native pool
-  link/compatibility CI must pass before merging.
+- Local `gcc -std=c11 -O2 -Wall -Wextra -Werror -pedantic` tests and
+  **27 Python pool source tests** passed. Independent x86_64 and AArch64
+  native pool link/compatibility CI must pass before merging.
+- **Native LMDB rollback fixture added:** `test_lmdb_ledger_rollback.c` opens a
+  real disposable LMDB environment, commits fee and miner balance credits
+  into a nested transaction, injects a failing `MDB_CURRENT` status update,
+  aborts its parent, then verifies both balances are absent and the candidate
+  remains `LOCKED`. The success control verifies that all three values become
+  visible together on a successful parent commit. It passed locally with
+  `gcc -std=c11 -O2 -Wall -Wextra -Werror -pedantic -llmdb`, and is added
+  to both native x86_64 and ARM64 CI jobs.
 - **Still required for production:** deterministic share rounding/dust policy,
-  actual LMDB failure injection and rollback verification, canonical 60-block
-  orphan/reorg reconciliation, tested native wallet `transfer_split`, treasury
-  address verification and payout-ledger audit. There is **no funded/tested
-  real FRG payout**; do not relax compile-time or network guards.
+  injecting LMDB failures directly into the **real running pool callback**
+  (the regression is a model using real LMDB transaction behavior),
+  canonical 60-block orphan/reorg reconciliation, tested native wallet
+  `transfer_split`, treasury address verification and payout-ledger audit.
+  There is **no funded/tested real FRG payout**; do not relax compile-time
+  or network guards.
 
 This PR is NOT public pool activation or release authorization. The frozen
 FRG network ports remain P2P 39480, daemon RPC 39481, ZMQ RPC 39482.

@@ -1,0 +1,11 @@
+{
+  "description": "Previously accepted by pre-guard native Windows 20261026 disposable mainnet QA",
+  "accepted_block_hash": "9755a4f129f97b7865e5897e79abf5fea89dec2ba776d53fb9d01942b9f7ba9e",
+  "expected_genesis_hash": "4bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c",
+  "height": 1,
+  "difficulty": 500000,
+  "coinbase_reward_atomic": 2384185222,
+  "source_daemon_sha256": "3efaf014c7fdfcea167630f1884abee2defd40f28f1e725b6c0a8fcede5b5c37",
+  "serialized_block_sha256": "9031680cf33d31fa484033ee1f0a23ceaab390e5f5004b0149a263b37efcc4d8",
+  "serialized_block_hex": "1313d49583d7064bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c5ef04171023d01ff0101868feff00803520d2f80b7a8446b17f2715fe1aaf8724fd5ae7cbe5e64d69498fbcd149c93c4b12101af66e4a7a9e7d86f6d150ae9b603d9632f70ee753aa9ab2dc69e0282f1356c230000"
+}

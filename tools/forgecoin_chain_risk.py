@@ -76,6 +76,13 @@ def take_snapshot(url, window=64):
     genesis = parse_header(rpc(url, 'get_block_header_by_height', {'height': 0})['block_header'])
     if genesis['height'] != 0 or genesis['hash'] != FROZEN_GENESIS_HASH:
         raise ValueError('node does not match frozen ForgeCoin genesis')
+    info = rpc(url, 'get_info')
+    outbound = info.get('outgoing_connections_count')
+    if outbound is not None and (not isinstance(outbound, int) or isinstance(outbound, bool) or outbound < 0):
+        raise ValueError('invalid outgoing peer count')
+    synchronized = info.get('synchronized')
+    if synchronized is not None and not isinstance(synchronized, bool):
+        raise ValueError('invalid synchronized status')
     tip = parse_header(rpc(url, 'get_last_block_header')['block_header'])
     start = max(0, tip['height'] - window + 1)
     raw = rpc(url, 'get_block_headers_range', {'start_height': start,
@@ -90,7 +97,8 @@ def take_snapshot(url, window=64):
             raise ValueError('invalid parent continuity')
     if headers[-1]['hash'] != tip['hash'] or headers[-1]['difficulty'] != tip['difficulty']:
         raise ValueError('tip and range response disagree')
-    return {'tip': tip, 'headers': {str(h['height']): h for h in headers}}
+    return {'tip': tip, 'headers': {str(h['height']): h for h in headers},
+            'outbound_peers': outbound, 'synchronized': synchronized}
 
 
 def assess(snapshots, previous=None, now=None, alert_depth=3, stale_seconds=900):
@@ -103,6 +111,12 @@ def assess(snapshots, previous=None, now=None, alert_depth=3, stale_seconds=900)
         tip, headers = snap['tip'], snap['headers']
         old = previous.get(node, {})
         old_tip = old.get('tip', {})
+        if snap.get('outbound_peers') is not None and snap['outbound_peers'] < 2:
+            events.append({'code': 'low_outbound_peer_count', 'node': node,
+                           'outbound_peers': snap['outbound_peers'], 'severity': 'warning'})
+        if snap.get('synchronized') is False:
+            events.append({'code': 'node_not_synchronized', 'node': node,
+                           'severity': 'warning'})
         if old_tip and tip['height'] < old_tip['height']:
             events.append({'code': 'height_rollback', 'node': node,
                            'previous_height': old_tip['height'], 'height': tip['height']})

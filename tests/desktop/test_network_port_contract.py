@@ -17,7 +17,13 @@ def src(relative: str) -> str:
 
 class SelectedPorts(unittest.TestCase):
     def test_frozen_manifest_ports_match_public_spec(self):
-        for path in ("config/mainnet.identity.json", "docs/mainnet.identity.json"):
+        # The main branch has a documentation manifest; PR #185 adds the
+        # compiled-source manifest. Check both once that integration lands.
+        paths = ["docs/mainnet.identity.json"]
+        source_manifest = ROOT / "config/mainnet.identity.json"
+        if source_manifest.is_file():
+            paths.append("config/mainnet.identity.json")
+        for path in paths:
             with self.subTest(path=path):
                 manifest = json.loads(src(path))
                 self.assertEqual(manifest["ports"], NATIVE)

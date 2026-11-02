@@ -90,8 +90,9 @@ class NativeBackendPreflight(unittest.TestCase):
             reconciliation.count("Block status ledger write failed; aborting all credits"),
             4,
         )
-        self.assertEqual(reconciliation.count("mdb_txn_abort(txn);"), 5)
+        self.assertEqual(reconciliation.count("mdb_txn_abort(txn);"), 7)
         self.assertIn("return rc;", reconciliation)
+        self.assertIn("aborting canonical reconciliation batch", reconciliation)
 
     def test_canonical_header_range_requires_complete_anchored_response(self):
         self.assertIn('#include "frg_canonical_headers.h"', self.pool)
@@ -101,9 +102,9 @@ class NativeBackendPreflight(unittest.TestCase):
         self.assertIn("frg_canonical_headers_valid(headers, expected->start", callback)
         self.assertIn("Incomplete, inconsistent or stale canonical header range", callback)
         self.assertIn("block_t verified[BLOCK_HEADERS_RANGE] = {0};", callback)
-        self.assertIn("process_blocks(verified, headers_len)", callback)
+        self.assertIn("process_blocks(verified, headers_len, expected->tip_height)", callback)
         self.assertIn("#if BLOCK_HEADERS_RANGE != FRG_CANONICAL_HEADERS_MAX", self.pool)
-        self.assertIn("if (process_blocks(verified, headers_len))", callback)
+        self.assertIn("if (process_blocks(verified, headers_len, expected->tip_height))", callback)
         self.assertNotIn("process_blocks(block_headers_range, BLOCK_HEADERS_RANGE)", callback)
         self.assertNotIn("block_headers_range[i]", callback)
         self.assertIn("if (!expected ||", callback)
@@ -112,12 +113,38 @@ class NativeBackendPreflight(unittest.TestCase):
         )[0]
         self.assertIn("expected->start = start", schedule)
         self.assertIn("expected->end = end", schedule)
+        self.assertIn("expected->tip_height = top->height", schedule)
         self.assertIn("rpc_on_block_headers_range, expected, 0", schedule)
         header = (VENDOR / "src/frg_canonical_headers.h").read_text(encoding="utf-8")
         self.assertIn("FRG_CANONICAL_HEADERS_MAX 10", header)
         self.assertIn("json_object_array_length(", header)
         self.assertIn("strcmp(parent, prior_hash)", header)
         self.assertIn("requested_start + (uint64_t)i", header)
+
+    def test_native_reorg_freezes_credited_blocks_and_checks_tip_maturity(self):
+        self.assertIn('#include "frg_reconcile_policy.h"', self.pool)
+        self.assertIn("BLOCK_UNLOCKED == FRG_SAVED_UNLOCKED", self.pool)
+        core = self.pool.split("static int\nprocess_blocks(", 1)[1].split(
+            "static void\nupdate_pool_hr(", 1
+        )[0]
+        self.assertIn("frg_reconcile_block(", core)
+        self.assertIn("sb->status, sb->height, ib->height, observed_tip_height", core)
+        self.assertIn("FRG_RECONCILE_ABORT_DEEP_REORG", core)
+        self.assertIn("abort this accounting batch; manual review required", core)
+        self.assertIn("return EPROTO;", core)
+        self.assertIn("FRG_RECONCILE_DEFER", core)
+        self.assertIn("FRG_RECONCILE_ALREADY_CREDITED", core)
+        self.assertIn("FRG_RECONCILE_ALREADY_ORPHANED", core)
+        self.assertNotIn("if (sb->status != BLOCK_LOCKED)\n                continue", core)
+        self.assertIn("observed_tip_height", core)
+        startup = self.pool.split("rpc_on_block_header_by_height(", 1)[1].split(
+            "static void\nrpc_on_block_headers_range(", 1
+        )[0]
+        self.assertIn("process_blocks(&rb, 1, pool_stats.network_height)", startup)
+        helper = (VENDOR / "src/frg_reconcile_policy.h").read_text(encoding="utf-8")
+        self.assertIn("frg_reward_mature(saved_height, tip_height)", helper)
+        self.assertIn("FRG_RECONCILE_ABORT_DEEP_REORG", helper)
+        self.assertIn("FRG_RECONCILE_MARK_ORPHAN", helper)
 
     def test_miner_balance_uses_8_decimal_integer_json(self):
         self.assertIn('mb / FRG_ATOMIC_UNITS, mb % FRG_ATOMIC_UNITS', self.webui)

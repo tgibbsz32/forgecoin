@@ -51,3 +51,26 @@ authorized network or installer release.
 
 This document is normative for *selected* ports only. Historic handoffs and
 tests retain their original recorded ports as evidence, not current instructions.
+
+## Verification performed November 2, 2026
+
+The canonical `docs/current-mainnet.html` public website was fetched over HTTPS
+from the project workstation; HTTP 200 was returned, and the published page
+showed native ports **39480/39481/39482**, Windows wallet RPC **39484**,
+and XMRig telemetry **39483**.
+
+A read-only SSH check of the previously documented Oracle host was **not
+authorized by the available SSH key** (`Permission denied (publickey)`).
+Therefore, the actual remote service process command lines, firewall bindings,
+legacy daemon listeners, pool Stratum listener and reverse proxy remain
+**unverified**. No server configuration or network rule was changed. When
+authorized access is restored, inspect `ss -ltn`, relevant service units, native
+daemon configuration, pool config, explorer RPC URL and firewall rules
+**before** applying reviewed changes. Do not expose daemon RPC, ZMQ or wallet
+RPC to the public internet and do not start mining merely to confirm connectivity.
+
+The active app/service source cross-check is in the dedicated
+`tests/desktop/test_network_port_contract.py` regression attached to desktop
+draft PR #186, with independent GitHub CI. The compiled frozen-native source
+and its runtime identity checks remain in draft PR #185. The old installed binaries
+have **not** been replaced or certified.

@@ -33,3 +33,11 @@ The original local checkout is Windows Git sparse-checkout and lacked multiple u
 5. Reconcile the full desktop/Android/explorer/pool/Oracle integration, wallet identity and payout acceptance separately. PR #111's older broad UI tests remain on that draft; they are not imported as passing consensus tests here.
 
 Keep production deployment unauthorized until these gates are met. Do not change the frozen genesis, launch configuration or production wallets to manufacture green tests.
+
+## New offline genesis RPC acceptance gate (2026-11-02)
+
+The original PR #185 native x86_64 daemon compile/link CI passed (run [41400808001](https://github.com/tgibbsz32/forgecoin/actions/runs/41400808001)); ARM64 and x86_64 pool link CI also passed. This proves binary compilation but not correct behavior at genesis.
+
+The integration now includes `tools/smoke_frozen_prelaunch_daemon.py` and a post-build runner step. The script refuses any manifest that enables mainnet release, pool payouts, public Stratum, or prelaunch mining. It launches the linked `forged` on fresh disposable data, with offline mode, no ZMQ, loopback-only P2P/RPC, randomly chosen localhost ports and bounded process lifetime. It reads `get_info` and genesis `get_block_header_by_height` and asserts frozen hash/nonce/height, calls `getblocktemplate` and `start_mining` without expecting success, verifies the chain still has only genesis, and always terminates the process.
+
+**Evidence is pending for the new runtime smoke until its revised CI run completes.** RPC failure alone is not proof of hostile, fully valid submitted blocks being rejected, and this smoke does not test alternative branches, real mining, coinbase spend exclusions, persistence or payout maturity. Those remain mandatory integration gates.

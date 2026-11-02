@@ -70,9 +70,13 @@ jobs:
             -DBUILD_GUI_DEPS=OFF -DMANUAL_SUBMODULES=1 -DUSE_CCACHE=OFF
       - name: Compile and link daemon without launching network
         run: cmake --build build/consensus-gated/release --parallel 2 --target daemon
-      - name: Verify compiled native daemon, do not execute
+      - name: Verify linked native daemon artifact without starting it
         run: |
           test -s build/consensus-gated/release/bin/forged
           file build/consensus-gated/release/bin/forged
           sha256sum build/consensus-gated/release/bin/forged
-          echo 'PASS: source compiled/linked. NO runtime consensus or mining test performed.'
+      - name: Boot disposable localhost-only prelaunch daemon and reject mining
+        run: |
+          python3 tools/smoke_frozen_prelaunch_daemon.py \
+            --daemon build/consensus-gated/release/bin/forged --max-seconds 90
+          echo 'PASS: isolated genesis-only prelaunch smoke; no public networking or payout test'

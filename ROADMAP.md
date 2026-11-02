@@ -1,67 +1,38 @@
 # ForgeCoin development roadmap
 
-> **Current mFRG policy (November 2026):** 50,000,000 total mFRG: 5M presale, 5M liquidity, 40M combined ecosystem/staking/collateral reserve. Proposed flat presale $0.12/mFRG; maximum $600,000 gross if all 5M sell. Proceeds: 90% project, 10% founders (half immediate, half over six months). No founder token allocation. No sale or mint authorized. [Current policy](docs/MFRG_50M_CITY_TOKENOMICS.md) · [Discover Your City](docs/discover-your-city.html). Historical 500M figures below are superseded and must not be used for deployment.
+**Updated November 1, 2026. Order: native FRG → governance procedures → optional mFRG → future ecosystem and privacy upgrades.** Proposed features and dates are not guaranteed. Native mainnet release and mFRG distribution remain unauthorized until required gates are met.
 
+## Phase 1 — Verify native FRG mainnet and mining
+- Resolve genesis-output unspendability, frozen consensus identity, RandomX/LWMA90 verification and cross-platform reproducible builds. Use P2P 39480, RPC 39481, ZMQ 39482.
+- Test Windows/Android wallet-miner, accepted native solo and pool shares/blocks, payouts, chain maturity, explorer and Oracle monitoring.
+- Native FRG: 50M primary-emission reference (not a hard cap), 0.20 FRG perpetual block tail; mining rewards accrue to miners. Official pool fee: planned 1% on eligible pooled rewards.
+- Gate: independently reviewed, repeatable release and end-to-end mining evidence before public launch.
 
-> **Adopted mFRG pilot sale planning figures (October 28, 2026):** 5M mFRG in five equal rounds at $0.08/$0.10/$0.12/$0.14/$0.16, yielding a **maximum $600,000 gross** if fully subscribed. Intended 80% project / 20% founder proceeds allocation ($120,000 founder total, half immediately and half over six months). These figures are **not an active offering, promised proceeds or permission to receive funds**. See [fixed pilot pricing and all nine token allocations](PILOT_PRICE_AND_USE_OF_PROCEEDS.md).
+## Phase 2 — Determine and publish governance procedures before mFRG
+- Seek FRG miner, contributor and community input; determine who may submit proposals, eligibility, discussion periods, vote/consent/decision rules, appeals and amendment procedures.
+- Set founder responsibilities, treasury authorization and signer thresholds, conflict disclosures, security controls, records retention and emergency procedures.
+- Publish the final, approved governance framework and its effective date. No fixed chamber, mandatory stake or binding ballot structure is currently ratified.
+- **Gate: governance procedures must be determined and published before mFRG is introduced, promoted, minted, sold, distributed or given treasury authority.**
 
+## Phase 3 — Optional separate miniFORGE (mFRG)
+- Only after Phase 2, consider the current **50,000,000 six-decimal standard Solana SPL mFRG** proposal: 5M initial presale, 5M future liquidity, 40M combined ecosystem/staking/collateral reserve.
+- Proposed flat presale price is $0.12/mFRG; maximum $600,000 gross if all 5M sell. Proposed proceeds 90% project / 10% founder, half founder share immediate and half over six months. No separate founder token allocation under the current proposal.
+- Require independent legal, custody, payment-verification, supply/account reconciliation and security review before any authorization. The earlier 500M allocations, five-round price ladder and 80/20 proceeds split are superseded.
+- No sale, mint, bridge, staking, backing, price guarantee or token rights are active.
 
-**Current milestone (October 28): mFRG pre-deployment readiness.** No Solana mainnet mFRG mint exists yet. Prepare and audit fixed-supply issuance, nine treasuries, signer controls, reproducible simulations and explicit deployment approval before any token transaction. Steps 17–34 are offline and opt-in evidence tooling, not deployed mint verification. [Unified project status](docs/project-status.html).
+## Phase 4 — Governed treasuries and ecosystem
+- Evaluate optional liquidity, staking, collateral, community grants and game integration under approved governance and independently audited custody, signing and release controls.
 
+## Phase 5 — Native FCMP++ / CARROT privacy research
+- Research full-chain membership proofs, curve-tree databases, generalized Bulletproofs, CARROT addressing, wallet/mempool/consensus validation and deep-reorg performance.
+- Prefer a reviewed supply-conserving in-place hard fork if safe; independent cryptographic audit and explicit activation approval are required.
 
-**Updated October 27, 2026. Proposed future upgrades and their timing are not guaranteed.**
-[Current native mainnet release status](docs/CURRENT_MAINNET.md) | [miniFORGE sale information](docs/miniforge-sale.html) | [mFRG treasury controls](docs/MINIFORGE_SPL_TREASURIES.md)
+## Phase 6 — Other L1, L2 and potential L3 services
+- Native atomic swaps, MPC/TSS settlement, L2 secure payments and L3 merchant, marketplace and selective-disclosure systems remain separate review-gated proposals.
 
-ForgeCoin comprises **two separate assets**: native Proof-of-Work ForgeCoin (FRG), and a proposed standard Solana SPL miniFORGE token (mFRG). mFRG is **not** a 1:1 representation of native FRG, cannot be substituted for native FRG and has no guaranteed conversion or reserve claim. A fixed mFRG price, market listing, staking return or entitlement is not established.
+## Public statistics and accountability
+- Provide read-only pool statistics by public FRG payout address **without accounts or logins**. Personal payout changes require secure independent wallet-control authorization.
+- Display only verified native-chain hashrates, pool/solo miner and worker counts, and opt-in leaderboard records. Unsupported figures remain Unavailable.
+- Homepage visitor and pageview counters are third-party estimates, not blockchain data.
 
-## Phase 1 - Independent native FRG mainnet and mining tools
-
-- Native FRG primary-emission reference: **50 million FRG** (NOT a hard supply ceiling), with **0.20 FRG per block** perpetual tail. Native block rewards are allocated to Proof-of-Work miners, subject to consensus maturity; no founder/team ICO premine or governance reward diversion is authorized.
-- The October 26, 2026 mainnet identity is frozen but public launch remains **unauthorized** pending proof of genesis-output treatment, signed-source consensus agreement and adversarial reviews. The initial difficulty is 500,000 with a 400,000 floor and staged LWMA90 activation from height 16 in the frozen specification; validate actual implementation and Block 1 before activating.
-- Release and validate Windows desktop miner/wallet, Android interface as verified, local secure node/RPC, native RandomX job acceptance, verified solo/pool blocks, spendable matured rewards, restoration and cross-platform reproducibility. A preview GUI does not establish a live mainnet mining service.
-- Operate a fully verified block explorer, official pool backend, network and pool statistics pages, independent worker dashboard and Pool Observer. Pools must perform real RandomX share verification, immutable accounting and reorg-safe mature payouts. The planned operator fee is **1% on eligible pooled rewards** only; solo mining is fee-independent.
-- On Oracle, protect daemon/wallet RPC and payout signer, publish only tested HTTPS/web resources, secure ingress, backup, monitoring and rollback, and confirm actual network identity before advertising mining endpoints or live statistics.
-
-## Phase 2 - miniFORGE 500M SPL policy and controlled distribution
-
-- Adopt a proposed **500,000,000 mFRG fixed-supply policy** with standard SPL Token, 6 decimals, independent of the native FRG chain. The historical devnet mint does not confirm a mainnet issuance.
-- Verify mint identity and authority before creating/funding nine non-overlapping accounts. Revoke mint authority **only after** final supply reconciliation; if the legacy mint cannot be expanded, transparently review migration.
-- Disclose **founder beneficial ownership of 30M (6%)**: 15M immediately unlocked and an additional 15M (labeled team) with 625k monthly vesting in months 13–36.
-- Reserve 50M (10%) for staged **crypto-for-mFRG** exchanges (5M pilot, 15M additional year 1, 20M years 2–3, 10M years 4–10). No offered price, purchase or mainnet token delivery until legal, custody, contract and settlement gates pass.
-- Keep all website previews non-transactional. See [full policy](docs/MFRG_50M_CITY_TOKENOMICS.md), [sale specification](docs/MINIFORGE_SALE_MECHANISM.md).
-
-## Phase 3 - Separate treasuries, grants, staking and liquidity (all gated)
-
-- 100M long-term operations, 100M adoption, 85M finite staking/participation rewards, 60M liquidity and 65M engineering/security; 10M emergency. Maximum release policy and quarterly budget approval detailed in the lifetime plan.
-- Stage independent custody and multisig approvals, founder related-party disclosure and proof of vesting; publicly report all allocated balances and crypto received from distributions.
-- Proposed stake locks: 30, 90, 180, 365 days with 1.00, 1.10, 1.20, 1.40 weighting, weekly claims and seven-day cooldown. **Not live or guaranteed; staking cannot secure FRG PoW**.
-- Liquidity pools require paired USDC/SOL assets, independent reviews and market-risk reporting. No fixed FRG peg, native private Solana transactions or guaranteed token returns. Burns, if any, require explicit fee-policy implementation.
-
-## Phase 4 - FCMP++ and CARROT native protocol upgrades
-
-- Intend to implement FCMP++ full-chain membership proofs, curve-tree commitment/index databases with deterministic roots, generalized Bulletproof components, CARROT addressing and wallet recovery, mempool validation and legacy-output compatibility.
-- Prefer a **reviewed in-place hard fork** preserving existing native FRG supply and spendability if feasible. A separate successor network and opt-in supply-conserving migration are fallback research, not an approved chain replacement.
-- Run a separate adversarial stressnet, cross-platform synchronization, deep reorganization and invalid-proof suites; obtain independent cryptographic/security audits before announcing an activation height.
-
-## Phase 5 - Additional L1, L2 and possible L3 systems
-
-- **L1:** native atomic swaps, independently secured collateralized stable-denominated systems and multi-party TSS/MPC controlled large-trade settlement. Transparent public-chain settlement is not intrinsically private; no venue, rate or product is live.
-- **L2:** authenticated payment channels, batching, secure exit/dispute procedures, data availability and privacy-aware liquidity routes.
-- **L3:** potential private-market applications, auctions, merchant payments, selective disclosure, private execution and permissioned integrations. These require additional protocols beyond FCMP++/CARROT and independent legal/security review.
-
-## Observability and website release practices
-
-Pool network statistics, pool accounting data, worker dashboards and mining calculators are different sources. Never represent estimates, historical chains, fake online worker counts or stale API responses as current new-mainnet measurements. An address alone is insufficient authorization to change native FRG payout destinations. Pool credentials and signed payout changes require independent native-wallet ownership verification and a secure backend.
-
-## Sources and current status
-
-- [Native mainnet identity and blockers](docs/CURRENT_MAINNET.md)
-- [Native technical whitepaper, including separate mFRG economics](docs/WHITEPAPER.md)
-- [miniFORGE sale-information and allocation page](docs/miniforge-sale.html)
-- [mFRG 500M nine-category lifetime treasury plan](docs/MINIFORGE_SPL_TREASURIES.md)
-- [Sales engineering gates](docs/MINIFORGE_SALE_MECHANISM.md)
-- [Provisional governance principles](governance-charter.md)
-- [FCMP++/CARROT and L1–L3 architecture](docs/SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md)
-- [Pool worker accounts and statistics](docs/POOL_ACCOUNT_STATISTICS_AND_SECURITY.md)
-
-**No document here authorizes native FRG mining release, mainnet mFRG issuance, token sales, funds collection, advertised staking returns or treasury spending.**
+[Current mainnet release gates](docs/CURRENT_MAINNET.md) · [Governance charter](governance-charter.md) · [Pool overview](docs/pool.html) · [mFRG status](docs/miniforge-sale.html) · [Privacy roadmap](docs/SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md)

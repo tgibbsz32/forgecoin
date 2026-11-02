@@ -53,11 +53,13 @@
 
 **Done when:** a miner can independently verify accepted blocks, allocations and matured payouts from an audited service. **State:** synthetic research only; public pool unavailable.
 
-## Next-stage mFRG token, treasuries and governance
+## Milestone E — Determine and approve FRG governance procedures before mFRG
 
-miniFORGE (mFRG) is a separate standard Solana SPL asset with a revised **500M target fixed supply**: **50M staged fundraising inventory** (including an initial 5M pilot), **100M operations, 100M grants, 85M staking incentives, 60M liquidity, 65M engineering/security, 15M founder immediately unlocked, 15M founder-beneficial team-labeled vesting in months 13–36, and 10M emergency**. All nine buckets are distinct and the two founder buckets belong to the same person. No token sale, mainnet mint verification or staking is active. See [lifetime tokenomics](../MFRG_50M_CITY_TOKENOMICS.md).
+Develop proposal submission, member/miner participation, eligibility, decision authorization, conflicts, appeals, treasury control, security, transparency and amendment rules with community feedback. Publish approved procedures **before mFRG is introduced, minted, sold, or distributed**. No binding framework has yet been ratified. See [governance charter](../../governance-charter.md).
 
-The project intends to choose and publish the governance framework **before any authorized mFRG distribution begins**; no particular number of representatives, miner bond, mFRG voting scheme or quorum is ratified. Older wrapped-FRG and fixed-seat roadmaps are superseded. See [technical roadmap](../../ROADMAP.md), [mFRG sale page](../miniforge-sale.html), [treasury specification](../MINIFORGE_SPL_TREASURIES.md) and [governance design](../../governance-charter.md).
+## Milestone F — Optional mFRG after governance
+
+Current separate 50M SPL mFRG proposal: 5M prospective presale, 5M liquidity and 40M ecosystem/staking/collateral reserve. Proposed $0.12/mFRG price and 90/10 project/founder proceeds are planning terms only. Previous 500M and five-round proposals are superseded. No sale/mint is authorized. See [roadmap](../../ROADMAP.md) and [current token proposal](../MFRG_50M_CITY_TOKENOMICS.md).
 
 ## Intended future L1, L2 and possible L3 architecture
 

@@ -28,7 +28,7 @@ The design uses a two-minute block target, proposed **500,000** starting difficu
 
 ### How does miniFORGE (mFRG) relate to native FRG?
 
-Native FRG is an independent, privacy-focused Proof-of-Work network. The **separate** miniFORGE (mFRG) Solana SPL token has a revised **500M intended fixed supply** across nine categories: 50M staged cryptocurrency fundraising, 100M operations, 100M ecosystem, 85M finite staking rewards, 60M liquidity, 65M engineering/security, **15M immediately unlocked founder allocation** and **15M team-labeled allocation vested in months 13–36 for the same founder**, and 10M emergency. No sale, mainnet mint verification, liquidity or staking is active. See [lifetime policy](../MFRG_LIFETIME_TOKENOMICS_500M.md).
+Native FRG is an independent, privacy-focused Proof-of-Work network. The **separate** miniFORGE (mFRG) Solana SPL token has a revised **500M intended fixed supply** across nine categories: 50M staged cryptocurrency fundraising, 100M operations, 100M ecosystem, 85M finite staking rewards, 60M liquidity, 65M engineering/security, **15M immediately unlocked founder allocation** and **15M team-labeled allocation vested in months 13–36 for the same founder**, and 10M emergency. No sale, mainnet mint verification, liquidity or staking is active. See [lifetime policy](../MFRG_50M_CITY_TOKENOMICS.md).
 
 ### Has a governance system been selected?
 

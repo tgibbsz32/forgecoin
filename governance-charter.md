@@ -10,7 +10,7 @@ The project intends to select and publish a governance solution **before any aut
 ## Scope: two separate assets
 
 - **Native ForgeCoin (FRG)** is issued via PoW consensus (50M primary-emission reference, not cap; 0.20 FRG tail). Full node operators voluntarily adopt consensus releases. No project committee, mFRG tokenholder or hosted voting API can rewrite consensus automatically.
-- **miniFORGE (mFRG)** is a separate planned 500M standard Solana SPL token, allocated across nine categories (50M staged cryptocurrency fundraising, 100M operations, 100M adoption, 85M finite staking rewards, 60M liquidity, 65M engineering/security, 15M founder immediately unlocked, 15M founder-beneficial team-labeled vesting in months 13–36, 10M emergency). Both 3% buckets benefit the **same founder**. These are proposed allocations, not verified funds, staking, sale or voting rights. See [full plan](docs/MFRG_LIFETIME_TOKENOMICS_500M.md).
+- **miniFORGE (mFRG)** is a separate planned 500M standard Solana SPL token, allocated across nine categories (50M staged cryptocurrency fundraising, 100M operations, 100M adoption, 85M finite staking rewards, 60M liquidity, 65M engineering/security, 15M founder immediately unlocked, 15M founder-beneficial team-labeled vesting in months 13–36, 10M emergency). Both 3% buckets benefit the **same founder**. These are proposed allocations, not verified funds, staking, sale or voting rights. See [full plan](docs/MFRG_50M_CITY_TOKENOMICS.md).
 - The project-managed **1% eligible-reward mining-pool fee wallet** is separate from any governance/community treasury, the mFRG sale assets, and the eventual mFRG reserves. No automatic assignment of pool fees to governance is enacted.
 
 ## Principles that any future solution should address

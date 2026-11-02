@@ -13,11 +13,13 @@ Updated October 26, 2026. **Frozen identity; public launch is not authorized.** 
 | Network UUID | `bd936359-09e4-4fdb-8ec0-12fa9d6ef090` |
 | Standard / integrated / subaddress prefixes | 190 / 191 / 192 |
 | P2P / daemon RPC / ZMQ RPC | 39480 / 39481 / 39482 |
-| Desktop wallet RPC | Local protected service; distinct from ZMQ (Windows Forms uses 39483) |
+| Desktop local services | Windows Forms wallet RPC **127.0.0.1:39484**; XMRig statistics API **127.0.0.1:39483**; Tauri wallet RPC uses a separate dynamic localhost port. Neither is native ZMQ. |
 | Protocol | v1 genesis, v19 from height 1 |
 | Initial difficulty / minimum | 500,000 / 400,000 |
 | Difficulty schedule | Fixed startup through height 15; progressive LWMA90 from height 16 |
 | Coinbase maturity | 60 blocks |
+
+For all selected network-service defaults, local-only exposure rules, retired endpoints and staged deployment gates, use the [network port contract](NETWORK_PORTS.md). **The presence of configured ports is not evidence of live mainnet services.**
 
 ## Tokenomics
 

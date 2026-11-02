@@ -54,6 +54,41 @@ python -m unittest discover -s tools -p 'test_forgecoin_chain_risk.py'
 - Exit 0 = observations returned with no alarms (NOT chain finality or evidence of safety); exit 1 = alert(s); exit 2 = unverified/error. First execution establishes an observation baseline. State file is deliberately local and contains no secrets. Observing only a bounded header window cannot prove there were no prior deep reorganizations.
 - The watcher is **not scheduled, deployed, integrated with pool payouts or wired to alert delivery**. Until live release gates are satisfied, use only disposable/authorized test nodes. Independently authenticated observations and response playbooks are still outstanding.
 
+## Research addendum — actual Tari RandomXM difficulty and source compatibility (2026-11-02)
+
+**Conclusion: FRG parent → Tari auxiliary is a plausible solo-miner adapter, not yet validated, and likely poor standalone economics; it does not increase FRG's proof-of-work security.** Monero parent → FRG auxiliary is a separate, much larger consensus/hard-fork project.
+
+### Evidence for parent compatibility and necessary edits
+
+- Tari's maintained Rust proxy [`block_template_manager.rs`](https://github.com/tari-project/tari/blob/development/applications/minotari_merge_mining_proxy/src/block_template_manager.rs) and [`inner.rs`](https://github.com/tari-project/tari/blob/development/applications/minotari_merge_mining_proxy/src/proxy/inner.rs) request `getblocktemplate`, require `result.difficulty`, `blocktemplate_blob`, `blockhashing_blob`, `seed_hash`, and rewrite the Monero-format coinbase to carry Tari's auxiliary Merkle commitment. The proxy appends **35 bytes** of placeholder data to `extra_nonce` or `reserve_size` to preserve accurate block-weight/reward accounting, then shifts `reserved_offset` by 35 bytes. It caches the Tari template and examines the submitted block. The selected job difficulty is `min(parent_difficulty, tari_difficulty)`.
+- FRG's inherited Monero C++ `src/rpc/core_rpc_server.cpp::on_getblocktemplate` exposes these four fields and `reserved_offset`, permits up to 255 bytes of `reserve_size` or 255 bytes of `extra_nonce`, and constructs the standard RandomX hashing blob. This is **source-level overlap**, not a proof the frozen new-mainnet binary accepts a tagged block or that Tari would validate it.
+- Explicitly disable the proxy default dynamic `monero.fail` discovery and configure a controlled local FRG daemon endpoint. The default discovery points to **real Monero nodes**, not FRG; never accidentally mine or route reward templates to untrusted remote Monero peers.
+- Tari's `verify_header_at_rules_height` verifies the auxiliary hash, parent coinbase tag, coinbase/Merkle proof and achieved RandomX work independently without querying Monero. Current header validators also enforce seed reuse-age limits. Whether FRG's actual RandomX seed lifecycle, coinbase serialization, and reset/activation heights satisfy all constraints must be demonstrated on an isolated patched Tari node; do not assume arbitrary forks work.
+- Solo XMRig daemon-mode through a modified proxy is distinct from official FRG Stratum pool integration. The C pool needs coinbase tag/template construction per job, candidate share routing, duplicate/stale protection, correct 1% FRG fee accounting, independently validated Tari rewards, independent XTM wallet/payment accounting and pool reward disclosure.
+
+### Quantitative practicality
+
+- [Tari RFC-0131](https://rfc.tari.com/RFC-0131_Mining) and [network tokenomics](https://tari.com/tokenomics) use four algorithm lanes with a 120-second combined target and 480-second RandomXM target; each lane targets 25% of block rewards. The current RandomXM lane has much more external mining power than the prospective FRG launch network.
+- The independently tracked [Tari RandomXM network statistics](https://coin-miners.info/coin/minotari-tari-randomx) show roughly **3–4 GH/s** and **1.6–1.8 trillion difficulty** in recent snapshots around the first days of November 2026. Those readings are volatile, externally estimated and can drift.
+- For an **illustrative** 6,500 H/s continuous eligible miner and 1.6T difficulty, expected waiting time for **one solo Tari RandomXM block** is `1.6e12 / 6500 = 246,153,846 seconds`, or **7.8 years**, with about **1.05% chance of at least one block in 30 days** under a stationary Poisson model. This is not a forecast or a payout estimate. At 500,000 FRG initial difficulty a valid FRG block will be far more common than a valid Tari RandomXM block.
+- Pool participation can distribute small fractions of jointly mined XTM block rewards, but **FRG-origin mining work is not automatically credited by existing Monero/Tari pools**; payout accounting must be deliberately supported, and fees may outweigh small ancillary rewards. There is no 51% defense from the FRG-parent direction.
+
+### Security and version choice
+
+- [Critical Tari RandomXM merge-mining proof-forgery advisory GHSA-jm73-2949-8jcc](https://github.com/tari-project/tari/security/advisories/GHSA-jm73-2949-8jcc) published 2026-09-22; affected <=v5.7.0-pre.9, fixed in v5.7.0-pre.10. It required both proof-verifier and merge-mining proxy upgrades, not a config toggle. Do **not** use earlier examples or insecure legacy proof structures.
+- As of this research the latest GitHub non-prerelease release observed is [v6.2.0](https://github.com/tari-project/tari/releases/tag/v6.2.0) (2026-10-19), with [v6.3.0-pre.2](https://github.com/tari-project/tari/releases/tag/v6.3.0-pre.2) (2026-10-29) available as prerelease. Pin source and binaries to a single reviewed post-fix release. Verify all subsequent upstream advisories before test deployment.
+- Never accept attacker-supplied pre-hashed coinbase/Keccak state, merely trust a proxy's claim of high difficulty, or assume parent network identities confer proof validity. A successful proxy handshake is **not** a valid dual-chain block test.
+
+### Go/no-go ladder
+
+1. **RPC (easy):** archived, non-mining template fixture from frozen FRG selected mainnet; verify reward address, seed, difficulty and reserved offset under 35-byte extension. Result must pass exact field/serialization checks.
+2. **Coinbase (moderate):** patched proxy produces transformed FRG template, validates 35-byte tag and canonical parent hashing blob; FRG's native template reward calculation survives.
+3. **Dual proof (hard):** deterministic low-difficulty *isolated Tari* network (not production Tari) confirms valid FRG-parent RandomX proof with patched Tari, and both nodes accept their respective blocks. Negative cases reject corrupted tag, stale seed, wrong target, altered parent, duplicate and orphan.
+4. **Operational integration (hard):** real official FRG Stratum share/solo boundary, pool reward settlement/fee separation and XTM wallet/accounting on disposable networks; no live payouts. Review the actual economic value before adding UX switches.
+5. **Security path:** independently assess a future Monero→FRG AuxPoW fork only after mainnet launch gates and security governance; never market FRG→Tari as 51%-resistant.
+
+**Non-consensus research only:** no change to the frozen genesis, difficulty/LWMA policy, RandomX rules, network ports, mainnet launch authorization or Oracle service.
+
 ## Experiment matrix before accepting FRG/Tari integration
 
 - **FRG parent chain validity:** produce real isolated FRG block templates with coinbase extra commitment, prove both unmodified and modified parent blocks accepted under frozen selected FRG rules, and test rejection of malformed extra fields.

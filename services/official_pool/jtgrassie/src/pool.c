@@ -71,6 +71,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frg_pplns_accounting.h"
 #include "frg_canonical_headers.h"
 #include "frg_credited_history_audit.h"
+#include "frg_credited_ledger_scan.h"
 #include "frg_reconcile_policy.h"
 #include "frg_accounting_quarantine.h"
 #include "forkoff.h"
@@ -292,6 +293,12 @@ typedef struct block_t
     uint64_t reward;
     time_t timestamp;
 } block_t;
+_Static_assert(sizeof(block_t) == sizeof(frg_history_saved_t),
+               "FRG saved history must match actual native pool block layout");
+_Static_assert(offsetof(block_t, timestamp) == offsetof(frg_history_saved_t, timestamp),
+               "FRG saved history timestamp layout mismatch");
+_Static_assert(offsetof(block_t, reward) == offsetof(frg_history_saved_t, reward),
+               "FRG saved history reward layout mismatch");
 
 typedef struct payment_t
 {
@@ -2036,51 +2043,16 @@ static int
 frg_history_select(block_t *selected, bool *has_selection, uint64_t *total)
 {
     if (!selected || !has_selection || !total) return EINVAL;
-    *has_selection = false;
-    *total = 0;
     MDB_txn *txn = NULL;
-    MDB_cursor *cursor = NULL;
     int rc = pdb_txn_begin(env, NULL, MDB_RDONLY, &txn);
     if (rc) return rc;
-    rc = mdb_cursor_open(txn, db_blocks, &cursor);
-    if (rc) { mdb_txn_abort(txn); return rc; }
-    MDB_cursor_op op = MDB_FIRST;
-    MDB_val key = {0, NULL}, value = {0, NULL};
-    while ((rc = mdb_cursor_get(cursor, &key, &value, op)) == 0)
-    {
-        op = MDB_NEXT;
-        if (key.mv_size != sizeof(uint64_t) ||
-            value.mv_size != sizeof(block_t) || !key.mv_data || !value.mv_data)
-        {
-            rc = EPROTO;
-            break;
-        }
-        block_t item = {0};
-        uint64_t key_height = 0;
-        memcpy(&item, value.mv_data, sizeof(item));
-        memcpy(&key_height, key.mv_data, sizeof(key_height));
-        if (item.height != key_height || item.status > BLOCK_ORPHANED ||
-            !frg_fixed_hash64(item.hash) || !frg_fixed_hash64(item.prev_hash))
-        {
-            rc = EPROTO;
-            break;
-        }
-        if (item.status != BLOCK_UNLOCKED) continue;
-        if (!item.difficulty || !item.reward || *total == UINT64_MAX)
-        {
-            rc = EPROTO;
-            break;
-        }
-        if (*total == frg_history_cursor)
-        {
-            *selected = item;
-            *has_selection = true;
-        }
-        ++*total;
-    }
-    mdb_cursor_close(cursor);
+    frg_history_saved_t saved = {0};
+    rc = frg_history_scan_credited(txn, db_blocks, frg_history_cursor,
+                                   &saved, has_selection, total);
+    if (!rc && *has_selection)
+        memcpy(selected, &saved, sizeof(*selected));
     mdb_txn_abort(txn);
-    return rc == MDB_NOTFOUND ? 0 : rc;
+    return rc;
 }
 
 static void

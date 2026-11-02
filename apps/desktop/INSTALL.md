@@ -2,7 +2,7 @@ ForgeCoin private prelaunch desktop — October 26, 2026
 
 Current specification: https://tgibbsz32.github.io/forgecoin/current-mainnet.html
 
-The selected mainnet is frozen and NOT LAUNCHED. Nonce20261026; ports39480/39481/39482; standard/integrated/subaddress prefixes190/191/192. Wallet RPC is distinct and protected (Windows Forms uses localhost39483). Never expose wallet RPC or unrestricted daemon RPC publicly.
+The selected mainnet is frozen and NOT LAUNCHED. Nonce20261026; ports39480/39481/39482; standard/integrated/subaddress prefixes190/191/192. Wallet RPC is distinct and protected (Windows Forms wallet RPC uses localhost39484; local XMRig stats use 39483). Never expose wallet RPC or unrestricted daemon RPC publicly.
 
 Main-branch desktop source is the legacy implementation. Matching private prelaunch Windows Forms source and binaries are tracked separately in draft PR #111. Do not use legacy packages or retired public peers for this chain. Solo/pool mining and sending remain locked in the private new-mainnet GUI. There is no approved public peer, pool, installer or download for launch.
 

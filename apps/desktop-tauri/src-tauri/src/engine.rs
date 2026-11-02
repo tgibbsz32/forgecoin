@@ -21,8 +21,8 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            daemon_url: "http://127.0.0.1:19481".into(),
-            peer: "150.136.209.227:19480".into(),
+            daemon_url: "http://127.0.0.1:39481".into(),
+            peer: String::new(),
             xmrig_path: String::new(),
             pool: String::new(),
             tls: true,
@@ -129,6 +129,7 @@ fn validate_settings(s: &Settings) -> Result<(), String> {
         let peer = reqwest::Url::parse(&format!("tcp://{}", s.peer)).map_err(error)?;
         if peer.host_str().is_none()
             || peer.port().is_none()
+            || peer.port() == Some(19480)
             || !peer.username().is_empty()
             || peer.password().is_some()
             || !matches!(peer.path(), "" | "/")
@@ -148,6 +149,9 @@ fn validate_settings(s: &Settings) -> Result<(), String> {
         || u.path() != "/"
     {
         return Err("Node must be an HTTP(S) host and port without a path or credentials.".into());
+    }
+    if u.port() == Some(19481) {
+        return Err("Retired ForgeCoin daemon RPC port 19481 is not valid for the selected chain.".into());
     }
     if s.threads == 0 || s.threads > 256 {
         return Err("Choose 1–256 CPU threads.".into());
@@ -185,10 +189,24 @@ impl Engine {
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Settings::default(),
             Err(e) => return Err(error(e)),
         };
-        if settings.peer.trim().is_empty() {
-            settings.peer = Settings::default().peer;
+        // Old installations must not silently keep using the retired
+        // prelaunch Oracle peer or the superseded daemon-RPC port.
+        let mut migrated = false;
+        if settings.peer.trim().ends_with(":19480") {
+            settings.peer.clear();
+            migrated = true;
+        }
+        if settings.daemon_url.trim_end_matches('/') == "http://127.0.0.1:19481" {
+            settings.daemon_url = Settings::default().daemon_url;
+            migrated = true;
         }
         validate_settings(&settings)?;
+        if migrated {
+            fs::write(
+                dir.join("settings.json"),
+                serde_json::to_vec_pretty(&settings).map_err(error)?,
+            ).map_err(error)?;
+        }
         Ok(Self {
             _lock: instance_lock,
             dir,
@@ -466,13 +484,13 @@ impl Engine {
                         .arg(self.dir.join("chain"))
                         .args([
                             "--p2p-bind-ip",
-                            "0.0.0.0",
+                            "127.0.0.1",
                             "--p2p-bind-port",
-                            "19480",
+                            "39480",
                             "--rpc-bind-ip",
                             "127.0.0.1",
                             "--rpc-bind-port",
-                            "19481",
+                            "39481",
                             "--no-igd",
                             "--add-exclusive-node",
                             &self.settings.peer,

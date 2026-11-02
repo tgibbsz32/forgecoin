@@ -1,3 +1,9 @@
+# HISTORICAL DOCUMENT — SUPERSEDED; NOT CURRENT TOKENOMICS
+
+**Do not use these 500M supply figures, tiered prices, founder token allocations or 80/20 proceeds for any sale, mint, checkout, treasury transaction or marketing.** The adopted planning revision is [50M mFRG and CITY utility](MFRG_50M_CITY_TOKENOMICS.md): 5M presale at proposed $0.12 flat price, 5M liquidity, 40M combined ecosystem reserve; proposed gross proceeds 90% project / 10% founders (half immediately and half over six months). The following is preserved solely as historical decision and engineering context.
+
+---
+
 # miniFORGE (mFRG) — lifetime tokenomics, treasury and release policy
 
 > **Adopted mFRG pilot sale planning figures (October 28, 2026):** 5M mFRG in five equal rounds at $0.08/$0.10/$0.12/$0.14/$0.16, yielding a **maximum $600,000 gross** if fully subscribed. Intended 80% project / 20% founder proceeds allocation ($120,000 founder total, half immediately and half over six months). These figures are **not an active offering, promised proceeds or permission to receive funds**. See [fixed pilot pricing and all nine token allocations](MFRG_PILOT_PRICE_AND_USE_OF_PROCEEDS.md).

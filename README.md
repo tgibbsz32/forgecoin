@@ -2,6 +2,8 @@
 
 > **Current mFRG policy (November 2026):** 50,000,000 total mFRG: 5M presale, 5M liquidity, 40M combined ecosystem/staking/collateral reserve. Proposed flat presale $0.12/mFRG; maximum $600,000 gross if all 5M sell. Proceeds: 90% project, 10% founders (half immediate, half over six months). No founder token allocation. No sale or mint authorized. [Current policy](docs/MFRG_50M_CITY_TOKENOMICS.md) · [Discover Your City](docs/discover-your-city.html).
 
+[Current project status](docs/project-status.html) · [Security and future Tari/XMR merged-mining proposals](docs/SECURITY_51_PERCENT_AND_TARI_MERGE_MINING_2026-11-02.md).
+
 > **Current mainnet specification:** [October 26 frozen identity, tokenomics and release status](docs/CURRENT_MAINNET.md). Public launch is not authorized.
 
 ![ForgeCoin mark](docs/images/forgecoin-logo.png)

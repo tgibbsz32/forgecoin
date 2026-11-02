@@ -91,3 +91,9 @@ The updated `tools/smoke_frozen_prelaunch_daemon.py` now has a third independent
 Read-only QA regression `tools/inspect_local_full_block_qa.py` was also repaired: an inner `import sys` shadowed module-level `sys` before the daemon could start. After removing it, the historical binary's read-only RPC inspection returned the original height-1 block hash, difficulty 500000, reward 2384185222 atomic units, and succeeded with `ReadOnlyRPCVerifier` against the native node (no wallet RPC, mining, or payment).
 
 At the time this gate was authored, **9 mainnet source/fixture tests, 24 pool source tests, 45 settlement tests and Python syntax checks passed locally.** The new height-2 database rejection requires independent GitHub CI runtime confirmation before claiming an acceptance pass. This test does not establish genesis ring-spend rejection, multi-node reorg agreement, mature pool payouts, or release authorization.
+
+## Genesis-output provenance against native LMDB (read-only QA)
+
+The existing historical Windows daemon verifier was extended to call its native `/get_outs` JSON RPC for the genesis output amount `1192092895` atomic FRG at output index zero. The returned public output record reported `height=0`, verifying that the database's `output_data_t.height` field uses the intended height-zero value. The verifier also passed its independent height-1 block/difficulty/hash inspection and read-only pool canonicality observer. No wallet key, mining action, publicly exposed port, or production data directory was used.
+
+This provides concrete provenance for the proposed mainnet `forgecoin_prelaunch::output_allowed(mainnet, creation_height)` exclusion in `scan_outputkeys_for_indexes`. It does NOT constitute an adversarial spend proof; independent crafted ring/input validation, bypass-path audit and reorg tests remain required before authorizing launch.

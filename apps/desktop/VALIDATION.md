@@ -10,7 +10,7 @@
 - Offline bootstrap mode also mined with zero peers: `start_mining` returned `OK`, one RandomX thread became active at approximately 226 H/s, and `stop_mining` returned `OK`.
 - The packaged wallet RPC opened a ForgeCoin wallet using 8-decimal precision, returned a ForgeCoin address beginning `GAcHPyLxjr77`, and returned its balance.
 - Receive-address generation created subaddress index 1, address listing returned both wallet addresses, and saved-recipient add/list/delete completed successfully.
-- Native RPC services bind only to loopback in the GUI. P2P listens on TCP 19480.
+- Native RPC services bind only to loopback in the GUI. P2P binds 127.0.0.1:39480; daemon RPC is 127.0.0.1:39481, wallet RPC 127.0.0.1:39484, and XMRig statistics API 127.0.0.1:39483. Older release validation was conducted against retired binaries and is not new mainnet acceptance.
 - The Pool Mining section uses official XMRig 6.26.0 for Windows x64. Its release archive matched SHA-256 `bba8097cb37d9b458a1cb1137876b27cde6740d17fe4ccbc086ba07d87d9e147`.
 - XMRig's live API is bound to `127.0.0.1:19483`; its GPLv3 license and matching v6.26.0 source archive are included.
 - Rendered interface previews confirmed the Node, Wallet, Addresses, Explorer, Mining, and Pool Mining actions are visible at the application's default 1040×760 window size.

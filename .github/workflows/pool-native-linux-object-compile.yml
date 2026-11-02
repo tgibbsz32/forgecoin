@@ -1,5 +1,13 @@
 name: ForgeCoin pool native Linux object compile
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/official_pool/**'
+      - 'src/**'
+      - 'external/**'
+      - 'contrib/epee/**'
+      - '.github/workflows/pool-native-linux-object-compile.yml'
   pull_request:
     paths:
       - 'services/official_pool/**'

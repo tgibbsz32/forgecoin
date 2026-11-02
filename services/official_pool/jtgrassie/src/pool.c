@@ -63,6 +63,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "bstack.h"
 #include "util.h"
 #include "xmr.h"
+#include "frg_block_submit_receipt.h"
 #include "log.h"
 #include "webui.h"
 #include "frg_currency.h"
@@ -2097,42 +2098,46 @@ rpc_on_last_block_header(const char* data, rpc_callback_t *callback)
 static void
 rpc_on_block_submitted(const char* data, rpc_callback_t *callback)
 {
-    int rc = 0;
-    json_object *root = json_tokener_parse(data);
-    JSON_GET_OR_WARN(result, root, json_type_object);
-    JSON_GET_OR_WARN(status, result, json_type_string);
-    const char *ss = json_object_get_string(status);
-    json_object *error = NULL;
-    json_object_object_get_ex(root, "error", &error);
-    /*
-      The RPC reports submission as an error even when it's added as
-      an alternative block. Thus, still store it. This doesn't matter
-      as upon payout, blocks are checked whether they are orphaned or not.
-    */
-    if (error)
-    {
-        JSON_GET_OR_WARN(code, error, json_type_object);
-        JSON_GET_OR_WARN(message, error, json_type_string);
-        int ec = json_object_get_int(code);
-        const char *em = json_object_get_string(message);
-        log_warn("Error (%d) with block submission: %s", ec, em);
-    }
-    if (error || !status || strcmp(ss, "OK"))
+    /* Only an error-free daemon acknowledgment may enter the candidate
+     * ledger. Confirmation on the canonical chain is a separate gate;
+     * this callback must never credit mature rewards or pay wallets.
+     */
+    json_object *root = data ? json_tokener_parse(data) : NULL;
+    if (!frg_block_submission_rpc_accepted(root))
     {
         log_warn("Block submission unconfirmed; no accepted-block credit");
+        if (root) json_object_put(root);
+        return;
+    }
+
+    block_t *b = callback ? (block_t*)callback->data : NULL;
+    if (!b)
+    {
+        log_error("Daemon acknowledged block without candidate metadata");
         json_object_put(root);
         return;
     }
+
+    /* A durable candidate record must precede all successful statistics.
+     * Never report a found block if LMDB rejected or lost the write.
+     */
+    int rc = store_block(b->height, b);
+    if (rc)
+    {
+        log_error("Block candidate storage failed; pool stats unchanged: %s",
+                  mdb_strerror(rc));
+        json_object_put(root);
+        return;
+    }
+
     pool_stats.pool_blocks_found++;
-    block_t *b = (block_t*)callback->data;
     if (!upstream_event)
     {
         pool_stats.last_block_found = b->timestamp;
         pool_stats.round_hashes = 0;
     }
-    log_info("Block submitted at height: %"PRIu64, b->height);
-    if ((rc = store_block(b->height, b)))
-        log_warn("Failed to store block: %s", mdb_strerror(rc));
+    log_info("Daemon acknowledged block at height %"PRIu64
+             "; canonical confirmation remains pending", b->height);
     json_object_put(root);
 }
 

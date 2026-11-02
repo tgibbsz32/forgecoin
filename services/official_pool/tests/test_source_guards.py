@@ -93,6 +93,34 @@ class NativeBackendPreflight(unittest.TestCase):
         self.assertIn('"tx_hash_list"', self.pool)
         self.assertIn("No transaction-hash evidence in wallet response", self.pool)
 
+    def test_daemon_block_submission_must_persist_before_reporting(self):
+        callback = self.pool.split(
+            "rpc_on_block_submitted(const char* data, rpc_callback_t *callback)", 1
+        )[1].split("rpc_on_wallet_transferred(", 1)[0]
+        self.assertIn('#include "frg_block_submit_receipt.h"', self.pool)
+        self.assertIn("frg_block_submission_rpc_accepted(root)", callback)
+        self.assertIn('data ? json_tokener_parse(data) : NULL', callback)
+        self.assertIn('callback ? (block_t*)callback->data : NULL', callback)
+        self.assertLess(
+            callback.index("if (!frg_block_submission_rpc_accepted(root))"),
+            callback.index("store_block(b->height, b)"),
+        )
+        self.assertLess(
+            callback.index("if (!b)"), callback.index("store_block(b->height, b)")
+        )
+        self.assertLess(
+            callback.index("store_block(b->height, b)"),
+            callback.index("pool_stats.pool_blocks_found++"),
+        )
+        self.assertIn("if (rc)", callback)
+        self.assertLess(
+            callback.index("if (rc)"),
+            callback.index("pool_stats.pool_blocks_found++"),
+        )
+        self.assertIn("canonical confirmation remains pending", callback)
+        self.assertNotIn("payout_block(", callback)
+        self.assertNotIn("balance_add(", callback)
+
     def test_share_credit_follows_durable_storage(self):
         start = self.pool.index("    if (can_store)")
         end = self.pool.index("    if (retarget_required(client, job))", start)

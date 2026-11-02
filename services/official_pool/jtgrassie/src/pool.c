@@ -68,6 +68,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "webui.h"
 #include "frg_currency.h"
 #include "frg_reward_maturity.h"
+#include "frg_pplns_accounting.h"
 #include "forkoff.h"
 #include "growbag.h"
 #include "uthash.h"
@@ -894,7 +895,15 @@ payout_block(block_t *block, MDB_txn *parent)
     /*
       PPLNS
     */
-    log_info("Payout on block at height: %"PRIu64, block->height);
+    /* Never deduct the mandated 1% fee without a valid destination.
+     * Even the research-only balance ledger must never lose fee atoms.
+     */
+    if (!config.pool_fee_wallet[0])
+    {
+        log_error("Cannot credit mature pool rewards: verified 1%% fee wallet absent");
+        return EINVAL;
+    }
+    log_info("Allocating validated block rewards at height: %"PRIu64, block->height);
     int rc = 0;
     char *err = NULL;
     MDB_txn *txn = NULL;
@@ -940,19 +949,31 @@ payout_block(block_t *block, MDB_txn *parent)
             break;
 
         share_t *share = (share_t*)val.mv_data;
-        uint64_t amount = floor((double)share->difficulty /
-            ((double)block->difficulty * config.share_mul) * block->reward);
-        if (total_paid + amount > block->reward)
-            amount = block->reward - total_paid;
+        uint64_t amount = 0;
+        if (!frg_pplns_share_atomic(share->difficulty, block->difficulty,
+                                   config.share_mul, block->reward,
+                                   total_paid, &amount))
+        {
+            log_error("Invalid PPLNS share allocation (difficulty, multiplier or reward)");
+            mdb_cursor_close(cursor);
+            mdb_txn_abort(txn);
+            return EINVAL;
+        }
+        /* The policy helper caps BEFORE uint64 conversion or addition.
+         * credited_total never exceeds the canonical block's reward.
+         */
         total_paid += amount;
         uint64_t fee = frg_pool_fee_atomic(amount);
         amount -= fee;
-        if (fee > 0 && config.pool_fee_wallet[0])
+        if (fee > 0)
         {
             if ((rc = balance_add(config.pool_fee_wallet, fee, txn)))
             {
                 err = mdb_strerror(rc);
-                log_error("Error adding pool fee balance: %s", err);
+                log_error("Fee ledger credit failed; aborting full allocation: %s", err);
+                mdb_cursor_close(cursor);
+                mdb_txn_abort(txn);
+                return rc;
             }
         }
         if (amount == 0)
@@ -967,6 +988,17 @@ payout_block(block_t *block, MDB_txn *parent)
         }
     }
 
+    /* No shares / incomplete rewards must not mark a candidate as
+     * unlocked: abort ALL pending miner and fee balance credits together.
+     */
+    if (!frg_pplns_fully_accounted(block->reward, total_paid))
+    {
+        log_error("Incomplete PPLNS share allocation: refusing to unlock block");
+        mdb_cursor_close(cursor);
+        mdb_txn_abort(txn);
+        return EPROTO;
+    }
+    mdb_cursor_close(cursor);
     rc = mdb_txn_commit(txn);
     return rc;
 }

@@ -36,6 +36,9 @@ jobs:
           gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
             -o /tmp/frg-maturity-test services/official_pool/tests/test_reward_maturity.c
           /tmp/frg-maturity-test
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
+            -o /tmp/frg-pplns-test services/official_pool/tests/test_pplns_accounting.c -lm
+          /tmp/frg-pplns-test
           bash -n services/official_pool/tools/build-native-static.sh
       - name: Build reviewed ForgeCoin static libraries (no wallet, network or deployment)
         env:

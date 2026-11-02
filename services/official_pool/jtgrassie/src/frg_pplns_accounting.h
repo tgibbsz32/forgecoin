@@ -45,7 +45,7 @@ frg_pplns_share_atomic(uint64_t share_difficulty, uint64_t block_difficulty,
 static inline bool
 frg_pplns_fully_accounted(uint64_t block_reward, uint64_t credited_total)
 {
-    return credited_total == block_reward;
+    return block_reward != UINT64_C(0) && credited_total == block_reward;
 }
 
 #endif

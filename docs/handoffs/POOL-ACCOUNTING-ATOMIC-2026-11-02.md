@@ -15,6 +15,10 @@ the pool, connecting to a wallet, enabling Stratum, spending FRG or changing Ora
 4. The block could be marked `BLOCK_UNLOCKED` even after its share walk ended
    without accounting for the full canonical reward. Some PPLNS rounding
    combinations can leave dust, which needs deliberate future handling.
+5. Four `MDB_CURRENT` block-status updates ignored `mdb_cursor_put` failures.
+   If the nested miner/fee balance transaction succeeded but persisting
+   `BLOCK_UNLOCKED` failed, the parent transaction could still commit credits
+   while leaving a locked candidate eligible for double credit on retry.
 
 ## Changes
 
@@ -27,7 +31,11 @@ A configured and previously validated operator fee wallet is mandatory for
 accounting; failure to credit even one fee immediately aborts the same nested
 LMDB transaction as miner balances. Incomplete reward allocation aborts that
 transaction and returns `EPROTO`, leaving the candidate locked for explicit
-reconciliation. The cursor is closed on all new failure paths and on success.
+reconciliation. Every canonical/orphaned `mdb_cursor_put(MDB_CURRENT)` now
+checks its return status and aborts the **parent** transaction on failure,
+so a nested fee/miner balance credit cannot commit without the
+corresponding unlocked-block status. Zero-reward candidates also fail closed.
+The cursor is closed on all new failure paths and on success.
 
 The fallback is deliberately **fail closed**, not a dust-redistribution algorithm.
 It may defer a previously partly allocated reward until a reviewed exact

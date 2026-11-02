@@ -1070,7 +1070,14 @@ process_blocks(block_t *blocks, size_t count)
                 log_debug("Orphaned block at height: %"PRIu64, ib->height);
                 nb.status |= BLOCK_ORPHANED;
                 MDB_val new_val = {sizeof(block_t), (void*)&nb};
-                mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT);
+                if ((rc = mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT)))
+                {
+                    log_error("Block status ledger write failed; aborting all credits: %s",
+                              mdb_strerror(rc));
+                    mdb_cursor_close(cursor);
+                    mdb_txn_abort(txn);
+                    return rc;
+                }
                 continue;
             }
             if (memcmp(ib->prev_hash, sb->prev_hash, 64))
@@ -1080,7 +1087,14 @@ process_blocks(block_t *blocks, size_t count)
                         "Setting orphaned.\n");
                 nb.status |= BLOCK_ORPHANED;
                 MDB_val new_val = {sizeof(block_t), (void*)&nb};
-                mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT);
+                if ((rc = mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT)))
+                {
+                    log_error("Block status ledger write failed; aborting all credits: %s",
+                              mdb_strerror(rc));
+                    mdb_cursor_close(cursor);
+                    mdb_txn_abort(txn);
+                    return rc;
+                }
                 continue;
             }
             if (ib->status & BLOCK_ORPHANED)
@@ -1088,7 +1102,14 @@ process_blocks(block_t *blocks, size_t count)
                 log_debug("Orphaned block at height: %"PRIu64, ib->height);
                 nb.status |= BLOCK_ORPHANED;
                 MDB_val new_val = {sizeof(block_t), (void*)&nb};
-                mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT);
+                if ((rc = mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT)))
+                {
+                    log_error("Block status ledger write failed; aborting all credits: %s",
+                              mdb_strerror(rc));
+                    mdb_cursor_close(cursor);
+                    mdb_txn_abort(txn);
+                    return rc;
+                }
                 continue;
             }
             nb.status |= BLOCK_UNLOCKED;
@@ -1099,7 +1120,14 @@ process_blocks(block_t *blocks, size_t count)
             {
                 log_debug("Paid out block: %"PRIu64, nb.height);
                 MDB_val new_val = {sizeof(block_t), (void*)&nb};
-                mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT);
+                if ((rc = mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT)))
+                {
+                    log_error("Block status ledger write failed; aborting all credits: %s",
+                              mdb_strerror(rc));
+                    mdb_cursor_close(cursor);
+                    mdb_txn_abort(txn);
+                    return rc;
+                }
             }
             else
                 log_trace("%s", mdb_strerror(rc));

@@ -49,7 +49,7 @@ static void caps_and_bounds(void)
     assert(allocation(0, 1, 2.0, reward, 0) == 0);
     assert(allocation(1, 1, 2.0, 0, 0) == 0);
     assert(allocation(1, 1, 2.0, 100, 100) == 0);
-    assert(frg_pplns_fully_accounted(0, 0));
+    assert(!frg_pplns_fully_accounted(0, 0));
     assert(!frg_pplns_fully_accounted(1, 0));
 }
 

@@ -71,6 +71,27 @@ class NativeBackendPreflight(unittest.TestCase):
         helper = (VENDOR / "src/frg_pplns_accounting.h").read_text(encoding="utf-8")
         self.assertIn("block_reward - credited_so_far", helper)
         self.assertIn("proposed >= (long double)remaining", helper)
+        self.assertIn("block_reward != UINT64_C(0)", helper)
+
+    def test_all_block_status_updates_are_atomic_with_balances(self):
+        reconciliation = self.pool.split("static int\nprocess_blocks(", 1)[1].split(
+            "static void\nupdate_pool_hr(", 1
+        )[0]
+        self.assertEqual(
+            reconciliation.count(
+                "if ((rc = mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT)))"
+            ), 4,
+        )
+        self.assertNotIn(
+            "                mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT);",
+            reconciliation,
+        )
+        self.assertEqual(
+            reconciliation.count("Block status ledger write failed; aborting all credits"),
+            4,
+        )
+        self.assertEqual(reconciliation.count("mdb_txn_abort(txn);"), 5)
+        self.assertIn("return rc;", reconciliation)
 
     def test_miner_balance_uses_8_decimal_integer_json(self):
         self.assertIn('mb / FRG_ATOMIC_UNITS, mb % FRG_ATOMIC_UNITS', self.webui)

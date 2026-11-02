@@ -74,6 +74,55 @@ class ChainRiskTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'frozen ForgeCoin genesis'):
                 m.take_snapshot('http://localhost:39481/json_rpc')
 
+    def test_peer_count_and_sync_warning(self):
+        node = snap(1, 5)
+        node['outbound_peers'] = 1
+        node['synchronized'] = False
+        events, _ = m.assess({'node-a': node}, now=1_000_100)
+        self.assertIn('low_outbound_peer_count', [e['code'] for e in events])
+        self.assertIn('node_not_synchronized', [e['code'] for e in events])
+
+    def test_rpc_peer_count_fails_closed(self):
+        from unittest.mock import patch
+        def fake_rpc(url, method, params=None, timeout=5):
+            if method == 'get_block_header_by_height':
+                genesis = header(0)
+                genesis['hash'] = m.FROZEN_GENESIS_HASH
+                return {'block_header': genesis}
+            if method == 'get_info':
+                return {'outgoing_connections_count': -1, 'synchronized': True}
+            raise AssertionError(method)
+        with patch.object(m, 'rpc', side_effect=fake_rpc):
+            with self.assertRaisesRegex(ValueError, 'outgoing peer count'):
+                m.take_snapshot('http://localhost:39481/json_rpc')
+
+    def test_severe_difficulty_jump_alert_only(self):
+        before = snap(1, 5)
+        after = snap(2, 6)
+        after['tip'] = {**after['tip'], 'difficulty': 2500000}
+        events, _ = m.assess({'a': after}, {'a': before}, now=1_000_100)
+        self.assertIn('difficulty_jump', [event['code'] for event in events])
+
+    def test_history_audit_error_keeps_baseline_unmodified(self):
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from unittest.mock import patch
+        import json
+        with TemporaryDirectory() as d:
+            state = Path(d) / 'state.json'
+            original = {'version': 1, 'nodes': {
+                'http://localhost:39481/json_rpc': {'anchors': {'60': header(60)['hash']}},
+                'http://localhost:39581/json_rpc': {'anchors': {'60': header(60)['hash']}}
+            }}
+            state.write_text(json.dumps(original))
+            with patch.object(m, 'take_snapshot', return_value=snap(500, 563)):
+                with patch.object(m, 'rpc', side_effect=ValueError('historical RPC unreachable')):
+                    code = m.main(['--node', 'http://localhost:39481',
+                                   '--node', 'http://localhost:39581',
+                                   '--state', str(state)])
+            self.assertEqual(code, 2)
+            self.assertEqual(json.loads(state.read_text()), original)
+
     def test_failed_rpc_not_persisted(self):
         from unittest.mock import patch
         from tempfile import TemporaryDirectory

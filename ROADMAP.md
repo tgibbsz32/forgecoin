@@ -28,7 +28,7 @@ ForgeCoin comprises **two separate assets**: native Proof-of-Work ForgeCoin (FRG
 - Verify mint identity and authority before creating/funding nine non-overlapping accounts. Revoke mint authority **only after** final supply reconciliation; if the legacy mint cannot be expanded, transparently review migration.
 - Disclose **founder beneficial ownership of 30M (6%)**: 15M immediately unlocked and an additional 15M (labeled team) with 625k monthly vesting in months 13–36.
 - Reserve 50M (10%) for staged **crypto-for-mFRG** exchanges (5M pilot, 15M additional year 1, 20M years 2–3, 10M years 4–10). No offered price, purchase or mainnet token delivery until legal, custody, contract and settlement gates pass.
-- Keep all website previews non-transactional. See [full policy](docs/MFRG_LIFETIME_TOKENOMICS_500M.md), [sale specification](docs/MINIFORGE_SALE_MECHANISM.md).
+- Keep all website previews non-transactional. See [full policy](docs/MFRG_50M_CITY_TOKENOMICS.md), [sale specification](docs/MINIFORGE_SALE_MECHANISM.md).
 
 ## Phase 3 - Separate treasuries, grants, staking and liquidity (all gated)
 

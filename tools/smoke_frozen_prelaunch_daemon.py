@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -83,6 +84,23 @@ def run(binary: Path, manifest: dict, max_seconds: int) -> None:
     genesis = "4bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c"
     if manifest.get("genesis_hash") != genesis:
         raise AssertionError("Frozen genesis hash mismatch")
+
+    # Public serialized block previously accepted by an isolated pre-guard
+    # 20261026 mainnet QA daemon, not a malformed or simulated submit payload.
+    fixture = json.loads((ROOT / "tests/mainnet/fixtures/isolated_20261026_block1.json").read_text(encoding="utf-8"))
+    if (fixture.get("expected_genesis_hash") != genesis or fixture.get("height") != 1
+            or fixture.get("difficulty") != 500000
+            or fixture.get("accepted_block_hash") != "9755a4f129f97b7865e5897e79abf5fea89dec2ba776d53fb9d01942b9f7ba9e"):
+        raise AssertionError("Recovered isolated block provenance mismatch")
+    blob = fixture.get("serialized_block_hex")
+    if not isinstance(blob, str) or len(blob) < 100 or len(blob) > 4000:
+        raise AssertionError("Missing bounded serialized QA block")
+    try:
+        raw_block = bytes.fromhex(blob)
+    except ValueError as exc:
+        raise AssertionError("QA block is not valid hexadecimal") from exc
+    if len(raw_block) * 2 != len(blob) or hashlib.sha256(raw_block).hexdigest() != fixture.get("serialized_block_sha256"):
+        raise AssertionError("Saved QA block bytes failed SHA-256 validation")
 
     fee_address = manifest.get("pool", {}).get("operator_fee_address")
     if not isinstance(fee_address, str) or not 90 <= len(fee_address) <= 130:
@@ -164,6 +182,18 @@ def run(binary: Path, manifest: dict, max_seconds: int) -> None:
                 if started.get("status") == "OK":
                     raise AssertionError("Mainnet mining unexpectedly started")
                 print("PASS: start_mining did not authorize mining", flush=True)
+
+                # Replay a historically accepted, properly mined height-1 block
+                # so the decoder must reach the native consensus rejection path.
+                rejected = call_rpc(rpc_port, "submitblock", [blob])
+                rejection = rejected.get("error")
+                if (not isinstance(rejection, dict)
+                        or rejection.get("message") != "Block not accepted"):
+                    raise AssertionError(
+                        "Previously accepted frozen-chain block did not reach "
+                        "the required mainnet consensus rejection path"
+                    )
+                print("PASS: valid pre-guard height-1 block rejected by locked mainnet", flush=True)
 
                 after = call_rpc(rpc_port, "get_info", {}, plain=True)
                 if after.get("height") != 1 or after.get("status") != "OK":

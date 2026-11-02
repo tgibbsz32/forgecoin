@@ -34,7 +34,7 @@ def unique_ports(count: int) -> list[int]:
 
 
 def launch(binary: Path, directory: Path, p2p: int, rpc: int,
-           log_handle, *, peer: int | None = None) -> subprocess.Popen:
+           log_handle, *, peer: int | None = None, offline: bool = False) -> subprocess.Popen:
     # No networking outside the namespace of this local CI runner:
     # physical P2P listener and RPC both bind 127.0.0.1. No DNS/IGD.
     cmd = [
@@ -51,7 +51,11 @@ def launch(binary: Path, directory: Path, p2p: int, rpc: int,
         "--in-peers", "2" if peer is None else "0",
         "--out-peers", "0" if peer is None else "1",
     ]
+    if offline:
+        cmd.append("--offline")
     if peer is not None:
+        if offline:
+            raise AssertionError("Cannot request a peer while in isolated offline mining mode")
         cmd += ["--add-exclusive-node", f"127.0.0.1:{peer}"]
     return subprocess.Popen(
         cmd, stdin=subprocess.DEVNULL, stdout=log_handle,
@@ -119,8 +123,13 @@ def mine(port: int, address: str, amount: int, nonce: int) -> list[str]:
         raise AssertionError("Regtest RPC response exceeds bounded local limit")
     response = require_result(json.loads(raw), "generateblocks")
     blocks = response.get("blocks")
+    if response.get("status") != "OK":
+        raise AssertionError(f"Regtest generateblocks returned status {response.get('status')!r}")
     if not isinstance(blocks, list) or len(blocks) != amount:
-        raise AssertionError("Regtest generateblocks did not mine the required blocks")
+        raise AssertionError(
+            f"Regtest generated {len(blocks) if isinstance(blocks, list) else 'no'} "
+            f"blocks, expected {amount}"
+        )
     if any(not isinstance(x, str) or len(x) != 64 for x in blocks):
         raise AssertionError("Malformed regtest block-hash response")
     return blocks
@@ -156,7 +165,9 @@ def run(binary: Path, manifest: dict, max_seconds: int) -> None:
             for node, pp, rp in ((a, a_p2p, a_rpc), (b, b_p2p, b_rpc)):
                 log = (home / (node.name + ".log")).open("wb")
                 logs.append(log)
-                procs.append(launch(binary, node, pp, rp, log))
+                # CHECK_CORE_READY blocks generateblocks until synchronized.
+                # Offline FAKECHAIN mode permits isolated local mining.
+                procs.append(launch(binary, node, pp, rp, log, offline=True))
 
             deadline = time.monotonic() + max_seconds
             for proc, port in zip(procs, (a_rpc, b_rpc)):
@@ -185,14 +196,23 @@ def run(binary: Path, manifest: dict, max_seconds: int) -> None:
             # do not count time spent mining toward the reorganization timeout.
             deadline = time.monotonic() + max_seconds
 
-            # Reopen only node A with one explicit local B peer. --keep-fakechain
-            # is essential: restarting must preserve the 3 mined A blocks.
-            procs[0].terminate()
-            procs[0].wait(timeout=10)
-            log = (home / "fork-a-connected.log").open("wb")
-            logs.append(log)
-            procs[0] = launch(binary, a, a_p2p, a_rpc, log, peer=b_p2p)
-            wait_ready(procs[0], a_rpc, deadline)
+            # Offline mining cannot participate in P2P. Stop BOTH temporary
+            # nodes and restart with P2P enabled, preserving their distinct
+            # local FAKECHAIN LMDBs via --keep-fakechain. B accepts only local
+            # incoming peers; A connects exclusively to B on loopback.
+            for proc in procs:
+                proc.terminate()
+                proc.wait(timeout=10)
+            for index, (node, pp, rp, peer) in enumerate((
+                (b, b_p2p, b_rpc, None),
+                (a, a_p2p, a_rpc, b_p2p),
+            )):
+                log = (home / (node.name + "-connected.log")).open("wb")
+                logs.append(log)
+                procs[1 if index == 0 else 0] = launch(
+                    binary, node, pp, rp, log, peer=peer,
+                )
+                wait_ready(procs[1 if index == 0 else 0], rp, deadline)
 
             matched = False
             while time.monotonic() < deadline:
@@ -219,7 +239,8 @@ def run(binary: Path, manifest: dict, max_seconds: int) -> None:
             # mining; the independent mainnet CI smoke tests prove that path.
             print("PASS: regtest-specific block production; no mainnet mining or payouts", flush=True)
         except Exception:
-            for path in (home / "fork-a.log", home / "fork-a-connected.log", home / "fork-b.log"):
+            for path in (home / "fork-a.log", home / "fork-a-connected.log",
+                         home / "fork-b.log", home / "fork-b-connected.log"):
                 if path.exists():
                     recent = path.read_text(encoding="utf-8", errors="replace").splitlines()[-25:]
                     print(f"DIAGNOSTIC {path.name}: " + "\n".join(recent)[-3500:], flush=True)

@@ -19,7 +19,7 @@ class DisposableReorgSafety(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             node = Path(folder) / "node"
             with patch.object(reorg.subprocess, "Popen") as launch:
-                reorg.launch(Path(folder) / "forged", node, 49700, 49701, None)
+                reorg.launch(Path(folder) / "forged", node, 49700, 49701, None, offline=True)
                 args = launch.call_args.args[0]
         self.assertIn("--regtest", args)
         self.assertIn("--keep-fakechain", args)
@@ -35,7 +35,7 @@ class DisposableReorgSafety(unittest.TestCase):
         self.assertNotIn("--add-exclusive-node", args)
         self.assertNotIn("--testnet", args)
         self.assertNotIn("--stagenet", args)
-        self.assertNotIn("--offline", args)  # temporary loopback P2P must still handshake
+        self.assertIn("--offline", args)  # independent forks mine with no P2P synchronization
         self.assertNotIn("0.0.0.0", args)
 
     def test_reconnecting_node_uses_one_explicit_local_peer_only(self):
@@ -47,6 +47,13 @@ class DisposableReorgSafety(unittest.TestCase):
         self.assertEqual(args[args.index("--out-peers") + 1], "1")
         self.assertEqual(args[args.index("--in-peers") + 1], "0")
         self.assertEqual(args[args.index("--add-exclusive-node") + 1], "127.0.0.1:49700")
+        self.assertNotIn("--offline", args)
+
+    def test_no_peer_connection_while_offline_mining(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with self.assertRaisesRegex(AssertionError, "offline"):
+                reorg.launch(Path(folder) / "forged", Path(folder) / "node",
+                             49702, 49703, None, peer=49700, offline=True)
 
     def test_fork_test_never_contains_external_oracle_endpoint(self):
         source = (ROOT / "tools/smoke_regtest_reorg.py").read_text(encoding="utf-8")

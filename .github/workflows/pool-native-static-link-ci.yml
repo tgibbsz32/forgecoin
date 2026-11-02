@@ -54,6 +54,9 @@ jobs:
           gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
             -o /tmp/frg-credited-history-audit services/official_pool/tests/test_credited_history_audit.c -ljson-c
           /tmp/frg-credited-history-audit
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
+            -o /tmp/frg-credited-ledger-scan services/official_pool/tests/test_credited_ledger_scan_lmdb.c -llmdb -ljson-c
+          /tmp/frg-credited-ledger-scan
           bash -n services/official_pool/tools/build-native-static.sh
       - name: Build reviewed ForgeCoin static libraries (no wallet, network or deployment)
         env:

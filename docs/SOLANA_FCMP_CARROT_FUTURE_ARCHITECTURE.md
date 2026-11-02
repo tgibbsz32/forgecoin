@@ -1,18 +1,19 @@
 # ForgeCoin future FCMP++/CARROT, L1/L2/L3 architecture
 
-**Updated October 27, 2026. All capabilities listed here are future proposals, not production features.** The former wFRG/wrapped-FRG bridge was a superseded planning direction and is **not part of the current roadmap**.
+**Updated November 2, 2026.** The 50M mFRG token, audited native FRG↔Solana bridge, staking, DEX liquidity and game payments are planned capabilities, not live services.
 
-## Intended sequence
+## Intended development sequence
 
-1. Finish the independent FRG Proof-of-Work network and audit native wallet, RandomX mining, official pool, read-only explorer, node infrastructure and security release gates.
-2. Separately issue **miniFORGE (mFRG)** on Solana only after review: **500M intended fixed supply (6 decimals)**, with **50M staged crypto-denominated distribution**, 100M long-term operations, 100M ecosystem, 85M finite staking rewards, 60M liquidity, 65M security engineering, **30M total founder-beneficial** (15M immediate; 15M vesting months 13–36), and 10M emergency. See [revised lifetime tokenomics](MFRG_50M_CITY_TOKENOMICS.md). mFRG is neither a FRG wrapper nor a guaranteed dividend, pegged asset or yield instrument.
-3. Choose and publish governance rules **before authorized mFRG distribution**, with transparent treasury custody, approval thresholds, security and community oversight. No prescribed number of seats or vote type is adopted.
-4. Pursue a reviewed FCMP++/CARROT **in-place hard fork** of the existing FRG chain if proven safe. Maintain valid legacy outputs and owners' rights, or propose a separately approved supply-conserving successor migration only if necessary.
-5. Research native swaps, secure multiparty execution and optional future L2/L3 systems under independent threat models.
+1. Independently verify native FRG genesis, RandomX, mainnet miners, wallets, pool, explorer and release infrastructure.
+2. **Determine, ratify and publish governance procedures before any mFRG introduction**, including participants, bridge signers, treasury custody, reserve oversight, conflict procedures and emergency authority.
+3. Introduce the proposed **50,000,000 standard six-decimal Solana SPL mFRG** only after release/legal/security gates: 5M initial presale, 5M DEX/liquidity reserve and 40M combined staking/collateral/ecosystem reserve. Provisional sale: $0.12/mFRG and 90% project / 10% founder proceeds, with half founder proceeds immediately and half over six months. There is no founder token allocation.
+4. Design an audited **1 native FRG : 1 eligible mFRG** bidirectional bridge with one independently verifiable native FRG reserve for each outstanding redeemable mFRG, including presale, liquidity or staking tokens if marketed as backed. The 50M mFRG supply restricts bridge capacity despite native FRG's uncapped tail emissions. Build secure lock/release, 8-to-6 decimal conversion, proof-of-reserves, chain-finality and withdrawal safety.
+5. Support faster Solana ecosystem transfers, independently funded DEX trading and optional finite-reserve mFRG staking; integrate optional mFRG purchases of USD-priced CITY packs in ForgeCoin's planned **Discover Your City** game. CITY is credited only after finalized payment verification, exactly once; all received mFRG goes to the ecosystem treasury.
+6. Pursue independent FCMP++/CARROT native-chain upgrade research and later L1/L2/L3 services only after separately reviewed consensus and security gates.
 
-## mFRG distribution versus native FRG
+## Proposed 1:1 objective versus current status
 
-The nine mFRG allocations are **planned**, not verified funded mainnet token accounts. No sale is open, and a public Solana token or staking system cannot hide balances by virtue of association with native FRG. Future releases are disbursements from specified reserves within the proposed 500M fixed supply; they do not authorize additional minting. The 50M mFRG three-bucket plan is superseded. Any true fixed maximum requires a validated issued supply and properly revoked mint authority.
+The targeted conversion ratio is not a currently supported redemption, guaranteed market price or claim of native FRG reserves. The fixed SPL supply requires audited, prefunded bridge inventory if mint authority is revoked. Solana transactions remain transparent and do not inherit FRG confidentiality. No bridge, reserve, mint, exchange, staking or game checkout is activated by this roadmap.
 
 ## FCMP++/CARROT core implementation gates (later, not current L1)
 

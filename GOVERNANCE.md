@@ -7,6 +7,10 @@
 
 ForgeCoin consensus is enforced by software run independently by node operators. Repository maintainers can propose and publish changes but cannot remotely force independent nodes to accept them.
 
+## Governance-first Solana utility roadmap
+
+Native ForgeCoin mining and independent consensus come first. **Publish approved governance procedures before any mFRG introduction.** The project's later intended miniFORGE (mFRG) token would support Solana transfers, a fully reserved **1 FRG : 1 eligible mFRG** audited bridge, supported decentralized exchanges, optional finite-reserve staking and verified payments in ForgeCoin's planned **Discover Your City** game. No bridge, token redemption, staking, mint or DEX market is currently active. Governance must approve bridge custody/signers, independent proof-of-reserves and liabilities, emergency and conflict procedures, treasury/staking allocation and game treasury accountability. Native FRG consensus is never subject to automatic Solana token governance.
+
 ## Ordinary changes
 
 Documentation, interface, packaging, logging, performance, seed-list, and compatible RPC changes can ship in normal releases when they do not change block or transaction validity.

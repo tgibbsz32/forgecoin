@@ -1,38 +1,30 @@
-# miniFORGE (mFRG) — cryptocurrency exchange distribution, technical gates
+# miniFORGE (mFRG) — proposed sale and settlement readiness
 
-**Status October 28, 2026: DESIGNED / DISABLED. No deposits, quotes, exchange orders, wallet signing or token fulfillment are available on the website.** This specification supersedes older 50M-total / 5M-sale inventory assumptions **as an intended future policy only**. Production backend and simulator parameters are NOT automatically migrated by changing this document.
+**Updated November 2, 2026. Design only; checkout and payment collection are disabled.** No mint, DEX swap, bridge, staking product or sale is active.
 
-## Policy and inventory
+## Proposed supply and sale policy
 
-**Intended supply:** 500,000,000 standard SPL mFRG (6 decimals), subject to verified mint and authority. **Maximum fundraising inventory: 50,000,000 (10%)**: 5M pilot at launch, 15M further in year 1, 20M years 2–3 and 10M years 4–10. No sale price, eligibility, allocation to purchasers, opening date, payment address or distribution mechanism is approved.
+- Standard six-decimal Solana SPL token; proposed maximum **50,000,000 mFRG**.
+- **5M** initial sale inventory, **5M** future DEX liquidity, **40M** combined staking/collateral/ecosystem reserve. No separate founder token supply.
+- Proposed uniform **$0.12/mFRG** sale price; $600,000 illustrative maximum gross if all 5M sell. Intended use of actual proceeds: **90% project / 10% founder**, half founder proceeds immediately and half over six monthly releases. No approved sale offer or deposit address.
+- SOL and verified Solana USDC are proposed settlement assets, subject to audited pricing, legal conditions, secure custody and payment verification.
 
-The other **450M mFRG** is earmarked in eight separate categories as disclosed in [lifetime tokenomics](MFRG_50M_CITY_TOKENOMICS.md), including **30M (6%) founder-beneficial holdings**: 15M unlocked immediately; 15M vesting by 625k monthly in months 13–36. They are **not available for checkout inventory**. Liquidity, staking and operating treasury funds are also **not** sale inventory.
+## Intended 1:1 bridge and solvent sale conditions
 
-**Exchange consideration:** Initially evaluate canonical Solana USDC (mainnet mint `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`), with SOL and other coins only after independent settlement, pricing, custody and legal reviews. Accepting cryptocurrency instead of USD does not exempt sales from securities, money transmission, AML/sanctions or tax requirements. Quotes and receipts must state asset mint, network, slippage, exact integer consideration, receiving treasury, refund terms, participant restrictions and independent expiry.
+ForgeCoin intends a secure **1 native FRG : 1 eligible mFRG** redemption bridge to enable faster Solana transfers, supported DEX trades and optional finite-reserve mFRG staking. **If sale tokens are advertised as FRG-redeemable, secure and independently prove one native FRG for each such mFRG *before* issuing it.** SOL/USDC sale proceeds are not FRG collateral. Full coverage across fungible presale, liquidity and reserve inventory must be established before any universal 1:1 representation. The 50M mFRG cap limits bridge capacity while native FRG tail issuance continues. Fully preminted/authority-revoked mFRG requires escrowed inventory and lock-release, plus 8-to-6 decimal conversion and dust/fee rules.
 
-## Required reviewed flow — not available yet
+## Mandatory launch gates
 
-1. Verify mainnet mFRG mint, 6 decimals, supply, all treasury inventories, mint/freeze authorities, token metadata, vesting and project signers. If existing mint authority was revoked below 500M, plan a transparent migration; do not describe a mint increase as possible.
-2. Publish legal-reviewed distribution terms, risk disclosure, supported consideration assets, valuation/auction or clearing rules, eligibility, timing and maximum commitments. Obtain jurisdiction-specific professional advice before solicitation.
-3. Require a user-initiated wallet connection. Never request recovery secrets. An independently authenticated server must verify treasury inventory **only within the 50M fundraising allocation**, enforce tranche ceilings, reservations, exact atomic arithmetic, rate limits and correct network/mint.
-4. Prefer an independently audited on-chain **atomic crypto-for-mFRG settlement** so consideration and delivery either both occur or both fail. For any alternate custodial delivery, specify escrow, refunds, incident handling and legal obligations. Validate transaction finality, recipient, token accounts and amounts against independently sourced RPC data.
-5. Ensure idempotent receipts, prevention of reused signatures, double-spends, replay and stale quotes, and handling for chain outage/reorganizations. Maintain a ledger with crypto consideration value and token cost basis.
-6. Keep browser checkout **hard-disabled** until reviewed smart contracts, a legal offering process, funded inventory and production acceptance tests are complete. Editing `sale-status.json` alone cannot make the site transactional.
+1. Verify native FRG release status and **adopt/publish governance procedures before mFRG introduction**.
+2. Authenticate intended Solana SPL mint, six decimals, total supply, authorities, governance, token allocation and program security.
+3. Independently audit custody, FRG reserves, eligible redemption liabilities, bridge finality/reorg/replay safety and emergency withdrawal/incident paths.
+4. Approve legal sale conditions, treasury signers, founder-proceeds vesting, participant restrictions and applicable regulatory compliance.
+5. Validate independently sourced SOL/USDC price quotes, atomic settlement where possible, on-chain finality, refund conditions, funded inventory and account reconciliation.
+6. Enforce exact mint/chain/recipient/amount/expiry checks, idempotent receipts, replay prevention, authorization and production end-to-end failure testing.
+7. Keep all interactive checkout and payment receiver endpoints **disabled** until explicit authorization; a static status JSON edit must not activate a sale.
 
-## Existing sandbox modules — caution
+## DEX, staking and Discover Your City
 
-A former offline quote/reservation test module was built around a **5M maximum inventory** and synthetic USDC-only unit prices; it is **legacy test software** that must be reviewed and updated to the actual approved tranche parameters if a future offering is authorized. The read-only WSGI status endpoints and static site **must not** accept payment. Existing receipt validation tests are not an audit and do not prove production readiness.
+Future uses include independently funded Solana DEX liquidity, optional finite-reserve staking (no guaranteed APY), and verified mFRG payments for USD-priced CITY packs in ForgeCoin's planned **Discover Your City** game. Only finalized verified payments can credit CITY exactly once; 100% of received mFRG goes to the designated ecosystem treasury. These features are not live.
 
-## Pre-opening go/no-go checklist
-
-- [ ] Independent on-chain mainnet mint/address and fully reconciled 500M intent; verified final mint/freeze authority policies
-- [ ] Nine allocation accounts reconciled; founder's unrestricted and vested beneficial ownership publicly disclosed
-- [ ] Multisig funding and separate sale proceeds treasury; test withdrawal, incident and signer recovery
-- [ ] Contract audit of payment/settlement, staking and vesting as applicable
-- [ ] Legal, tax and financial compliance approval for chosen jurisdictions and crypto consideration
-- [ ] Published exact inventory tranche, pricing method, dates, eligibility and refunds
-- [ ] End-to-end devnet tests with adversarial wallet, stale price, RPC fault and duplicate/failed payment scenarios
-- [ ] Accessible, accurate website with no live controls until authorization and independently reviewed release
-- [ ] Native FRG chain launch gates resolved **separately**; not implied by mFRG issuance
-
-**No solicitation, returns representation or guaranteed listing.**
+[Tokenomics](MFRG_50M_CITY_TOKENOMICS.md) · [Treasury controls](MINIFORGE_SPL_TREASURIES.md) · [Exchange roadmap](MFRG_EXCHANGE_DESIGN.md)

@@ -10,7 +10,7 @@ During the formative phase, the ForgeCoin founder retains final authority to cho
 
 ForgeCoin (FRG) is the primary RandomX proof-of-work network. Its mining, wallet, node, pool, explorer and adoption efforts take precedence over other assets. FRG's primary-emission reference is 50 million coins (not a hard cap), followed by perpetual 0.20 FRG-per-block tail emission. No founder, ICO or governance premine is authorized.
 
-miniFORGE (mFRG), Solana integration, sale, bridge, staking, and game payments remain **future proposals only**, subject to review once the FRG network and community mature. No mFRG vote, sale, mint or conversion is authorized by this charter.
+miniFORGE (mFRG), Solana integration, presale, bridge, DEX liquidity, staking and game payments remain **intended future developments only** after independent FRG verification and governance procedures. The proposed mFRG tokenomics are 50M standard SPL tokens (5M presale, 5M liquidity, 40M combined ecosystem/staking/collateral reserve), with an intended **audited 1 FRG : 1 eligible mFRG reserve-backed bridge**, faster Solana transfers, supported DEX trading and optional mFRG purchases of CITY packs in ForgeCoin's Discover Your City game. All redeemable mFRG must have independently verifiable native FRG backing; no current mint, bridge, staking, DEX, game checkout or conversion is authorized by this charter.
 
 ## 2. Single constituency: 100% active community members
 

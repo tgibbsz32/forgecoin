@@ -34,7 +34,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: android-actions/setup-android@v3
+      - name: Use preinstalled Android SDK on the Ubuntu runner
+        run: |
+          test -d "$ANDROID_HOME/cmdline-tools"
+          command -v sdkmanager
+          sdkmanager --version
       - name: Install pinned Android build tooling
         run: |
           sdkmanager --install "platforms;android-35" "build-tools;35.0.0" "cmake;3.22.1" "ndk;27.0.12077973"

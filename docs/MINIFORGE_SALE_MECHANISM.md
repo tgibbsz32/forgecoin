@@ -6,7 +6,7 @@
 
 **Intended supply:** 500,000,000 standard SPL mFRG (6 decimals), subject to verified mint and authority. **Maximum fundraising inventory: 50,000,000 (10%)**: 5M pilot at launch, 15M further in year 1, 20M years 2–3 and 10M years 4–10. No sale price, eligibility, allocation to purchasers, opening date, payment address or distribution mechanism is approved.
 
-The other **450M mFRG** is earmarked in eight separate categories as disclosed in [lifetime tokenomics](MFRG_LIFETIME_TOKENOMICS_500M.md), including **30M (6%) founder-beneficial holdings**: 15M unlocked immediately; 15M vesting by 625k monthly in months 13–36. They are **not available for checkout inventory**. Liquidity, staking and operating treasury funds are also **not** sale inventory.
+The other **450M mFRG** is earmarked in eight separate categories as disclosed in [lifetime tokenomics](MFRG_50M_CITY_TOKENOMICS.md), including **30M (6%) founder-beneficial holdings**: 15M unlocked immediately; 15M vesting by 625k monthly in months 13–36. They are **not available for checkout inventory**. Liquidity, staking and operating treasury funds are also **not** sale inventory.
 
 **Exchange consideration:** Initially evaluate canonical Solana USDC (mainnet mint `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`), with SOL and other coins only after independent settlement, pricing, custody and legal reviews. Accepting cryptocurrency instead of USD does not exempt sales from securities, money transmission, AML/sanctions or tax requirements. Quotes and receipts must state asset mint, network, slippage, exact integer consideration, receiving treasury, refund terms, participant restrictions and independent expiry.
 

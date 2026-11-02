@@ -47,6 +47,7 @@ enum xmr_error
     XMR_MISMATCH_ERROR   = -6
 };
 
+int frg_matches_frozen_mainnet(void);
 int get_hashing_blob(const unsigned char *input, const size_t in_size,
         unsigned char **output, size_t *out_size);
 int parse_address(const char *input, uint64_t *prefix,

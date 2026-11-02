@@ -67,6 +67,13 @@ class NativeBackendPreflight(unittest.TestCase):
                 self.assertEqual(self.conf.get(key), expected)
         self.assertNotIn("9y4V6rSRb", (VENDOR / "pool.conf").read_text(encoding="utf-8"))
 
+    def test_failed_wallet_payouts_are_not_debited(self):
+        self.assertIn("Malformed wallet payout response; balances unchanged", self.pool)
+        self.assertIn("Wallet payout failed or ambiguous; no balance debits", self.pool)
+        self.assertIn('"tx_hash_list"', self.pool)
+        self.assertIn("No transaction-hash evidence in wallet response", self.pool)
+        self.assertIn("json_object_array_length(hashes) == 0", self.pool)
+
     def test_runtime_rejects_unsafe_user_configs(self):
         self.assertIn("#ifndef FRG_REVIEWED_PUBLIC_POOL", self.pool)
         self.assertIn('strcmp(config.pool_listen, "127.0.0.1")', self.pool)

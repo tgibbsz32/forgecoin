@@ -79,7 +79,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CLIENT_JOBS_MAX 4
 #define BLOCK_HEADERS_MAX 4
 #define BLOCK_TEMPLATES_MAX 4
-#define MAINNET_ADDRESS_PREFIX 90 /* ForgeCoin native mainnet; see cryptonote_config.h */
+#define MAINNET_ADDRESS_PREFIX 190 /* Frozen 20261026 mainnet; old prefix 90 is invalid */
 #define TESTNET_ADDRESS_PREFIX 53
 #define BLOCK_HEADERS_RANGE 10
 #define DB_INIT_SIZE 0x140000000 /* 5G */
@@ -2117,9 +2117,11 @@ rpc_on_block_submitted(const char* data, rpc_callback_t *callback)
         const char *em = json_object_get_string(message);
         log_warn("Error (%d) with block submission: %s", ec, em);
     }
-    if (!status || strcmp(ss, "OK"))
+    if (error || !status || strcmp(ss, "OK"))
     {
-        log_warn("Error submitting block: %s", ss);
+        log_warn("Block submission unconfirmed; no accepted-block credit");
+        json_object_put(root);
+        return;
     }
     pool_stats.pool_blocks_found++;
     block_t *b = (block_t*)callback->data;
@@ -2139,19 +2141,33 @@ rpc_on_wallet_transferred(const char* data, rpc_callback_t *callback)
 {
     log_trace("Transfer response: \n%s", data);
     json_object *root = json_tokener_parse(data);
-    JSON_GET_OR_WARN(result, root, json_type_object);
+    if (!root || !json_object_is_type(root, json_type_object))
+    {
+        log_error("Malformed wallet payout response; balances unchanged");
+        if (root) json_object_put(root);
+        return;
+    }
     json_object *error = NULL;
     json_object_object_get_ex(root, "error", &error);
-    if (error)
+    json_object *result = NULL;
+    if ((error && !json_object_is_type(error, json_type_null)) ||
+        !json_object_object_get_ex(root, "result", &result) ||
+        !result || !json_object_is_type(result, json_type_object))
     {
-        JSON_GET_OR_WARN(code, error, json_type_object);
-        JSON_GET_OR_WARN(message, error, json_type_string);
-        int ec = json_object_get_int(code);
-        const char *em = json_object_get_string(message);
-        log_error("Error (%d) with wallet transfer: %s", ec, em);
+        log_error("Wallet payout failed or ambiguous; no balance debits or payments recorded");
+        json_object_put(root);
+        return;
     }
-    else
-        log_info("Payout transfer successful");
+    json_object *hashes = NULL;
+    if (!json_object_object_get_ex(result, "tx_hash_list", &hashes) ||
+        !hashes || !json_object_is_type(hashes, json_type_array) ||
+        json_object_array_length(hashes) == 0)
+    {
+        log_error("No transaction-hash evidence in wallet response; balances unchanged");
+        json_object_put(root);
+        return;
+    }
+    log_info("Wallet returned transaction hashes; payout reconciliation remains required");
 
     int rc = 0;
     char *err = NULL;
@@ -2203,11 +2219,6 @@ rpc_on_wallet_transferred(const char* data, rpc_callback_t *callback)
             current_amount = 0;
         }
 
-        if (error)
-        {
-            log_warn("Error seen on transfer for %s with amount %"PRIu64,
-                    p->address, p->amount);
-        }
         MDB_val new_val = {sizeof(current_amount), (void*)&current_amount};
         if ((rc = mdb_cursor_put(cursor, &key, &new_val, MDB_CURRENT)))
         {
@@ -3305,11 +3316,16 @@ miner_on_submit(json_object *message, client_t *client)
 
     char *endptr = NULL;
     const char *nptr = json_object_get_string(nonce);
+    if (!nptr || strlen(nptr) != 8 || is_hex_string(nptr))
+    {
+        send_validation_error(client, "nonce must be exactly 8 hex characters");
+        return;
+    }
     errno = 0;
     unsigned long int uli = strtoul(nptr, &endptr, 16);
-    if (errno || nptr == endptr)
+    if (errno || nptr == endptr || *endptr != '\0' || uli > UINT32_MAX)
     {
-        send_validation_error(client, "nonce not an unsigned long int");
+        send_validation_error(client, "nonce invalid 32-bit value");
         return;
     }
     const uint32_t result_nonce = ntohl(uli);
@@ -3508,17 +3524,7 @@ post_hash:
     BN_free(rh);
 
     /* Process share */
-    account_t *account = NULL;
-    pthread_rwlock_rdlock(&rwlock_acc);
-    HASH_FIND_STR(accounts, client->address, account);
-    client->hashes += job->target;
-    client->hr_stats.diff_since += job->target;
-    account->hashes += job->target;
-    account->hr_stats.diff_since += job->target;
-    hr_update(&client->hr_stats);
-    /* TODO: account hr should be called less freq */
-    hr_update(&account->hr_stats);
-    pthread_rwlock_unlock(&rwlock_acc);
+    /* Rejected low-difficulty shares must not inflate worker hashrate. */
     time_t now = time(NULL);
     bool can_store = true;
     log_trace("Checking hash against block difficulty: "
@@ -3579,6 +3585,24 @@ post_hash:
     if (can_store)
     {
         int rc = 0;
+        pthread_rwlock_rdlock(&rwlock_acc);
+        account_t *account = NULL;
+        HASH_FIND_STR(accounts, client->address, account);
+        if (account)
+        {
+            client->hashes += job->target;
+            client->hr_stats.diff_since += job->target;
+            account->hashes += job->target;
+            account->hr_stats.diff_since += job->target;
+            hr_update(&client->hr_stats);
+            hr_update(&account->hr_stats);
+        }
+        pthread_rwlock_unlock(&rwlock_acc);
+        if (!account)
+        {
+            send_validation_error(client, "no registered account");
+            return;
+        }
         if (client->bad_shares)
             client->bad_shares--;
         share_t share = {0,0,{0},0};
@@ -3911,7 +3935,7 @@ read_config(const char *config_file)
 
     /* Start with some defaults for any missing... */
     strcpy(config.rpc_host, "127.0.0.1");
-    config.rpc_port = 19481;
+    config.rpc_port = 39481;
     config.rpc_timeout = 15;
     config.idle_timeout = 150;
     config.template_timeout = 120;
@@ -4169,6 +4193,14 @@ read_config(const char *config_file)
         }
     }
     fclose(fp);
+
+    /* Frozen 20261026 mainnet identity gate; the legacy main source is
+     * NOT launch-compatible. Never bypass this even in reviewed builds. */
+    if (!frg_matches_frozen_mainnet() || config.rpc_port != 39481)
+    {
+        log_fatal("Frozen FRG identity mismatch: require address prefixes 190/191/192 and ports 39480/39481/39482");
+        exit(-1);
+    }
 
     /* Fail closed for unreviewed research builds, regardless of config. */
 #ifndef FRG_REVIEWED_PUBLIC_POOL

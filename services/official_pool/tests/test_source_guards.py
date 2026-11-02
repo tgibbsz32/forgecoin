@@ -93,6 +93,17 @@ class NativeBackendPreflight(unittest.TestCase):
         self.assertIn('"tx_hash_list"', self.pool)
         self.assertIn("No transaction-hash evidence in wallet response", self.pool)
 
+    def test_share_credit_follows_durable_storage(self):
+        start = self.pool.index("    if (can_store)")
+        end = self.pool.index("    if (retarget_required(client, job))", start)
+        body = self.pool[start:end]
+        self.assertLess(body.index("store_share(share.height, &share)"),
+                        body.index("client->hashes += job->target"))
+        self.assertLess(body.index("store_share(share.height, &share)"),
+                        body.index('stratum_get_status_body(body, client->json_id, "OK")'))
+        self.assertIn("pthread_rwlock_wrlock(&rwlock_acc)", body)
+        self.assertIn('share storage unavailable', body)
+
     def test_runtime_rejects_unsafe_user_configs(self):
         self.assertIn("#ifndef FRG_REVIEWED_PUBLIC_POOL", self.pool)
         self.assertIn('strcmp(config.pool_listen, "127.0.0.1")', self.pool)

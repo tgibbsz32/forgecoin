@@ -28,6 +28,16 @@ class Checks(unittest.TestCase):
     def test_site_navigation(self):
         for f in ("docs/index.html","docs/miniforge-sale.html","docs/miniforge-tokenomics.html"):
             self.assertIn("project-status.html",(ROOT/f).read_text(),f)
+    def test_merged_mining_proposals_remain_research_only(self):
+        for name in ("docs/index.html", "docs/mining.html",
+                     "docs/current-mainnet.html", "docs/pool-network.html",
+                     "docs/project-status.html"):
+            page = (ROOT/name).read_text()
+            self.assertIn("Tari", page, name)
+            self.assertIn("Monero", page, name)
+            self.assertIn("future", page.lower(), name)
+        self.assertIn("consensus", (ROOT/"docs/mining.html").read_text())
+
     def test_repo_docs(self):
         for f in ("README.md","ROADMAP.md","docs/index.md"):
             self.assertIn("project-status.html",(ROOT/f).read_text())

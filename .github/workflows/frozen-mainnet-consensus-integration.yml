@@ -101,3 +101,8 @@ jobs:
           python3 tools/smoke_frozen_prelaunch_peers.py \
             --daemon build/consensus-gated/release/bin/forged --max-seconds 90
           echo 'PASS: loopback-only prelaunch P2P handshake; no mining or reorg test'
+      - name: Mine two disposable regtest forks and verify a native P2P reorganization
+        run: |
+          python3 tools/smoke_regtest_reorg.py \
+            --daemon build/consensus-gated/release/bin/forged --max-seconds 180
+          echo 'PASS: FAKECHAIN-only post-genesis synchronization/reorg; mainnet remains locked'

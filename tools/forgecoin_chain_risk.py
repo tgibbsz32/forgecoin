@@ -207,7 +207,7 @@ def main(argv=None):
                           'events': events,
                           'tips': {k: v['tip']['height'] for k, v in observations.items()}}, sort_keys=True))
         return 1 if events else 0
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError, TypeError, KeyError, IndexError, UnicodeError, json.JSONDecodeError) as exc:
         print(json.dumps({'status': 'UNVERIFIED', 'events': [{'code':'monitor_failure','error':str(exc)[:160]}]}))
         return 2
 

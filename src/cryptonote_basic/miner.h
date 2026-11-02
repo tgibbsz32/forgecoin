@@ -133,6 +133,7 @@ namespace cryptonote
 
     std::list<boost::thread> m_threads;
     epee::critical_section m_threads_lock;
+    network_type m_prelaunch_nettype = MAINNET;
     i_miner_handler* m_phandler;
     get_block_hash_t m_gbh;
     account_public_address m_mine_address;

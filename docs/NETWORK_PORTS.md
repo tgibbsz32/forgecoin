@@ -33,7 +33,8 @@ The active staging work is tracked in
 [PR #185](https://github.com/tgibbsz32/forgecoin/pull/185)
 (native consensus and prelaunch protection) and
 [PR #186](https://github.com/tgibbsz32/forgecoin/pull/186)
-(Windows desktop endpoint corrections). Both remain draft; neither is an
+(Windows desktop endpoint corrections, now **merged into source `main`**).
+PR #185 remains draft; PR #186 is merged. Neither change is an
 authorized network or installer release.
 
 ## Verification and deployment gates

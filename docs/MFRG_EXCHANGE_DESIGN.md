@@ -6,7 +6,7 @@ Status: **Design / preview only.** No wallet deposits, purchase quotes, treasury
 
 - **FRG** is the ForgeCoin native L1 mined asset.
 - **No wrapped native-FRG bridge is part of the current project roadmap.** Native FRG and proposed mFRG are distinct network assets; there is no audited cross-chain conversion or redemption protocol.
-- **mFRG** (miniFORGE) is a separate proposed **500M fixed-supply standard SPL asset** (6 decimals), with **50M (10%) staged crypto-denominated fundraising inventory**, separately budgeted 60M liquidity and 85M staking incentives. The complete nine-category breakdown and the **6% total founder-beneficial allocation (3% unlocked immediately, 3% vesting months 13–36)** are in [lifetime tokenomics](MFRG_LIFETIME_TOKENOMICS_500M.md). mFRG is not redeemable for FRG at any fixed rate.
+- **mFRG** (miniFORGE) is a separate proposed **500M fixed-supply standard SPL asset** (6 decimals), with **50M (10%) staged crypto-denominated fundraising inventory**, separately budgeted 60M liquidity and 85M staking incentives. The complete nine-category breakdown and the **6% total founder-beneficial allocation (3% unlocked immediately, 3% vesting months 13–36)** are in [lifetime tokenomics](MFRG_50M_CITY_TOKENOMICS.md). mFRG is not redeemable for FRG at any fixed rate.
 - Do not show a contract address, token price, circulating supply, live inventory, or buy control until verified on-chain and formally approved.
 
 ## Routes and phased delivery
@@ -40,4 +40,4 @@ A public, static GitHub Pages website can host the interface; secrets and signin
 
 ## Superseded historical assumptions
 
-The historical 55M, 50M and three-bucket mFRG plans are **superseded** by the October 28, 2026 **500M intended fixed supply** and [nine-category lifetime distribution](MFRG_LIFETIME_TOKENOMICS_500M.md). This document remains an informational exchange design and does not authorize payments, minting, a swap or liquidity. Native FRG remains an independent PoW asset with a continuing tail-emission policy.
+The historical 55M, 50M and three-bucket mFRG plans are **superseded** by the October 28, 2026 **500M intended fixed supply** and [nine-category lifetime distribution](MFRG_50M_CITY_TOKENOMICS.md). This document remains an informational exchange design and does not authorize payments, minting, a swap or liquidity. Native FRG remains an independent PoW asset with a continuing tail-emission policy.

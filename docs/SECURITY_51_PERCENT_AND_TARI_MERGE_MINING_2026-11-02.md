@@ -48,7 +48,7 @@ At target 120 seconds, estimated equilibrium hashrate is difficulty / 120 H/s. T
 ## Implemented read-only observer (source-only prototype; not deployed)
 
 - [`tools/forgecoin_chain_risk.py`](../tools/forgecoin_chain_risk.py) compares two or more **trusted** node header ranges from *distinct* local RPC endpoints. Independent remote nodes must be accessed by separate reviewed SSH tunnels to localhost. It checks the selected frozen genesis hash on each poll and detects conflicting same-height hashes, observed local history changes, height rollback, stale tips, gaps and incomplete RPC responses. No RPC writes, private keys, network consensus modification, automatic pause or checkpoint.
-- [`tools/test_forgecoin_chain_risk.py`](../tools/test_forgecoin_chain_risk.py) contains offline regression tests. Ten local deterministic tests passed before source finalization; this is **not** an integration test against frozen candidate daemons.
+- [`tools/test_forgecoin_chain_risk.py`](../tools/test_forgecoin_chain_risk.py) and [`tools/test_forgecoin_chain_history.py`](../tools/test_forgecoin_chain_history.py) contain **24 offline regression tests**, all passed in [independent GitHub Actions CI](https://github.com/tgibbsz32/forgecoin/actions/runs/41531018745). This is **not** integration evidence against frozen candidate daemons.
 - Example after approved test nodes and tunnels are available (ports are *local tunnel endpoints*, not a change in selected mainnet port contract):
 
 ```sh
@@ -56,10 +56,11 @@ python tools/forgecoin_chain_risk.py \
   --node http://127.0.0.1:39481/json_rpc \
   --node http://127.0.0.1:39581/json_rpc \
   --state ./local-chain-risk-state.json
-python -m unittest discover -s tools -p 'test_forgecoin_chain_risk.py'
+python -m unittest discover -s tools -p 'test_forgecoin_chain_*.py'
 ```
 
 - Exit 0 = observations returned with no alarms (NOT chain finality or evidence of safety); exit 1 = alert(s); exit 2 = unverified/error. First execution establishes an observation baseline. State file is deliberately local and contains no secrets. Observing only a bounded header window cannot prove there were no prior deep reorganizations.
+- [Read-only historical anchor logic](../tools/forgecoin_chain_history.py) stores mature block-hash observations every 60 blocks and audits two recent and rotating older anchors; it also warns of severe difficulty jumps, few outbound peers and unsynchronized nodes. Conflicts remain visible rather than silently replacing old observed hashes. [Operator runbook](CHAIN_RISK_MONITORING_OPERATIONS.md) explains private tunnels, incident response and limitations. This does not inspect every height continuously.
 - The watcher is **not scheduled, deployed, integrated with pool payouts or wired to alert delivery**. Until live release gates are satisfied, use only disposable/authorized test nodes. Independently authenticated observations and response playbooks are still outstanding.
 
 ## Research addendum — actual Tari RandomXM difficulty and source compatibility (2026-11-02)

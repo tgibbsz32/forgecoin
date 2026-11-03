@@ -117,11 +117,11 @@ def wait_accepted(node_port: int, web_port: int,
 
 
 def run(daemon: Path, pool_binary: Path, pow_binary: Path,
-        manifest: dict, max_seconds: int) -> None:
+        ledger_binary: Path, manifest: dict, max_seconds: int) -> None:
     if os.name == "nt":
         raise SystemExit("Run only in disposable Linux CI")
     address = require_manifest(manifest)
-    if any(not b.is_file() for b in (daemon, pool_binary, pow_binary)):
+    if any(not b.is_file() for b in (daemon, pool_binary, pow_binary, ledger_binary)):
         raise AssertionError("Missing reviewed full-stack native test binaries")
 
     ports = []
@@ -221,6 +221,15 @@ def run(daemon: Path, pool_binary: Path, pow_binary: Path,
                             or stats.get("pool_fee") != 0.01
                             or stats.get("miner_balance") != 0.0):
                         raise AssertionError("Incorrect post-block pool statistics")
+                    # Separate read-only process; do not trust the WebUI count
+                    # as a proxy for a durably stored candidate.
+                    saved = subprocess.run([
+                        str(ledger_binary.resolve()), str(pool_dir),
+                        "locked", "1", canonical["hash"], FROZEN_GENESIS,
+                        address, address,
+                    ], capture_output=True, text=True, check=True, timeout=15)
+                    if "PASS: actual native pool-mined block durably LMDB-locked" not in saved.stdout:
+                        raise AssertionError("Read-only candidate auditor did not certify native LMDB record")
                     print(
                         "PASS: real native RandomX Stratum share and daemon-accepted "
                         "FAKECHAIN block, duplicate rejected, durable pool candidate "
@@ -253,12 +262,14 @@ def main() -> None:
     parser.add_argument("--daemon", type=Path, required=True)
     parser.add_argument("--pool", type=Path, required=True)
     parser.add_argument("--pow-helper", type=Path, required=True)
+    parser.add_argument("--ledger-audit", type=Path, required=True)
     parser.add_argument("--max-seconds", type=int, default=100)
     args = parser.parse_args()
     if not 30 <= args.max_seconds <= 240:
         raise SystemExit("Bounded disposable test timeout out of range")
     manifest = json.loads((ROOT / "config/mainnet.identity.json").read_text())
-    run(args.daemon, args.pool, args.pow_helper, manifest, args.max_seconds)
+    run(args.daemon, args.pool, args.pow_helper, args.ledger_audit,
+        manifest, args.max_seconds)
 
 
 if __name__ == "__main__":

@@ -118,6 +118,24 @@ jobs:
             --pool services/official_pool/jtgrassie/build/release/forgecoin-pool \
             --max-seconds 120
           echo 'PASS: loopback-only pool/daemon RPC and WebUI, zero transfers, no wallet RPC server'
+      - name: Compile genuine RandomX light-mode test-share generator from native archives
+        run: |
+          gcc -std=c11 -O2 -Wall -Wextra -Werror \
+            -Iexternal/randomx/src \
+            -o /tmp/frg-regtest-randomx-share \
+            services/official_pool/tests/frg_regtest_randomx_share.c \
+            build/consensus-gated/release/external/randomx/librandomx.a \
+            -lstdc++ -lm -pthread -ldl
+          test -s /tmp/frg-regtest-randomx-share
+          echo 'PASS: native RandomX test utility; no wallet, no private key, no network'
+      - name: Genuine native Stratum RandomX submission on local FAKECHAIN
+        run: |
+          python3 tools/smoke_native_stratum_regtest.py \
+            --daemon build/consensus-gated/release/bin/forged \
+            --pool services/official_pool/jtgrassie/build/release/forgecoin-pool \
+            --pow-helper /tmp/frg-regtest-randomx-share \
+            --max-seconds 120
+          echo 'PASS: real native RandomX share -> C Stratum -> native regtest daemon, wallet disabled'
       - name: Mine two disposable regtest forks and verify a native P2P reorganization
         run: |
           python3 tools/smoke_regtest_reorg.py \

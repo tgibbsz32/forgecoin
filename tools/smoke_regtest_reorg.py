@@ -23,6 +23,13 @@ from smoke_frozen_prelaunch_daemon import call_rpc, require_result, take_free_po
 ROOT = Path(__file__).resolve().parents[1]
 FROZEN_GENESIS = "4bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c"
 
+# Both branches become mature enough for 60-block native reward testing.
+# Branch A's 66 formerly canonical blocks must ALL be reorganized when
+# fork B's 70-block (higher cumulative work at fixed regtest diff 1) wins.
+FORK_A_BLOCKS = 66
+FORK_B_BLOCKS = 70
+MINE_BATCH = 10
+
 
 def unique_ports(count: int) -> list[int]:
     ports: list[int] = []
@@ -135,6 +142,22 @@ def mine(port: int, address: str, amount: int, nonce: int) -> list[str]:
     return blocks
 
 
+def mine_in_batches(port: int, address: str, total: int, starting_nonce: int) -> None:
+    """Bound individual RPC calls; verify each native LMDB height advance."""
+    if total < 1 or MINE_BATCH < 1:
+        raise AssertionError("No regtest blocks requested")
+    for mined in range(0, total, MINE_BATCH):
+        amount = min(MINE_BATCH, total - mined)
+        accepted = mine(port, address, amount, starting_nonce + mined * 2048)
+        if len(accepted) != amount:
+            raise AssertionError("Native generated-block count mismatch")
+        expected = mined + amount + 1  # get_info.height includes genesis
+        if info(port).get("height") != expected:
+            raise AssertionError(
+                f"Native regtest height mismatch after {mined + amount} blocks"
+            )
+
+
 def run(binary: Path, manifest: dict, max_seconds: int) -> None:
     if os.name == "nt":
         raise SystemExit("Run only in disposable Linux CI, not on desktop/Oracle")
@@ -180,18 +203,29 @@ def run(binary: Path, manifest: dict, max_seconds: int) -> None:
             if a0 != b0 or a0 != FROZEN_GENESIS:
                 raise AssertionError("Regtest genesis unexpected: should share frozen genesis")
 
-            # Positive proof of competing forks, not just a restart/same chain:
-            mine(a_rpc, address, 3, 13)
-            mine(b_rpc, address, 5, 456)
-            a_old_tip = header(a_rpc, 3)["hash"]
-            b_tip = header(b_rpc, 5)["hash"]
+            # Mine two separate native RandomX-validated FAKECHAIN forks.
+            # At 60 confirmations A's first credited coinbase is mature.
+            # A must lose 66 historical blocks to longer/higher-work B.
+            if FORK_A_BLOCKS < 61 or FORK_B_BLOCKS <= FORK_A_BLOCKS:
+                raise AssertionError("Deep-fork test depth below required maturity")
+            mine_in_batches(a_rpc, address, FORK_A_BLOCKS, 13)
+            mine_in_batches(b_rpc, address, FORK_B_BLOCKS, 456)
+            a_old_tip = header(a_rpc, FORK_A_BLOCKS)["hash"]
             a_old_first = header(a_rpc, 1)["hash"]
+            a_old_deep = header(a_rpc, FORK_A_BLOCKS - 1)["hash"]
+            b_tip = header(b_rpc, FORK_B_BLOCKS)["hash"]
             b_first = header(b_rpc, 1)["hash"]
-            if a_old_first == b_first:
-                raise AssertionError("Regtest forks are identical; no reorg demonstrated")
-            if info(a_rpc)["height"] != 4 or info(b_rpc)["height"] != 6:
-                raise AssertionError("Initial divergent chain heights unexpected")
-            print("PASS: independent FAKECHAIN forks with distinct height-1 blocks", flush=True)
+            b_deep = header(b_rpc, FORK_A_BLOCKS - 1)["hash"]
+            if a_old_first == b_first or a_old_deep == b_deep:
+                raise AssertionError("Regtest forks are not independent at deep history")
+            if (info(a_rpc)["height"] != FORK_A_BLOCKS + 1 or
+                    info(b_rpc)["height"] != FORK_B_BLOCKS + 1):
+                raise AssertionError("Initial deep fork heights unexpected")
+            print(
+                f"PASS: native FAKECHAIN blocks on independent forks: "
+                f"A={FORK_A_BLOCKS}, B={FORK_B_BLOCKS}, shared frozen genesis",
+                flush=True,
+            )
             # Native RandomX initialization is separate from P2P convergence;
             # do not count time spent mining toward the reorganization timeout.
             deadline = time.monotonic() + max_seconds
@@ -220,8 +254,9 @@ def run(binary: Path, manifest: dict, max_seconds: int) -> None:
                     raise AssertionError("Regtest peer stopped during reorg")
                 x = info(a_rpc)
                 y = info(b_rpc)
-                if x.get("height") == 6 and y.get("height") == 6:
-                    if header(a_rpc, 5)["hash"] == b_tip:
+                if (x.get("height") == FORK_B_BLOCKS + 1 and
+                        y.get("height") == FORK_B_BLOCKS + 1):
+                    if header(a_rpc, FORK_B_BLOCKS)["hash"] == b_tip:
                         matched = True
                         break
                 time.sleep(0.6)
@@ -229,11 +264,19 @@ def run(binary: Path, manifest: dict, max_seconds: int) -> None:
                 raise AssertionError("A did not reorganize to longer B fork")
             if header(a_rpc, 1)["hash"] != b_first:
                 raise AssertionError("Orphaned first fork is still canonical")
-            if header(a_rpc, 3)["hash"] == a_old_tip:
+            if header(a_rpc, FORK_A_BLOCKS - 1)["hash"] != b_deep:
+                raise AssertionError("Deep orphaned fork is still canonical")
+            if header(a_rpc, FORK_A_BLOCKS - 1)["hash"] == a_old_deep:
+                raise AssertionError("Old deep block survived reorg")
+            if header(a_rpc, FORK_A_BLOCKS)["hash"] == a_old_tip:
                 raise AssertionError("Original shorter fork tip remained canonical")
             if header(a_rpc, 0)["hash"] != a0:
                 raise AssertionError("Genesis changed during reorganization")
-            print("PASS: shorter native FAKECHAIN fork reorganized to longer peer fork", flush=True)
+            print(
+                f"PASS: native FAKECHAIN P2P reorg displaced {FORK_A_BLOCKS} "
+                f"formerly canonical blocks; B reached height {FORK_B_BLOCKS}",
+                flush=True,
+            )
 
             # The *same compiled daemon* must still refuse public mainnet
             # mining; the independent mainnet CI smoke tests prove that path.

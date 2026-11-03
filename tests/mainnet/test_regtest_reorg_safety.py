@@ -116,7 +116,8 @@ class DisposableReorgSafety(unittest.TestCase):
         self.assertIn("header(a_rpc, 1)", source)
         self.assertIn("header(b_rpc, 1)", source)
         self.assertIn("a_old_first == b_first", source)
-        self.assertIn("header(a_rpc, FORK_B_BLOCKS)", source)
+        self.assertIn("header(a_rpc, winning_height)", source)
+        self.assertIn("wait_for_reorg(", source)
         self.assertIn("a_old_tip", source)
 
 

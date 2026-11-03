@@ -140,8 +140,8 @@ jobs:
             --pool services/official_pool/jtgrassie/build/release/forgecoin-pool \
             --pow-helper /tmp/frg-regtest-randomx-share \
             --ledger-audit /tmp/frg-native-ledger-readonly \
-            --max-seconds 120
-          echo 'PASS: real native RandomX share -> C Stratum -> native regtest daemon, wallet disabled'
+            --mature --max-seconds 120
+          echo 'PASS: real RandomX Stratum -> native block -> 61+ confirmations -> exact 1% LMDB fee split and restart, wallet disabled'
       - name: Mine two disposable regtest forks and verify a native P2P reorganization
         run: |
           python3 tools/smoke_regtest_reorg.py \

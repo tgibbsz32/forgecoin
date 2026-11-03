@@ -101,6 +101,23 @@ jobs:
           python3 tools/smoke_frozen_prelaunch_peers.py \
             --daemon build/consensus-gated/release/bin/forged --max-seconds 90
           echo 'PASS: loopback-only prelaunch P2P handshake; no mining or reorg test'
+      - name: Build the C pool against these exact native consensus static archives
+        env:
+          FRG_BUILD_JOBS: '2'
+        run: |
+          bash services/official_pool/tools/build-native-static.sh \
+            "$PWD" "$PWD/build/consensus-gated/release" "$(git rev-parse HEAD)"
+          make -C services/official_pool/jtgrassie -j 2 release TYPE=release \
+            FORGECOIN_ROOT="$PWD" FORGECOIN_BUILD_ROOT="$PWD/build/consensus-gated/release"
+          test -s services/official_pool/jtgrassie/build/release/forgecoin-pool
+          echo 'PASS: source-identical FAKECHAIN-capable daemon and C pool are both linked'
+      - name: Run native C pool against disposable local FAKECHAIN daemon without a wallet
+        run: |
+          python3 tools/smoke_native_pool_regtest.py \
+            --daemon build/consensus-gated/release/bin/forged \
+            --pool services/official_pool/jtgrassie/build/release/forgecoin-pool \
+            --max-seconds 120
+          echo 'PASS: loopback-only pool/daemon RPC and WebUI, zero transfers, no wallet RPC server'
       - name: Mine two disposable regtest forks and verify a native P2P reorganization
         run: |
           python3 tools/smoke_regtest_reorg.py \

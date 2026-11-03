@@ -63,12 +63,22 @@ frg_history_compare(const struct json_object *header,
     if (h < 0 || diff <= 0 || pay <= 0 || ts < 0 ||
         !frg_hex_hash64(chain_hash) || !frg_hex_hash64(chain_parent))
         return FRG_HISTORY_UNVERIFIED;
-    if ((uint64_t)h != expected_height || (uint64_t)diff != saved_difficulty ||
-        (uint64_t)pay != saved_reward ||
-        memcmp(chain_hash, saved_hash, 64) != 0 ||
+    /* A response for another height is not proof of a reorg at the
+     * requested credited height; it is an unverified/misdirected RPC.
+     */
+    if ((uint64_t)h != expected_height)
+        return FRG_HISTORY_UNVERIFIED;
+    if (memcmp(chain_hash, saved_hash, 64) != 0 ||
         memcmp(chain_parent, saved_parent, 64) != 0 ||
         json_object_get_boolean(orphan))
         return FRG_HISTORY_CONFLICT;
+    /* A hash-identical header with altered reward/difficulty is internally
+     * inconsistent RPC evidence, not a cryptographically supported fork.
+     * Hold payouts, but do NOT write an irreversible reorg marker.
+     */
+    if ((uint64_t)diff != saved_difficulty ||
+        (uint64_t)pay != saved_reward)
+        return FRG_HISTORY_UNVERIFIED;
     return FRG_HISTORY_MATCH;
 }
 

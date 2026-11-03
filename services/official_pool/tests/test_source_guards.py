@@ -48,7 +48,7 @@ class NativeBackendPreflight(unittest.TestCase):
         # must FAIL CLOSED until frozen consensus PR #185 (190) is reviewed;
         # do not require unrelated consensus changes in a pool-only PR.
         prefix = re.search(
-            r"CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX\\s*=\\s*(90|190);",
+            r"CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX\s*=\s*(90|190);",
             self.chain,
         )
         self.assertIsNotNone(prefix)
@@ -285,7 +285,7 @@ class NativeBackendPreflight(unittest.TestCase):
         # must FAIL CLOSED until frozen consensus PR #185 (190) is reviewed;
         # do not require unrelated consensus changes in a pool-only PR.
         prefix = re.search(
-            r"CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX\\s*=\\s*(90|190);",
+            r"CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX\s*=\s*(90|190);",
             self.chain,
         )
         self.assertIsNotNone(prefix)

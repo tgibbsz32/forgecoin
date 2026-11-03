@@ -36,7 +36,15 @@ The test creates a *synthetic* 240-height chain and 120 already matured credited
 
 Security correction: a structurally valid response for the **wrong height** or a hash-identical header with inconsistent difficulty/reward now returns `FRG_HISTORY_UNVERIFIED`, preventing wallet release but **not** writing a permanent reorg marker from inadequate evidence. Correct-height canonical hash/parent/orphan conflicts still trigger the durable quarantine. The shared JSON-RPC evaluator is used by both the live callback and the isolated fixture; explicit JSON `error: null` is treated as success, genuine errors as unverified.
 
-## Required acceptance before public operation
+## Required acceptance before public operation## November 3 native FAKECHAIN deep fork — separately verified
+
+A full native x86_64 daemon test on frozen/prelaunch-locked draft [PR #185](https://github.com/tgibbsz32/forgecoin/pull/185) has [passed](https://github.com/tgibbsz32/forgecoin/actions/runs/41674936417): two real loopback-only RandomX-regtest nodes independently mined 66 and 70 blocks. After P2P reconnection the 70-block fork won and displaced the 66 formerly canonical blocks. The test independently checked common genesis, winning chain tip and changed deep historical hashes. One short RPC timeout during alternative-chain synchronization was retried within a fixed deadline; all final assertions passed. This is **real native chain reorganization** on fakechain, rather than the separate synthetic LMDB fixture. The mainnet compiled prelaunch lock remained active.
+
+For pool interoperability, [test-only combined integration branch](https://github.com/tgibbsz32/forgecoin/tree/integration/frozen-mainnet-prelaunch-validation-20261103) merges the consensus candidate with current native pool reorg protection **without changing public main**. A hosted native test compiled and linked a real C pool with a real daemon from exactly the same source revision and launched a localhost-only pool against FAKECHAIN (no wallet RPC service, no spending). Its first smoke run reached a valid pool header/template and HTTP `/stats` but the test incorrectly expected the pool's zero-based `network_height` to equal the daemon's genesis-inclusive `get_info.height`. That assertion was corrected on combined revision `8ccd3e4` and the updated smoke's native runtime result remains pending at this checkpoint.
+
+**Still unresolved:** genuine Stratum share acceptance, recording and maturing 61+ pool-found blocks, then deep reorg, durable pool quarantine and payout refusal with the running native pool and after restart, independent-node trust, and wallet signing. Neither the genuine regtest fork proof nor source-only credited-history fixture establishes those results.
+
+
 
 - Standalone native comparator tests reject changed height/hash/parent/reward/difficulty/orphan and malformed RPC.
 - x86_64 and ARM64 compile and native link CI pass.

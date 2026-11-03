@@ -73,7 +73,7 @@ class PrivatePoolSmokeSafety(unittest.TestCase):
         self.assertIn('from smoke_regtest_reorg import (', source)
         self.assertIn("offline=True", source)
         self.assertIn("wallet-rpc-port", source)
-        self.assertIn("str(k) for k in []" if False else "pool-view-key", source)
+        self.assertIn('"pool-view-key": "0" * 64', source)
         self.assertIn('if k != "MONERO_RANDOMX_FULL_MEM"', source)
         self.assertIn('f"http://127.0.0.1:{port}/stats"', source)
         self.assertIn('os.kill(pool.pid, signal.SIGUSR1)', source)

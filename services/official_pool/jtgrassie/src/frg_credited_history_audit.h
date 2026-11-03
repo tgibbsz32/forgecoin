@@ -17,6 +17,18 @@ enum frg_history_verdict {
     FRG_HISTORY_CONFLICT = 2
 };
 
+/* No wallet payout may be considered until a complete successful history
+ * sweep, and never while an RPC historical check remains outstanding.
+ * This is only one gate: on-chain maturity and wallet verification are
+ * independently required.
+ */
+static inline bool
+frg_history_payout_allowed(bool accounting_held, bool sweep_verified,
+                           bool request_pending)
+{
+    return !accounting_held && sweep_verified && !request_pending;
+}
+
 /* Stored LMDB hashes are exactly 64 bytes and may not have a terminator. */
 static inline bool frg_fixed_hash64(const char raw[64])
 {

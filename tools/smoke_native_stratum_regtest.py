@@ -25,11 +25,17 @@ from smoke_native_pool_regtest import (
     RPC_PORT, local_stats, require_manifest, test_config, wait_stats,
 )
 from smoke_regtest_reorg import (
-    FROZEN_GENESIS, header, info, launch, take_free_port, wait_ready,
+    FROZEN_GENESIS, header, info, launch, mine, take_free_port, wait_ready,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
 HEX = re.compile(r"^[0-9a-fA-F]+$")
+# Separate standard FRG test address already present in the offline
+# settlement fixtures. Public address ONLY, no wallet keys/signer.
+TEST_FEE_ADDRESS = (
+    "YnJ4sygA2VbA4nvoXssZcSKh4fwsw4g3DaujrVCDXSwWGuXwnYTfNsKPVunwuAf8"
+    "joPEWfePpMh6CEsyEqMpQz2i2uFy112XA"
+)
 
 
 def stratum_send(sock: socket.socket, request: dict) -> None:
@@ -117,7 +123,8 @@ def wait_accepted(node_port: int, web_port: int,
 
 
 def run(daemon: Path, pool_binary: Path, pow_binary: Path,
-        ledger_binary: Path, manifest: dict, max_seconds: int) -> None:
+        ledger_binary: Path, manifest: dict, max_seconds: int,
+        *, mature: bool = False) -> None:
     if os.name == "nt":
         raise SystemExit("Run only in disposable Linux CI")
     address = require_manifest(manifest)
@@ -135,7 +142,10 @@ def run(daemon: Path, pool_binary: Path, pow_binary: Path,
         node_dir, pool_dir = home / "node", home / "pool-data"
         node_dir.mkdir()
         pool_dir.mkdir()
-        config = test_config(address, pool_dir, pool_port, web_port, wallet_rpc_absent)
+        config = test_config(
+            address, pool_dir, pool_port, web_port, wallet_rpc_absent,
+            fixture_fee_address=TEST_FEE_ADDRESS if mature else None,
+        )
         logs = [(home / n).open("wb") for n in ("daemon.log", "pool.log")]
         processes = []
         try:
@@ -236,8 +246,89 @@ def run(daemon: Path, pool_binary: Path, pow_binary: Path,
                         "record counted once, 1% policy, no wallet/payout",
                         flush=True,
                     )
+            if mature:
+                # Mining is STRICTLY in an offline localhost FAKECHAIN. The
+                # one native Stratum-found block at height 1 remains the only
+                # pool candidate; 61 extra genuine native blocks mature it.
+                pool_proc.terminate()
+                pool_proc.wait(timeout=10)
+                mine(RPC_PORT, address, 61, 4096)
+                if (info(RPC_PORT).get("height") != 63 or
+                        header(RPC_PORT, 1)["hash"] != canonical["hash"]):
+                    raise AssertionError("Regtest chain did not mature the pool block")
+
+                maturity_log = (home / "pool-maturity.log").open("wb")
+                logs.append(maturity_log)
+                pool_mature = subprocess.Popen(
+                    [str(pool_binary.resolve()), "--config-file", str(config)],
+                    cwd=str(home), stdin=subprocess.DEVNULL,
+                    stdout=maturity_log, stderr=subprocess.STDOUT,
+                    close_fds=True, env=env,
+                )
+                processes.append(pool_mature)
+                wait_stats(pool_mature, web_port,
+                           time.monotonic() + max_seconds, 62,
+                           require_template=True)
+
+                # A SECOND independent process reads only the actual native
+                # LMDB. Never rely on a WebUI balance or trust a test fixture
+                # to write accounting entries. Exact 1% must sum to reward.
+                inspect_args = [
+                    str(ledger_binary.resolve()), str(pool_dir), "credited",
+                    "1", canonical["hash"], FROZEN_GENESIS,
+                    address, TEST_FEE_ADDRESS,
+                ]
+                credited = None
+                deadline_credit = time.monotonic() + max_seconds
+                while time.monotonic() < deadline_credit:
+                    credited = subprocess.run(
+                        inspect_args, text=True, capture_output=True,
+                        timeout=10, check=False,
+                    )
+                    if credited.returncode == 0:
+                        break
+                    if pool_mature.poll() is not None:
+                        raise AssertionError("Pool exited during mature reward credit")
+                    time.sleep(0.5)
+                if credited is None or credited.returncode:
+                    raise AssertionError(
+                        "Native mature reward LMDB reconciliation failed: " +
+                        (credited.stderr if credited else "missing result")
+                    )
+                print(credited.stdout.strip(), flush=True)
+
+                # Reopen LMDB in an entirely new pool process, verifying
+                # exact miner and operator balances were not double-credited.
+                pool_mature.terminate()
+                pool_mature.wait(timeout=10)
+                restart_log = (home / "pool-maturity-restart.log").open("wb")
+                logs.append(restart_log)
+                pool_restart = subprocess.Popen(
+                    [str(pool_binary.resolve()), "--config-file", str(config)],
+                    cwd=str(home), stdin=subprocess.DEVNULL,
+                    stdout=restart_log, stderr=subprocess.STDOUT,
+                    close_fds=True, env=env,
+                )
+                processes.append(pool_restart)
+                wait_stats(pool_restart, web_port,
+                           time.monotonic() + max_seconds, 62,
+                           require_template=True)
+                verified_again = subprocess.run(
+                    inspect_args, text=True, capture_output=True,
+                    timeout=10, check=True,
+                )
+                if "PASS: live native LMDB credited block" not in verified_again.stdout:
+                    raise AssertionError("Reopened pool ledger did not retain precise balances")
+                print(
+                    "PASS: real pool Stratum block matured after 61 native FAKECHAIN "
+                    "confirmations; exact 99% miner / 1% fee LMDB split "
+                    "remained unchanged across pool restart, no wallet payout",
+                    flush=True,
+                )
         except Exception:
-            for path in (home / "daemon.log", home / "pool.log"):
+            for path in (home / "daemon.log", home / "pool.log",
+                         home / "pool-maturity.log",
+                         home / "pool-maturity-restart.log"):
                 if path.exists():
                     recent = path.read_text(errors="replace").splitlines()[-50:]
                     print(f"DIAGNOSTIC {path.name}:\n" + "\n".join(recent)[-6000:],
@@ -263,13 +354,14 @@ def main() -> None:
     parser.add_argument("--pool", type=Path, required=True)
     parser.add_argument("--pow-helper", type=Path, required=True)
     parser.add_argument("--ledger-audit", type=Path, required=True)
+    parser.add_argument("--mature", action="store_true")
     parser.add_argument("--max-seconds", type=int, default=100)
     args = parser.parse_args()
     if not 30 <= args.max_seconds <= 240:
         raise SystemExit("Bounded disposable test timeout out of range")
     manifest = json.loads((ROOT / "config/mainnet.identity.json").read_text())
     run(args.daemon, args.pool, args.pow_helper, args.ledger_audit,
-        manifest, args.max_seconds)
+        manifest, args.max_seconds, mature=args.mature)
 
 
 if __name__ == "__main__":

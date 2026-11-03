@@ -55,6 +55,35 @@ class DisposableReorgSafety(unittest.TestCase):
                 reorg.launch(Path(folder) / "forged", Path(folder) / "node",
                              49702, 49703, None, peer=49700, offline=True)
 
+    def test_deep_fork_requires_more_than_reward_maturity_window(self):
+        self.assertGreaterEqual(reorg.FORK_A_BLOCKS, 61)
+        self.assertGreater(reorg.FORK_B_BLOCKS, reorg.FORK_A_BLOCKS)
+        self.assertLessEqual(reorg.MINE_BATCH, 10)
+        source = (ROOT / "tools/smoke_regtest_reorg.py").read_text(encoding="utf-8")
+        self.assertIn("header(a_rpc, FORK_A_BLOCKS - 1)", source)
+        self.assertIn("a_old_deep", source)
+        self.assertIn("b_deep", source)
+        self.assertIn("Old deep block survived reorg", source)
+        self.assertIn("mine_in_batches(a_rpc, address, FORK_A_BLOCKS, 13)", source)
+        self.assertIn("mine_in_batches(b_rpc, address, FORK_B_BLOCKS, 456)", source)
+
+    def test_chunked_regtest_mining_checks_each_native_height(self):
+        address = "test-public-address-only"
+        with patch.object(reorg, "mine", side_effect=lambda port, addr, n, nonce: ["a" * 64] * n) as mined:
+            with patch.object(reorg, "info", side_effect=[
+                {"height": 11}, {"height": 21}, {"height": 23},
+            ]) as heights:
+                reorg.mine_in_batches(19481, address, 22, 15)
+        self.assertEqual([call.args[2] for call in mined.call_args_list], [10, 10, 2])
+        self.assertEqual([call.args[3] for call in mined.call_args_list], [15, 20495, 40975])
+        self.assertEqual(heights.call_count, 3)
+
+    def test_chunked_regtest_mining_rejects_wrong_native_height(self):
+        with patch.object(reorg, "mine", return_value=["a" * 64] * 10):
+            with patch.object(reorg, "info", return_value={"height": 10}):
+                with self.assertRaisesRegex(AssertionError, "height mismatch"):
+                    reorg.mine_in_batches(19481, "test-only", 10, 15)
+
     def test_fork_test_never_contains_external_oracle_endpoint(self):
         source = (ROOT / "tools/smoke_regtest_reorg.py").read_text(encoding="utf-8")
         self.assertNotIn("150.136.209.227", source)
@@ -64,7 +93,7 @@ class DisposableReorgSafety(unittest.TestCase):
         self.assertIn("header(a_rpc, 1)", source)
         self.assertIn("header(b_rpc, 1)", source)
         self.assertIn("a_old_first == b_first", source)
-        self.assertIn("header(a_rpc, 5)", source)
+        self.assertIn("header(a_rpc, FORK_B_BLOCKS)", source)
         self.assertIn("a_old_tip", source)
 
 

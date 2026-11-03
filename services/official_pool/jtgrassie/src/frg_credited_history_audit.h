@@ -110,7 +110,7 @@ frg_history_evaluate_rpc(const char *json_reply, uint64_t expected_height,
     enum frg_history_verdict verdict = FRG_HISTORY_UNVERIFIED;
     if (root && json_object_is_type(root, json_type_object) &&
         (!json_object_object_get_ex(root, "error", &error) ||
-         (error && json_object_is_type(error, json_type_null))) &&
+         !error || json_object_is_type(error, json_type_null)) &&
         frg_json_member(root, "result", json_type_object, &result) &&
         frg_json_member(result, "status", json_type_string, &status) &&
         !strcmp(json_object_get_string(status), "OK") &&

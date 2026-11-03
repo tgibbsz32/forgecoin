@@ -44,7 +44,16 @@ class NativeBackendPreflight(unittest.TestCase):
         self.assertRegex(self.chain, r"#define CRYPTONOTE_DISPLAY_DECIMAL_POINT\s+8")
         self.assertIn("FRG_ATOMIC_UNITS UINT64_C(100000000)", self.currency)
         self.assertIn("FRG_COIN_DECIMALS 8", self.currency)
-        self.assertRegex(self.chain, r"CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX\s*=\s*190;")
+        # Public main still carries the retired native prefix 90. Its C pool
+        # must FAIL CLOSED until frozen consensus PR #185 (190) is reviewed;
+        # do not require unrelated consensus changes in a pool-only PR.
+        prefix = re.search(
+            r"CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX\\s*=\\s*(90|190);",
+            self.chain,
+        )
+        self.assertIsNotNone(prefix)
+        if prefix.group(1) == "90":
+            self.assertIn("!frg_matches_frozen_mainnet()", self.pool)
         self.assertIn("#define MAINNET_ADDRESS_PREFIX 190", self.pool)
         self.assertIn("#define BLOCK_TIME 120", self.pool)
 
@@ -272,7 +281,16 @@ class NativeBackendPreflight(unittest.TestCase):
         for value in ("== 190", "== 191", "== 192", "== 39480", "== 39481", "== 39482"):
             self.assertIn(value, xmr)
         # Old consensus is NOT secretly treated as the new chain.
-        self.assertRegex(self.chain, r"CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX\s*=\s*190;")
+        # Public main still carries the retired native prefix 90. Its C pool
+        # must FAIL CLOSED until frozen consensus PR #185 (190) is reviewed;
+        # do not require unrelated consensus changes in a pool-only PR.
+        prefix = re.search(
+            r"CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX\\s*=\\s*(90|190);",
+            self.chain,
+        )
+        self.assertIsNotNone(prefix)
+        if prefix.group(1) == "90":
+            self.assertIn("!frg_matches_frozen_mainnet()", self.pool)
 
     def test_fail_closed_share_block_and_wallet_paths(self):
         self.assertIn("nonce must be exactly 8 hex characters", self.pool)

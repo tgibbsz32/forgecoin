@@ -83,6 +83,10 @@ int main(void)
     assert(verdict(NULL) == FRG_HISTORY_UNVERIFIED);
     assert(frg_history_compare(base_header(), 160, HASH, PARENT, 0, 2384185222ULL)
            == FRG_HISTORY_UNVERIFIED);
+    assert(!frg_history_payout_allowed(false, false, false));
+    assert(!frg_history_payout_allowed(false, true, true));
+    assert(!frg_history_payout_allowed(true, true, false));
+    assert(frg_history_payout_allowed(false, true, false));
     puts("PASS: native credited-history checks distinguish verified match, conflict, malformed/unverified");
     return 0;
 }

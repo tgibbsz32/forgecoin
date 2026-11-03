@@ -37,12 +37,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <pthread.h>
 
 #include <event2/event.h>
 #include <event2/buffer.h>
 #include <event2/http.h>
-#include <event2/listener.h>
 
 #include "log.h"
 #include "pool.h"
@@ -52,10 +50,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern unsigned char webui_html[];
 extern unsigned int webui_html_len;
 
-static pthread_t handle;
-static struct event_base *webui_base;
 static struct evhttp *webui_httpd;
-static struct evhttp_bound_socket *webui_listener;
 
 static const char*
 fetch_wa_cookie(struct evhttp_request *req)
@@ -184,76 +179,45 @@ process_request(struct evhttp_request *req, void *arg)
     evhttp_send_reply(req, HTTP_OK, "OK", buf);
 }
 
-static void *
-thread_main(void *ctx)
-{
-    wui_context_t *context = (wui_context_t*) ctx;
-    struct evconnlistener *lev = NULL;
-    struct addrinfo *info = NULL;
-    int rc;
-    char port[6] = {0};
-    sprintf(port, "%d", context->port);
-    if ((rc = getaddrinfo(context->listen, port, 0, &info)))
-    {
-        log_error("Error parsing listen address: %s", gai_strerror(rc));
-        return 0;
-    }
-    lev = evconnlistener_new_bind(webui_base, 0, NULL,
-            LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE | LEV_OPT_REUSEABLE_PORT,
-            -1, (struct sockaddr*)info->ai_addr, info->ai_addrlen);
-    if (!lev)
-    {
-        log_error("%s", strerror(errno));
-        return 0;
-    }
-    webui_listener = evhttp_bind_listener(webui_httpd, lev);
-    if(!webui_listener)
-    {
-        log_error("Failed to bind for port: %u", context->port);
-        return 0;
-    }
-    evhttp_set_gencb(webui_httpd, process_request, ctx);
-    event_base_dispatch(webui_base);
-    event_base_free(webui_base);
-    return 0;
-}
-
+/* WebUI shares the pool event loop. This removes detached worker lifetime,
+ * cross-thread libevent ownership and the SIGTERM/atexit deadlock window.
+ * Both Stratum and HTTP continue to bind only the explicitly configured
+ * local address in unreviewed research builds.
+ */
 int
-start_web_ui(wui_context_t *context)
+start_web_ui(wui_context_t *context, struct event_base *base)
 {
+    if (!context || !base || webui_httpd)
+        return -1;
     log_info("Starting Web UI on %s:%d", context->listen, context->port);
-    if (webui_base || handle)
-    {
-        log_error("Already running");
-        return -1;
-    }
-    webui_base = event_base_new();
-    if (!webui_base)
-    {
-        log_error("Failed to create httpd event base");
-        return -1;
-    }
-    webui_httpd = evhttp_new(webui_base);
+    webui_httpd = evhttp_new(base);
     if (!webui_httpd)
     {
-        log_error("Failed to create evhttp event");
+        log_error("Failed to allocate native WebUI HTTP server");
         return -1;
     }
-    int rc = pthread_create(&handle, NULL, thread_main, context);
-    if (!rc)
-        pthread_detach(handle);
-    return rc;
+    if (!evhttp_bind_socket_with_handle(webui_httpd, context->listen,
+                                        context->port))
+    {
+        log_error("Failed to bind WebUI to %s:%d", context->listen, context->port);
+        evhttp_free(webui_httpd);
+        webui_httpd = NULL;
+        return -1;
+    }
+    evhttp_set_gencb(webui_httpd, process_request, context);
+    return 0;
 }
 
 void
 stop_web_ui(void)
 {
-    log_debug("Stopping Web UI");
-    if (webui_listener && webui_httpd)
-        evhttp_del_accept_socket(webui_httpd, webui_listener);
+    /* Called only after the shared pool dispatcher has returned.
+     * evhttp_free closes HTTP listeners; the pool owns event_base_free.
+     */
     if (webui_httpd)
+    {
         evhttp_free(webui_httpd);
-    if (webui_base)
-        event_base_loopbreak(webui_base);
+        webui_httpd = NULL;
+    }
 }
 

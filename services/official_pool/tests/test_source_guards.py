@@ -24,6 +24,21 @@ class NativeBackendPreflight(unittest.TestCase):
         cls.currency = (VENDOR / "src/frg_currency.h").read_text(encoding="utf-8")
         cls.chain = (ROOT / "src/cryptonote_config.h").read_text(encoding="utf-8")
 
+    def test_graceful_shutdown_is_in_libevent_thread_and_webui_is_not_detached(self):
+        self.assertIn("signal_sigint = evsignal_new(pool_base, SIGINT", self.pool)
+        self.assertIn("signal_sigterm = evsignal_new(pool_base, SIGTERM", self.pool)
+        self.assertIn("event_base_loopexit(pool_base, NULL);", self.pool)
+        self.assertNotIn("sigint_handler(int sig)", self.pool)
+        self.assertNotIn("signal(SIGTERM, sigint_handler)", self.pool)
+        self.assertIn("run(&uic);", self.pool)
+        self.assertIn("start_web_ui(web_context, pool_base)", self.pool)
+        self.assertIn("evhttp_new(base)", self.webui)
+        self.assertIn("evhttp_bind_socket_with_handle(webui_httpd", self.webui)
+        self.assertIn("evhttp_free(webui_httpd)", self.webui)
+        self.assertNotIn("pthread_detach", self.webui)
+        self.assertNotIn("event_base_dispatch(webui_base)", self.webui)
+        self.assertNotIn("event_base_free(webui_base)", self.webui)
+
     def test_frg_currency_matches_checkout_consensus(self):
         self.assertRegex(self.chain, r"#define COIN\s+\(\(uint64_t\)100000000\)")
         self.assertRegex(self.chain, r"#define CRYPTONOTE_DISPLAY_DECIMAL_POINT\s+8")

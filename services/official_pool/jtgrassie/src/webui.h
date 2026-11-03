@@ -57,7 +57,8 @@ typedef struct wui_context_t
     unsigned allow_self_select;
 } wui_context_t;
 
-int start_web_ui(wui_context_t *context);
+struct event_base;
+int start_web_ui(wui_context_t *context, struct event_base *base);
 void stop_web_ui(void);
 
 #endif

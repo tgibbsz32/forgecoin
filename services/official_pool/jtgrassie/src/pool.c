@@ -2073,23 +2073,10 @@ rpc_on_frq_historical_credit(const char *data, rpc_callback_t *callback)
         expected->sequence != frg_history_request_sequence)
         return; /* stale response after timer timeout: never mark verified */
     frg_history_pending = false;
-    json_object *root = data ? json_tokener_parse(data) : NULL;
-    json_object *result = NULL, *status = NULL, *header = NULL;
-    json_object *rpc_error = NULL;
-    enum frg_history_verdict verdict = FRG_HISTORY_UNVERIFIED;
-    if (root && json_object_is_type(root, json_type_object) &&
-        (!json_object_object_get_ex(root, "error", &rpc_error) ||
-         (rpc_error && json_object_is_type(rpc_error, json_type_null))) &&
-        frg_json_member(root, "result", json_type_object, &result) &&
-        frg_json_member(result, "status", json_type_string, &status) &&
-        !strcmp(json_object_get_string(status), "OK") &&
-        frg_json_member(result, "block_header", json_type_object, &header))
-    {
-        verdict = frg_history_compare(header, expected->stored.height,
-                                      expected->stored.hash, expected->stored.prev_hash,
-                                      expected->stored.difficulty, expected->stored.reward);
-    }
-    if (root) json_object_put(root);
+    const enum frg_history_verdict verdict =
+        frg_history_evaluate_rpc(data, expected->stored.height,
+                                 expected->stored.hash, expected->stored.prev_hash,
+                                 expected->stored.difficulty, expected->stored.reward);
     if (verdict == FRG_HISTORY_CONFLICT)
     {
         /* Existing credit and/or a prior payout can no longer be trusted.

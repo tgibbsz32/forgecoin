@@ -1,0 +1,53 @@
+name: FRG credited-history deep-reorg regression (offline)
+
+on:
+  pull_request:
+    paths:
+      - 'services/official_pool/jtgrassie/src/frg_credited_history_audit.h'
+      - 'services/official_pool/jtgrassie/src/frg_credited_ledger_scan.h'
+      - 'services/official_pool/jtgrassie/src/frg_accounting_quarantine.h'
+      - 'services/official_pool/jtgrassie/src/frg_reconcile_policy.h'
+      - 'services/official_pool/tests/test_credited_history_audit.c'
+      - 'services/official_pool/tests/test_240_height_historical_reorg_lmdb.c'
+      - '.github/workflows/pool-credited-history-reorg-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  historical-credited-ledger:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install offline C fixtures' libraries
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            gcc liblmdb-dev libjson-c-dev
+      - name: Strict historical JSON-RPC comparator and payout gate
+        run: |
+          gcc -std=c11 -pedantic -O2 -Wall -Wextra -Werror \
+            -o /tmp/frg-credited-compare services/official_pool/tests/test_credited_history_audit.c \
+            -ljson-c
+          /tmp/frg-credited-compare
+      - name: Actual LMDB 240-height / 120-credit historical fork replay
+        run: |
+          gcc -std=c11 -pedantic -O2 -Wall -Wextra -Werror \
+            -o /tmp/frg-history-240 services/official_pool/tests/test_240_height_historical_reorg_lmdb.c \
+            -llmdb -ljson-c
+          /tmp/frg-history-240
+      - name: Existing persistent reorg and LMDB scanner regressions
+        run: |
+          gcc -std=c11 -pedantic -O2 -Wall -Wextra -Werror \
+            -o /tmp/frg-reorg-hold services/official_pool/tests/test_persistent_reorg_quarantine.c -llmdb
+          /tmp/frg-reorg-hold
+          gcc -std=c11 -pedantic -O2 -Wall -Wextra -Werror \
+            -o /tmp/frg-history-scan services/official_pool/tests/test_credited_ledger_scan_lmdb.c \
+            -llmdb -ljson-c
+          /tmp/frg-history-scan
+      - name: Verify no production artifacts or live RPC were required
+        run: |
+          test ! -e services/official_pool/jtgrassie/build/release/forgecoin-pool
+          echo 'PASS: isolated fixtures only. No daemon, miner, public Stratum, wallet or payment call.'

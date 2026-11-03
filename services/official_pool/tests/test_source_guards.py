@@ -52,7 +52,7 @@ class NativeBackendPreflight(unittest.TestCase):
         self.assertIn("frg_quarantine_mark(env, db_properties, expected->stored.height)", self.pool)
         self.assertIn("frg_history_sweep_verified = false;", self.pool)
         self.assertIn("frg_history_epoch++;", self.pool)
-        self.assertIn("!frg_history_sweep_verified || frg_history_pending", self.pool)
+        self.assertIn("frg_history_payout_allowed(frg_accounting_held,", self.pool)
         self.assertIn("timer_on_history", self.pool)
         self.assertIn("frg_history_requested_at", self.pool)
         self.assertIn("frg_history_request_sequence", self.pool)

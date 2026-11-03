@@ -17,6 +17,18 @@ enum frg_history_verdict {
     FRG_HISTORY_CONFLICT = 2
 };
 
+/* No wallet payout may be considered until a complete successful history
+ * sweep, and never while an RPC historical check remains outstanding.
+ * This is only one gate: on-chain maturity and wallet verification are
+ * independently required.
+ */
+static inline bool
+frg_history_payout_allowed(bool accounting_held, bool sweep_verified,
+                           bool request_pending)
+{
+    return !accounting_held && sweep_verified && !request_pending;
+}
+
 /* Stored LMDB hashes are exactly 64 bytes and may not have a terminator. */
 static inline bool frg_fixed_hash64(const char raw[64])
 {
@@ -63,13 +75,52 @@ frg_history_compare(const struct json_object *header,
     if (h < 0 || diff <= 0 || pay <= 0 || ts < 0 ||
         !frg_hex_hash64(chain_hash) || !frg_hex_hash64(chain_parent))
         return FRG_HISTORY_UNVERIFIED;
-    if ((uint64_t)h != expected_height || (uint64_t)diff != saved_difficulty ||
-        (uint64_t)pay != saved_reward ||
-        memcmp(chain_hash, saved_hash, 64) != 0 ||
+    /* A response for another height is not proof of a reorg at the
+     * requested credited height; it is an unverified/misdirected RPC.
+     */
+    if ((uint64_t)h != expected_height)
+        return FRG_HISTORY_UNVERIFIED;
+    if (memcmp(chain_hash, saved_hash, 64) != 0 ||
         memcmp(chain_parent, saved_parent, 64) != 0 ||
         json_object_get_boolean(orphan))
         return FRG_HISTORY_CONFLICT;
+    /* A hash-identical header with altered reward/difficulty is internally
+     * inconsistent RPC evidence, not a cryptographically supported fork.
+     * Hold payouts, but do NOT write an irreversible reorg marker.
+     */
+    if ((uint64_t)diff != saved_difficulty ||
+        (uint64_t)pay != saved_reward)
+        return FRG_HISTORY_UNVERIFIED;
     return FRG_HISTORY_MATCH;
+}
+
+/* Shared with the real asynchronous pool callback and disposable RPC replay
+ * tests. A missing response, RPC error, malformed envelope, wrong status or
+ * wrong-height header is UNVERIFIED, never a confirmed historical rewrite.
+ */
+static inline enum frg_history_verdict
+frg_history_evaluate_rpc(const char *json_reply, uint64_t expected_height,
+                         const char saved_hash[64], const char saved_parent[64],
+                         uint64_t saved_difficulty, uint64_t saved_reward)
+{
+    if (!json_reply) return FRG_HISTORY_UNVERIFIED;
+    struct json_object *root = json_tokener_parse(json_reply);
+    struct json_object *error = NULL, *result = NULL, *status = NULL;
+    struct json_object *header = NULL;
+    enum frg_history_verdict verdict = FRG_HISTORY_UNVERIFIED;
+    if (root && json_object_is_type(root, json_type_object) &&
+        (!json_object_object_get_ex(root, "error", &error) ||
+         !error || json_object_is_type(error, json_type_null)) &&
+        frg_json_member(root, "result", json_type_object, &result) &&
+        frg_json_member(result, "status", json_type_string, &status) &&
+        !strcmp(json_object_get_string(status), "OK") &&
+        frg_json_member(result, "block_header", json_type_object, &header))
+    {
+        verdict = frg_history_compare(header, expected_height, saved_hash,
+                                      saved_parent, saved_difficulty, saved_reward);
+    }
+    if (root) json_object_put(root);
+    return verdict;
 }
 
 #endif

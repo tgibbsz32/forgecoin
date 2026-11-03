@@ -47,12 +47,12 @@ int main(void)
 
     r = base_header();
     json_object_object_add(r, "difficulty", json_object_new_int64(700000));
-    assert(verdict(r) == FRG_HISTORY_CONFLICT);
+    assert(verdict(r) == FRG_HISTORY_UNVERIFIED);
     json_object_put(r);
 
     r = base_header();
     json_object_object_add(r, "reward", json_object_new_int64(2384185221LL));
-    assert(verdict(r) == FRG_HISTORY_CONFLICT);
+    assert(verdict(r) == FRG_HISTORY_UNVERIFIED);
     json_object_put(r);
 
     r = base_header();
@@ -67,7 +67,7 @@ int main(void)
 
     r = base_header();
     json_object_object_add(r, "height", json_object_new_int64(161));
-    assert(verdict(r) == FRG_HISTORY_CONFLICT);
+    assert(verdict(r) == FRG_HISTORY_UNVERIFIED);
     json_object_put(r);
 
     r = base_header();
@@ -83,6 +83,10 @@ int main(void)
     assert(verdict(NULL) == FRG_HISTORY_UNVERIFIED);
     assert(frg_history_compare(base_header(), 160, HASH, PARENT, 0, 2384185222ULL)
            == FRG_HISTORY_UNVERIFIED);
+    assert(!frg_history_payout_allowed(false, false, false));
+    assert(!frg_history_payout_allowed(false, true, true));
+    assert(!frg_history_payout_allowed(true, true, false));
+    assert(frg_history_payout_allowed(false, true, false));
     puts("PASS: native credited-history checks distinguish verified match, conflict, malformed/unverified");
     return 0;
 }

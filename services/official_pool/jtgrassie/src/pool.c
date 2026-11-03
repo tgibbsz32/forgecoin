@@ -334,6 +334,8 @@ static struct event *timer_10m;
 static struct event *timer_history;
 static struct event *timer_template;
 static struct event *signal_usr1;
+static struct event *signal_sigint;
+static struct event *signal_sigterm;
 static time_t template_triggered;
 static uint32_t extra_nonce;
 static uint32_t instance_id;
@@ -4804,11 +4806,15 @@ sigusr1_handler(evutil_socket_t fd, short event, void *arg)
     fetch_last_block_header();
 }
 
+/* Never call exit() or atexit cleanup from an asynchronous signal handler.
+ * libevent invokes this callback on the normal pool dispatcher thread.
+ */
 static void
-sigint_handler(int sig)
+signal_shutdown_handler(evutil_socket_t fd, short event, void *ctx)
 {
-    signal(sig, SIG_DFL);
-    exit(0);
+    log_info("Graceful pool shutdown requested by signal %d", (int)fd);
+    if (pool_base)
+        event_base_loopexit(pool_base, NULL);
 }
 
 static void *
@@ -4878,7 +4884,7 @@ bail:
 }
 
 static void
-run(void)
+run(wui_context_t *web_context)
 {
     evutil_socket_t listener;
     struct addrinfo *info = NULL;
@@ -4934,7 +4940,26 @@ run(void)
     }
 
     signal_usr1 = evsignal_new(pool_base, SIGUSR1, sigusr1_handler, NULL);
-    event_add(signal_usr1, NULL);
+    signal_sigint = evsignal_new(pool_base, SIGINT, signal_shutdown_handler, NULL);
+    signal_sigterm = evsignal_new(pool_base, SIGTERM, signal_shutdown_handler, NULL);
+    if (!signal_usr1 || !signal_sigint || !signal_sigterm ||
+        event_add(signal_usr1, NULL) ||
+        event_add(signal_sigint, NULL) ||
+        event_add(signal_sigterm, NULL))
+    {
+        log_fatal("Unable to register native pool libevent signal handlers");
+        goto bail;
+    }
+
+    /* Serve the research WebUI on the SAME event base as Stratum/RPC.
+     * A detached second event loop previously raced cleanup and made
+     * SIGTERM restart acceptance hang after 'Performing cleanup'.
+     */
+    if (config.webui_port && start_web_ui(web_context, pool_base))
+    {
+        log_fatal("Native pool WebUI failed to bind; refusing startup");
+        goto bail;
+    }
 
     if (*config.trusted_listen && config.trusted_port)
     {
@@ -5013,6 +5038,10 @@ cleanup(void)
         stop_web_ui();
     if (signal_usr1)
         event_free(signal_usr1);
+    if (signal_sigint)
+        event_free(signal_sigint);
+    if (signal_sigterm)
+        event_free(signal_sigterm);
     if (trusted_base)
         event_base_loopbreak(trusted_base);
     if (pool_base)
@@ -5216,8 +5245,9 @@ int main(int argc, char **argv)
 
     log_set_udata(&mutex_log);
     log_set_lock(log_lock);
-    signal(SIGINT, sigint_handler);
-    signal(SIGTERM, sigint_handler);
+    /* SIGINT/SIGTERM are dispatched by libevent on the normal main
+     * thread, never via async-handler exit() or concurrent atexit.
+     */
     signal(SIGPIPE, SIG_IGN);
     atexit(cleanup);
 
@@ -5253,10 +5283,7 @@ int main(int argc, char **argv)
     uic.pool_ssl_port = config.pool_ssl_port;
     uic.allow_self_select = !config.disable_self_select;
     uic.payment_threshold = config.payment_threshold;
-    if (config.webui_port)
-        start_web_ui(&uic);
-
-    run();
+    run(&uic);
 
 cleanup:
     return 0;

@@ -2677,7 +2677,9 @@ send_payments(void)
     /* In a future reviewed payout build the durable LMDB quarantine must
      * be checked before any wallet transfer is even considered.
      */
-    if (frg_accounting_held || !frg_history_sweep_verified || frg_history_pending)
+    if (!frg_history_payout_allowed(frg_accounting_held,
+                                    frg_history_sweep_verified,
+                                    frg_history_pending))
     {
         log_error("FRG payouts blocked until entire credited-block history is independently audited");
         return EACCES;

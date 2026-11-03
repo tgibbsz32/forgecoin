@@ -46,7 +46,7 @@ class NativeStratumOfflineSafety(unittest.TestCase):
         self.assertGreaterEqual(len(stratum.require_manifest(manifest)), 90)
         source = (ROOT / "tools/smoke_native_stratum_regtest.py").read_text()
         for required in ('socket.create_connection(("127.0.0.1", pool_port)',
-                         "offline=True", "test_config(address, pool_dir",
+                         "offline=True", "fixture_fee_address=TEST_FEE_ADDRESS if mature else None",
                          "wallet_rpc_absent", '"pool_blocks_found") != 1',
                          '"miner_balance") != 0.0', '"nonce": "wrong"',
                          "Duplicate Stratum share was accepted"):
@@ -55,6 +55,25 @@ class NativeStratumOfflineSafety(unittest.TestCase):
         self.assertNotIn("0.0.0.0", source)
         self.assertNotIn("150.136.209.227", source)
         self.assertNotIn("wallet_transfer(", source)
+
+    def test_maturity_fee_destination_is_public_only_and_allocation_is_exact(self):
+        from tempfile import TemporaryDirectory
+        from smoke_native_pool_regtest import test_config, require_manifest
+        manifest = json.loads((ROOT / "config/mainnet.identity.json").read_text())
+        public = require_manifest(manifest)
+        self.assertNotEqual(public, stratum.TEST_FEE_ADDRESS)
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "pool").mkdir()
+            config = test_config(public, root / "pool", 42300, 42301, 42302,
+                                 fixture_fee_address=stratum.TEST_FEE_ADDRESS)
+            body = config.read_text()
+            self.assertIn("pool-fee-wallet = " + stratum.TEST_FEE_ADDRESS, body)
+            self.assertIn("share-mul = 1.0", body)
+            self.assertIn("disable-payouts = 1", body)
+            with self.assertRaises(AssertionError):
+                test_config(public, root / "pool", 42300, 42301, 42302,
+                            fixture_fee_address=public)
 
     def test_stratum_reader_enforces_request_id_and_accepts_job_notification(self):
         class Reader:

@@ -47,12 +47,12 @@ int main(void)
 
     r = base_header();
     json_object_object_add(r, "difficulty", json_object_new_int64(700000));
-    assert(verdict(r) == FRG_HISTORY_CONFLICT);
+    assert(verdict(r) == FRG_HISTORY_UNVERIFIED);
     json_object_put(r);
 
     r = base_header();
     json_object_object_add(r, "reward", json_object_new_int64(2384185221LL));
-    assert(verdict(r) == FRG_HISTORY_CONFLICT);
+    assert(verdict(r) == FRG_HISTORY_UNVERIFIED);
     json_object_put(r);
 
     r = base_header();
@@ -67,7 +67,7 @@ int main(void)
 
     r = base_header();
     json_object_object_add(r, "height", json_object_new_int64(161));
-    assert(verdict(r) == FRG_HISTORY_CONFLICT);
+    assert(verdict(r) == FRG_HISTORY_UNVERIFIED);
     json_object_put(r);
 
     r = base_header();

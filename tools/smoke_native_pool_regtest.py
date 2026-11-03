@@ -46,7 +46,8 @@ def require_manifest(manifest: dict) -> str:
 
 
 def test_config(public_address: str, directory: Path, pool_port: int,
-                web_port: int, unbound_wallet_port: int) -> Path:
+                web_port: int, unbound_wallet_port: int, *,
+                fixture_fee_address: str | None = None) -> Path:
     """Derive from reviewed pool template, forcibly overriding unsafe settings."""
     original = POOL_CONFIG.read_text(encoding="utf-8")
     parsed = {}
@@ -75,6 +76,17 @@ def test_config(public_address: str, directory: Path, pool_port: int,
         "pool-view-key": "0" * 64,  # dummy; never derive a private key
         "trusted-listen": "", "upstream-host": "",
     }
+    if fixture_fee_address is not None:
+        # Test-only public address from the settlement fixtures. This controls
+        # internal LMDB allocation, not a connected signer or spendable wallet.
+        if (fixture_fee_address == public_address or
+                not 90 <= len(fixture_fee_address) <= 127 or
+                not fixture_fee_address.isalnum()):
+            raise AssertionError("Invalid or identical fakechain-only fee destination")
+        overrides["pool-fee-wallet"] = fixture_fee_address
+        # The maturity fixture submits a single difficulty-1 share; allocate
+        # precisely one whole test reward before splitting out the 1% fee.
+        overrides["share-mul"] = "1.0"
     if not all(k in parsed for k in (
             "pool-listen", "pool-port", "webui-listen", "webui-port",
             "rpc-host", "rpc-port", "wallet-rpc-host", "wallet-rpc-port",

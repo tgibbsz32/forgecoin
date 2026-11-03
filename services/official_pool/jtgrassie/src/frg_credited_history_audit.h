@@ -94,4 +94,33 @@ frg_history_compare(const struct json_object *header,
     return FRG_HISTORY_MATCH;
 }
 
+/* Shared with the real asynchronous pool callback and disposable RPC replay
+ * tests. A missing response, RPC error, malformed envelope, wrong status or
+ * wrong-height header is UNVERIFIED, never a confirmed historical rewrite.
+ */
+static inline enum frg_history_verdict
+frg_history_evaluate_rpc(const char *json_reply, uint64_t expected_height,
+                         const char saved_hash[64], const char saved_parent[64],
+                         uint64_t saved_difficulty, uint64_t saved_reward)
+{
+    if (!json_reply) return FRG_HISTORY_UNVERIFIED;
+    struct json_object *root = json_tokener_parse(json_reply);
+    struct json_object *error = NULL, *result = NULL, *status = NULL;
+    struct json_object *header = NULL;
+    enum frg_history_verdict verdict = FRG_HISTORY_UNVERIFIED;
+    if (root && json_object_is_type(root, json_type_object) &&
+        (!json_object_object_get_ex(root, "error", &error) ||
+         (error && json_object_is_type(error, json_type_null))) &&
+        frg_json_member(root, "result", json_type_object, &result) &&
+        frg_json_member(result, "status", json_type_string, &status) &&
+        !strcmp(json_object_get_string(status), "OK") &&
+        frg_json_member(result, "block_header", json_type_object, &header))
+    {
+        verdict = frg_history_compare(header, expected_height, saved_hash,
+                                      saved_parent, saved_difficulty, saved_reward);
+    }
+    if (root) json_object_put(root);
+    return verdict;
+}
+
 #endif

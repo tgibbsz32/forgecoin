@@ -42,7 +42,13 @@ Security correction: a structurally valid response for the **wrong height** or a
 
 This **closes the native daemon↔C pool compile/link, startup and block-header-refresh interface milestone**. It does not establish share-submission acceptance, pool-found block maturity/fee distribution, historical credited-block quarantine triggered by a genuine network reorg, or a safe live payout wallet.
 
-## Required acceptance before public operation## November 3 native FAKECHAIN deep fork — separately verified
+## Required acceptance before public operation## November 3 first genuine native Stratum-mined FAKECHAIN block
+
+[GitHub x86_64 CI run 41726516379](https://github.com/tgibbsz32/forgecoin/actions/runs/41726516379) **PASSED** an end-to-end test that issued a genuine native C Stratum mining job, computed native RandomX using the real public seed and hashing blob, submitted the valid 8-character nonce/result through the C pool, and observed **one daemon-accepted pool-mined FAKECHAIN block**. Malformed and duplicate submissions were rejected. The native pool, daemon and proof helper were compiled from the same isolated frozen-consensus/pool-security source revision. The fixed native mainnet lock remained on, all listeners were localhost-only, and no wallet RPC signer or real funds were present.
+
+The next acceptance extension introduces a separate read-only inspector of the pool's actual LMDB database (not just WebUI found-block counters), and then 61 additional genuine native FAKECHAIN confirmations with a test-only public fee destination and PPLNS multiplier 1.0 so a single valid share can account for one full block. The inspector requires exact integer-atomic 99% miner / 1% fee rewards and no duplicate allocation after a pool restart. **This maturity/restart result is not yet verified**, and even a pass would not establish a real-wallet transfer or post-credit 61+ network reorg quarantine.
+
+## November 3 native FAKECHAIN deep fork — separately verified
 
 A full native x86_64 daemon test on frozen/prelaunch-locked draft [PR #185](https://github.com/tgibbsz32/forgecoin/pull/185) has [passed](https://github.com/tgibbsz32/forgecoin/actions/runs/41674936417): two real loopback-only RandomX-regtest nodes independently mined 66 and 70 blocks. After P2P reconnection the 70-block fork won and displaced the 66 formerly canonical blocks. The test independently checked common genesis, winning chain tip and changed deep historical hashes. One short RPC timeout during alternative-chain synchronization was retried within a fixed deadline; all final assertions passed. This is **real native chain reorganization** on fakechain, rather than the separate synthetic LMDB fixture. The mainnet compiled prelaunch lock remained active.
 

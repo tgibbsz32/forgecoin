@@ -26,6 +26,16 @@ The native C pool now implements a **round-robin retrospective scan of every rec
 4. **No running pool validation yet:** Standalone json-c comparison tests are not equivalent to an actual LMDB + RPC + 61+-block restart/reorg fixture or dual-node security acceptance.
 5. **Legacy daemon concerns:** The public `main` branch still does not contain the finalized frozen consensus integration. PR #185 remains distinct. No production network mutation is allowed.
 
+## November 3, 2026: deeper synthetic acceptance and false-quarantine fix
+
+[Merged PR #197](https://github.com/tgibbsz32/forgecoin/pull/197) extends historical replay using the **actual shared LMDB scanner, strict daemon JSON-RPC envelope evaluator, account payout-eligibility policy, and persistent LMDB hold**. The focused [native offline regression workflow](https://github.com/tgibbsz32/forgecoin/actions/runs/41657969800), [x86_64 native link](https://github.com/tgibbsz32/forgecoin/actions/runs/41657969712), and [ARM64 native link](https://github.com/tgibbsz32/forgecoin/actions/runs/41657969685) all passed.
+
+The test creates a *synthetic* 240-height chain and 120 already matured credited records, preserving separate miner and 1% fee balances. It verifies normal historical sweep, malformed/wrong-height/error RPC handling, restart-required rescan, and a fork beginning at credited height 100 when the tip is 240 (**141-block deep**). It asserts the first conflict is preserved in durable LMDB quarantine across restart, no duplicate account changes occur, and the shared payout policy forbids payment while unverified or held.
+
+**Important distinction:** the fixture uses fabricated block hashes and replayed JSON. It does **not** mine 240 valid RandomX blocks, run a daemon or Stratum process, verify actual fork-choice or RandomX seed rules, sign a wallet transfer, or demonstrate an end-to-end real-chain 61+ reorg. Those remain critical release gates.
+
+Security correction: a structurally valid response for the **wrong height** or a hash-identical header with inconsistent difficulty/reward now returns `FRG_HISTORY_UNVERIFIED`, preventing wallet release but **not** writing a permanent reorg marker from inadequate evidence. Correct-height canonical hash/parent/orphan conflicts still trigger the durable quarantine. The shared JSON-RPC evaluator is used by both the live callback and the isolated fixture; explicit JSON `error: null` is treated as success, genuine errors as unverified.
+
 ## Required acceptance before public operation
 
 - Standalone native comparator tests reject changed height/hash/parent/reward/difficulty/orphan and malformed RPC.

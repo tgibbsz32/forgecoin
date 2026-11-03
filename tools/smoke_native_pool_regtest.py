@@ -114,14 +114,20 @@ def local_stats(port: int) -> dict:
 
 
 def wait_stats(proc: subprocess.Popen, web_port: int, deadline: float,
-               minimum_height: int) -> dict:
+               minimum_height: int, *, require_template: bool = False) -> dict:
     last = None
     while time.monotonic() < deadline:
         if proc.poll() is not None:
             raise AssertionError("Native C pool exited during local-only smoke")
         try:
             last = local_stats(web_port)
-            if last.get("network_height", 0) >= minimum_height:
+            height = last.get("network_height")
+            template_seen = last.get("last_template_fetched", 0)
+            if (isinstance(height, int) and not isinstance(height, bool)
+                    and height >= minimum_height
+                    and (not require_template or
+                         (isinstance(template_seen, int) and template_seen > 0
+                          and last.get("network_difficulty") == 1))):
                 return last
         except (OSError, ValueError, urllib.error.URLError):
             pass
@@ -172,8 +178,11 @@ def run(daemon_binary: Path, pool_binary: Path, manifest: dict,
                 close_fds=True, env=env,
             )
             processes.append(pool)
-            first = wait_stats(pool, web_port, deadline, 1)
-            if (first.get("pool_fee") != 0.01
+            # Pool WebUI reports zero-based canonical *tip index*, while
+            # get_info.height counts genesis as block one.
+            first = wait_stats(pool, web_port, deadline, 0, require_template=True)
+            if (first.get("network_height") != 0
+                    or first.get("pool_fee") != 0.01
                     or first.get("allow_self_select") != 0
                     or first.get("pool_blocks_found") != 0
                     or first.get("pool_port") != pool_port):
@@ -188,16 +197,15 @@ def run(daemon_binary: Path, pool_binary: Path, manifest: dict,
             if pool.poll() is not None:
                 raise AssertionError("Native pool stopped after fakechain block")
             os.kill(pool.pid, signal.SIGUSR1)  # native refresh callback
+            # Require actual same-process transition of pool tip 0 -> 1.
+            # This never confuses the daemon's block *count* 1 -> 2.
             after = wait_stats(pool, web_port, time.monotonic() + max_seconds, 1)
-            if after.get("pool_fee") != 0.01 or after.get("pool_blocks_found") != 0:
-                raise AssertionError("Native C pool stats changed unexpectedly")
-            # Require actual same-process transition to height 2, not only
-            # a web server responding while disconnected from the daemon.
-            after = wait_stats(pool, web_port, time.monotonic() + max_seconds, 2)
-            if after.get("network_height") != 2:
-                raise AssertionError("Native C pool did not see new FAKECHAIN height")
-            print("PASS: native C pool and real FAKECHAIN daemon communicate on localhost; "
-                  "height 1→2, 1% fee configured, no credits, no wallet/payout",
+            if (after.get("network_height") != 1
+                    or after.get("pool_fee") != 0.01
+                    or after.get("pool_blocks_found") != 0):
+                raise AssertionError("Native pool failed to observe the canonical FAKECHAIN tip")
+            print("PASS: real native C pool/FAKECHAIN RPC and WebUI on localhost; "
+                  "pool tip 0→1, daemon count 1→2, 1% fee, no wallet/payout",
                   flush=True)
         except Exception:
             for path in (root / "native-daemon.log", root / "native-pool.log"):

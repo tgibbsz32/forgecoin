@@ -68,6 +68,13 @@ class PrivatePoolSmokeSafety(unittest.TestCase):
         self.assertIn("pool-fee-wallet = \n", config)
         self.assertNotIn("0.0.0.0", config)
 
+    def test_pool_stats_use_zero_based_tip_while_daemon_counts_genesis(self):
+        source = (ROOT / "tools/smoke_native_pool_regtest.py").read_text()
+        self.assertIn("wait_stats(pool, web_port, deadline, 0, require_template=True)", source)
+        self.assertIn('first.get("network_height") != 0', source)
+        self.assertIn('after.get("network_height") != 1', source)
+        self.assertIn('info(RPC_PORT).get("height") != 2', source)
+
     def test_source_never_starts_wallet_or_production_miner(self):
         source = (ROOT / "tools/smoke_native_pool_regtest.py").read_text()
         self.assertIn('from smoke_regtest_reorg import (', source)

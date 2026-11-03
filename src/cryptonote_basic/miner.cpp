@@ -1,3 +1,4 @@
+#include "forgecoin_prelaunch.h"
 // Copyright (c) 2014-2022, The Monero Project
 //
 // All rights reserved.
@@ -296,6 +297,7 @@ namespace cryptonote
   //-----------------------------------------------------------------------------------------------------
   bool miner::init(const boost::program_options::variables_map& vm, network_type nettype)
   {
+    m_prelaunch_nettype = nettype;
     if(command_line::has_arg(vm, arg_extra_messages))
     {
       std::string buff;
@@ -369,6 +371,11 @@ namespace cryptonote
   //-----------------------------------------------------------------------------------------------------
   bool miner::start(const account_public_address& adr, size_t threads_count, bool do_background, bool ignore_battery)
   {
+    if (!forgecoin_prelaunch::mining_allowed(m_prelaunch_nettype == MAINNET))
+    {
+      MERROR("PRELAUNCH: native mainnet mining is disabled");
+      return false;
+    }
     m_block_reward = 0;
     m_mine_address = adr;
     m_threads_total = static_cast<uint32_t>(threads_count);

@@ -1,0 +1,108 @@
+name: Frozen FRG mainnet consensus prelaunch integration
+on:
+  push:
+    branches:
+      - 'integration/frozen-mainnet-prelaunch-*'
+  pull_request:
+    paths:
+      - 'config/mainnet.identity.json'
+      - 'src/**'
+      - 'tests/mainnet/**'
+      - 'services/official_pool/tests/**'
+      - '.github/workflows/frozen-mainnet-consensus-integration.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  prelaunch-policy:
+    name: Frozen chain identity and compiled prelaunch policy
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Verify all selected client, pool, explorer and host port contracts
+        run: python -m unittest discover -s tests/desktop -p 'test_*.py' -v
+      - name: Verify network identity and core enforcement ordering
+        run: python -m unittest discover -s tests/mainnet -p 'test_*.py' -v
+      - name: Verify official-pool source contracts and settlement prototype
+        run: |
+          python -m unittest discover -s services/official_pool/tests -p 'test_*.py' -v
+          python -m unittest discover -s services/pool_settlement/tests -p 'test_*.py' -v
+      - name: Compile and execute prelaunch consensus policy in isolation
+        run: |
+          g++ -std=c++17 -pedantic -Wall -Wextra -Werror -O2 -Isrc \
+            tests/mainnet/prelaunch_policy.cpp -o /tmp/frg-prelaunch-policy
+          /tmp/frg-prelaunch-policy
+      - name: Exercise native genesis output membership policy
+        run: |
+          g++ -std=c++17 -O2 -pedantic -Wall -Wextra -Werror -Isrc \
+            tests/mainnet/genesis_ring_policy.cpp -o /tmp/frg-genesis-ring-policy
+          /tmp/frg-genesis-ring-policy
+      - name: Install Boost multiprecision header for native difficulty test
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends libboost-dev libsodium-dev
+      - name: Compile and exercise real frozen difficulty and LWMA code
+        run: |
+          g++ -std=c++17 -O2 -pedantic -Wall -Wextra -Werror -Isrc -Icontrib/epee/include \
+            tests/mainnet/frozen_difficulty_policy.cpp -o /tmp/frg-frozen-difficulty
+          /tmp/frg-frozen-difficulty
+      - name: Assert mining and payouts remain unapproved
+        run: |
+          python - <<'PY'
+          import json
+          m=json.load(open('config/mainnet.identity.json',encoding='utf-8'))
+          assert m['release_authorized'] is False
+          assert m['pool']['payouts_enabled'] is False
+          assert m['pool']['stratum_public'] is False
+          assert m['consensus_guard_stage']=='draft-unbuilt'
+          print('Prelaunch configuration remains fail-closed')
+          PY
+
+  native-daemon-build:
+    name: Native x86_64 daemon build and isolated runtime acceptance
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned class of native build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            cmake build-essential pkg-config xxd \
+            libevent-dev liblmdb-dev libjson-c-dev libsodium-dev libunbound-dev \
+            uuid-dev libssl-dev libzmq3-dev libreadline-dev libhidapi-dev libusb-1.0-0-dev \
+            libboost-system-dev libboost-date-time-dev libboost-chrono-dev \
+            libboost-filesystem-dev libboost-thread-dev libboost-regex-dev \
+            libboost-serialization-dev libboost-program-options-dev libboost-locale-dev
+      - name: Configure isolated native source build
+        run: |
+          cmake -S . -B build/consensus-gated/release \
+            -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF \
+            -DBUILD_GUI_DEPS=OFF -DMANUAL_SUBMODULES=1 -DUSE_CCACHE=OFF
+      - name: Compile and link daemon without launching network
+        run: cmake --build build/consensus-gated/release --parallel 2 --target daemon
+      - name: Verify linked native daemon artifact without starting it
+        run: |
+          test -s build/consensus-gated/release/bin/forged
+          file build/consensus-gated/release/bin/forged
+          sha256sum build/consensus-gated/release/bin/forged
+      - name: Boot disposable localhost-only prelaunch daemon and reject mining
+        run: |
+          python3 tools/smoke_frozen_prelaunch_daemon.py \
+            --daemon build/consensus-gated/release/bin/forged --max-seconds 90
+          echo 'PASS: isolated genesis-only prelaunch smoke; no public networking or payout test'
+      - name: Verify two fresh native peers handshaking on loopback without mining
+        run: |
+          python3 tools/smoke_frozen_prelaunch_peers.py \
+            --daemon build/consensus-gated/release/bin/forged --max-seconds 90
+          echo 'PASS: loopback-only prelaunch P2P handshake; no mining or reorg test'
+      - name: Mine two disposable regtest forks and verify a native P2P reorganization
+        run: |
+          python3 tools/smoke_regtest_reorg.py \
+            --daemon build/consensus-gated/release/bin/forged --max-seconds 180
+          echo 'PASS: FAKECHAIN-only post-genesis synchronization/reorg; mainnet remains locked'

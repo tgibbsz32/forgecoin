@@ -33,16 +33,10 @@
 #define MONERO_DEFAULT_LOG_CATEGORY "blockchain.hardforks"
 
 const hardfork_t mainnet_hard_forks[] = {
-  // Genesis block remains version 1
+  // Fresh mainnet: genesis v1, all mined blocks v19.
+  // Startup difficulty is selected by height independently of protocol version.
   { 1, 0, 0, 0 },
-
-  // All mined blocks from height 1 onward use v16 rules
-  { 16, 1, 0, 1 },
-
-  // Mainnet minimum difficulty activates without rewriting prior blocks.
-  { 17, cryptonote::FORGE_DIFFICULTY_FLOOR_HEIGHT, 0, 1792400400 },
-  { 18, cryptonote::FORGE_DIFFICULTY_MILLION_HEIGHT, 0, 1792447200 },
-  { 19, cryptonote::FORGE_LWMA_HEIGHT, 0, 1792459200 },
+  { 19, 1, 0, 1 },
 };
 
 const size_t num_mainnet_hard_forks =

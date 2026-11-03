@@ -158,6 +158,35 @@ def mine_in_batches(port: int, address: str, total: int, starting_nonce: int) ->
             )
 
 
+def wait_for_reorg(a_rpc: int, b_rpc: int, winning_height: int,
+                   winning_hash: str, processes: list[subprocess.Popen],
+                   deadline: float) -> int:
+    """Retry transient RPC stalls while a deep P2P reorg reorganizes LMDB.
+
+    A short HTTP timeout is not evidence of consensus failure or success.
+    Never bypass the final canonical hash/height checks; the deadline is hard.
+    """
+    last_heights = None
+    transient_errors = 0
+    while time.monotonic() < deadline:
+        if any(p.poll() is not None for p in processes):
+            raise AssertionError("Regtest peer stopped during deep reorg")
+        try:
+            x = info(a_rpc)
+            y = info(b_rpc)
+            last_heights = (x.get("height"), y.get("height"))
+            if last_heights == (winning_height + 1, winning_height + 1):
+                if header(a_rpc, winning_height)["hash"] == winning_hash:
+                    return transient_errors
+        except (OSError, TimeoutError, ConnectionError, ValueError):
+            transient_errors += 1
+        time.sleep(0.6)
+    raise AssertionError(
+        f"Native deep regtest reorg did not converge: expected={winning_height + 1}, "
+        f"last_heights={last_heights!r}, transient_rpc_failures={transient_errors}"
+    )
+
+
 def run(binary: Path, manifest: dict, max_seconds: int) -> None:
     if os.name == "nt":
         raise SystemExit("Run only in disposable Linux CI, not on desktop/Oracle")
@@ -248,20 +277,14 @@ def run(binary: Path, manifest: dict, max_seconds: int) -> None:
                 )
                 wait_ready(procs[1 if index == 0 else 0], rp, deadline)
 
-            matched = False
-            while time.monotonic() < deadline:
-                if any(p.poll() is not None for p in procs):
-                    raise AssertionError("Regtest peer stopped during reorg")
-                x = info(a_rpc)
-                y = info(b_rpc)
-                if (x.get("height") == FORK_B_BLOCKS + 1 and
-                        y.get("height") == FORK_B_BLOCKS + 1):
-                    if header(a_rpc, FORK_B_BLOCKS)["hash"] == b_tip:
-                        matched = True
-                        break
-                time.sleep(0.6)
-            if not matched:
-                raise AssertionError("A did not reorganize to longer B fork")
+            transient_rpc = wait_for_reorg(
+                a_rpc, b_rpc, FORK_B_BLOCKS, b_tip, procs, deadline
+            )
+            if transient_rpc:
+                print(
+                    f"INFO: deep fork required {transient_rpc} bounded RPC retries; "
+                    "final canonical checks still required", flush=True
+                )
             if header(a_rpc, 1)["hash"] != b_first:
                 raise AssertionError("Orphaned first fork is still canonical")
             if header(a_rpc, FORK_A_BLOCKS - 1)["hash"] != b_deep:

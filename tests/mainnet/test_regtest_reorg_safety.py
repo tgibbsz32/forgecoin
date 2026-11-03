@@ -84,6 +84,29 @@ class DisposableReorgSafety(unittest.TestCase):
                 with self.assertRaisesRegex(AssertionError, "height mismatch"):
                     reorg.mine_in_batches(19481, "test-only", 10, 15)
 
+    def test_deep_reorg_rpc_timeout_is_retryable_without_false_success(self):
+        class Running:
+            def poll(self):
+                return None
+        winning_hash = "a" * 64
+        response = {"height": reorg.FORK_B_BLOCKS + 1}
+        with patch.object(reorg, "info", side_effect=[
+                TimeoutError("native reorg temporarily busy"), response, response]):
+            with patch.object(reorg, "header", return_value={"hash": winning_hash}):
+                with patch.object(reorg.time, "sleep", return_value=None):
+                    retried = reorg.wait_for_reorg(
+                        39801, 39802, reorg.FORK_B_BLOCKS, winning_hash,
+                        [Running(), Running()], reorg.time.monotonic() + 5)
+        self.assertEqual(retried, 1)
+
+    def test_deep_reorg_stopped_peer_must_fail_even_during_rpc_stall(self):
+        class Stopped:
+            def poll(self):
+                return 2
+        with self.assertRaisesRegex(AssertionError, "stopped"):
+            reorg.wait_for_reorg(39801, 39802, reorg.FORK_B_BLOCKS,
+                                 "a" * 64, [Stopped()], reorg.time.monotonic() + 5)
+
     def test_fork_test_never_contains_external_oracle_endpoint(self):
         source = (ROOT / "tools/smoke_regtest_reorg.py").read_text(encoding="utf-8")
         self.assertNotIn("150.136.209.227", source)

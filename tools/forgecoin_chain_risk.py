@@ -61,11 +61,33 @@ def parse_header(raw):
     timestamp = raw.get('timestamp')
     if not isinstance(timestamp, int) or isinstance(timestamp, bool) or timestamp < 0:
         raise ValueError('invalid block timestamp')
-    value = raw.get('wide_difficulty') or raw.get('difficulty')
-    try:
-        difficulty = int(value, 16) if isinstance(value, str) and value.lower().startswith('0x') else int(value)
-    except (TypeError, ValueError, OverflowError) as exc:
-        raise ValueError('invalid difficulty') from exc
+    # Monero-derived daemon JSON-RPC encodes wide_difficulty in BASE 16,
+    # even for digit-only strings without a 0x prefix. This is confirmed by
+    # the repository's native tests/functional_tests/blockchain.py assertions.
+    wide = raw.get('wide_difficulty')
+    if wide is not None:
+        if not isinstance(wide, str):
+            raise ValueError('wide_difficulty must be a hexadecimal string')
+        digits = wide[2:] if wide.lower().startswith('0x') else wide
+        if not 1 <= len(digits) <= 64 or any(c not in '0123456789abcdefABCDEF' for c in digits):
+            raise ValueError('malformed wide_difficulty hex')
+        difficulty = int(digits, 16)
+        lo = raw.get('difficulty')
+        if lo is not None:
+            if not isinstance(lo, int) or isinstance(lo, bool) or not 0 <= lo <= (1 << 64) - 1:
+                raise ValueError('invalid lower difficulty field')
+            if lo != difficulty & ((1 << 64) - 1):
+                raise ValueError('wide and low difficulty disagree')
+        hi = raw.get('difficulty_top64')
+        if hi is not None:
+            if not isinstance(hi, int) or isinstance(hi, bool) or not 0 <= hi <= (1 << 64) - 1:
+                raise ValueError('invalid difficulty_top64 field')
+            if hi != difficulty >> 64:
+                raise ValueError('wide and high difficulty disagree')
+    else:
+        difficulty = raw.get('difficulty')
+        if not isinstance(difficulty, int) or isinstance(difficulty, bool):
+            raise ValueError('invalid difficulty field')
     if difficulty <= 0:
         raise ValueError('non-positive difficulty')
     return {'height': h, 'hash': block_hash.lower(), 'prev_hash': parent.lower(),

@@ -67,6 +67,36 @@ class ChainRiskTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 m.parse_header(bad)
 
+    def test_wide_difficulty_is_hex_even_when_digits_only(self):
+        h = header(5)
+        self.assertEqual(m.parse_header({**h, 'wide_difficulty': '7a120'})['difficulty'], 500000)
+        self.assertEqual(m.parse_header({**h, 'wide_difficulty': '0x7a120'})['difficulty'], 500000)
+        # Digit-only string is still base-16, never decimal.
+        self.assertEqual(m.parse_header({**h, 'wide_difficulty': '500000',
+                                         'difficulty': 0x500000})['difficulty'], 0x500000)
+
+    def test_wide_difficulty_large_and_consistent_with_header_parts(self):
+        h = header(5)
+        large = (3 << 64) + 500000
+        wide = {**h, 'wide_difficulty': format(large, 'x'),
+                'difficulty_top64': 3}
+        self.assertEqual(m.parse_header(wide)['difficulty'], large)
+        for bad in ({**wide, 'difficulty_top64': 2},
+                    {**wide, 'difficulty': 500001},
+                    {**wide, 'wide_difficulty': 'XYZ'},
+                    {**wide, 'wide_difficulty': ''},
+                    {**wide, 'wide_difficulty': 'f' * 65},
+                    {**wide, 'wide_difficulty': 500000},
+                    {**wide, 'difficulty_top64': True}):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                m.parse_header(bad)
+
+    def test_wide_difficulty_missing_rejects_string_or_boolean_fallback(self):
+        h = header(5)
+        for value in ('500000', True, 0, -1, None):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                m.parse_header({**h, 'difficulty': value})
+
     def test_reject_wrong_genesis(self):
         from unittest.mock import patch
         bad_genesis = header(0)

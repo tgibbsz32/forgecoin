@@ -127,13 +127,19 @@ jobs:
             build/consensus-gated/release/external/randomx/librandomx.a \
             -lstdc++ -lm -pthread -ldl
           test -s /tmp/frg-regtest-randomx-share
-          echo 'PASS: native RandomX test utility; no wallet, no private key, no network'
+          gcc -std=c11 -O2 -Wall -Wextra -Werror \
+            -o /tmp/frg-native-ledger-readonly \
+            services/official_pool/tests/frg_native_pool_lmdb_inspect.c \
+            -llmdb -ljson-c
+          test -s /tmp/frg-native-ledger-readonly
+          echo 'PASS: native RandomX and independent read-only LMDB audit; no wallet, no private key, no network'
       - name: Genuine native Stratum RandomX submission on local FAKECHAIN
         run: |
           python3 tools/smoke_native_stratum_regtest.py \
             --daemon build/consensus-gated/release/bin/forged \
             --pool services/official_pool/jtgrassie/build/release/forgecoin-pool \
             --pow-helper /tmp/frg-regtest-randomx-share \
+            --ledger-audit /tmp/frg-native-ledger-readonly \
             --max-seconds 120
           echo 'PASS: real native RandomX share -> C Stratum -> native regtest daemon, wallet disabled'
       - name: Mine two disposable regtest forks and verify a native P2P reorganization

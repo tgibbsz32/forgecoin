@@ -75,6 +75,17 @@ class NativeStratumOfflineSafety(unittest.TestCase):
                 test_config(public, root / "pool", 42300, 42301, 42302,
                             fixture_fee_address=public)
 
+    def test_deep_real_credited_block_fork_holds_balances_and_denies_restart(self):
+        source = (ROOT / "tools/smoke_native_stratum_regtest.py").read_text()
+        self.assertIn("mine_in_batches(b_rpc, address, 70, 8300)", source)
+        self.assertIn("wait_for_reorg(", source)
+        self.assertIn('str(ledger_binary.resolve()), str(pool_dir), "held"', source)
+        self.assertIn("FRG ledger quarantine is active or unreadable", source)
+        self.assertIn("real 62-deep post-credit fork", source)
+        self.assertIn("wallet payout disabled", source)
+        self.assertIn("if deep_reorg and not mature:", source)
+        self.assertNotIn("frg_quarantine_mark(", source)
+
     def test_stratum_reader_enforces_request_id_and_accepts_job_notification(self):
         class Reader:
             def __init__(self, lines):

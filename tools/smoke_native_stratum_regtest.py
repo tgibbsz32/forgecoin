@@ -25,7 +25,8 @@ from smoke_native_pool_regtest import (
     RPC_PORT, local_stats, require_manifest, test_config, wait_stats,
 )
 from smoke_regtest_reorg import (
-    FROZEN_GENESIS, header, info, launch, mine, take_free_port, wait_ready,
+    FROZEN_GENESIS, header, info, launch, mine, mine_in_batches,
+    take_free_port, wait_ready, wait_for_reorg,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -124,9 +125,11 @@ def wait_accepted(node_port: int, web_port: int,
 
 def run(daemon: Path, pool_binary: Path, pow_binary: Path,
         ledger_binary: Path, manifest: dict, max_seconds: int,
-        *, mature: bool = False) -> None:
+        *, mature: bool = False, deep_reorg: bool = False) -> None:
     if os.name == "nt":
         raise SystemExit("Run only in disposable Linux CI")
+    if deep_reorg and not mature:
+        raise AssertionError("Real credited-block deep reorg requires mature credits first")
     address = require_manifest(manifest)
     if any(not b.is_file() for b in (daemon, pool_binary, pow_binary, ledger_binary)):
         raise AssertionError("Missing reviewed full-stack native test binaries")
@@ -325,6 +328,133 @@ def run(daemon: Path, pool_binary: Path, pow_binary: Path,
                     "remained unchanged across pool restart, no wallet payout",
                     flush=True,
                 )
+                if deep_reorg:
+                    # This chain A genuinely credited the Stratum-mined
+                    # block at height 1 after 61 following confirmations.
+                    # The competing node B starts with an independent LMDB.
+                    pool_restart.terminate()
+                    if pool_restart.wait(timeout=10) != 0:
+                        raise AssertionError("Credited pool failed clean shutdown")
+                    old_hash = canonical["hash"]
+                    b_dir = home / "independent-fork-b"
+                    b_dir.mkdir()
+                    forbidden = {RPC_PORT, p2p_port, pool_port, web_port, wallet_rpc_absent}
+                    b_ports = []
+                    while len(b_ports) < 2:
+                        port = take_free_port()
+                        if port not in forbidden:
+                            b_ports.append(port)
+                            forbidden.add(port)
+                    b_p2p, b_rpc = b_ports
+                    b_log = (home / "independent-fork-b.log").open("wb")
+                    logs.append(b_log)
+                    b_offline = launch(daemon, b_dir, b_p2p, b_rpc, b_log,
+                                       offline=True)
+                    processes.append(b_offline)
+                    if (wait_ready(b_offline, b_rpc,
+                                   time.monotonic() + max_seconds).get("height") != 1
+                            or header(b_rpc, 0)["hash"] != FROZEN_GENESIS):
+                        raise AssertionError("Replacement fakechain does not share genesis")
+                    mine_in_batches(b_rpc, address, 70, 8300)
+                    b_tip = header(b_rpc, 70)["hash"]
+                    b_first = header(b_rpc, 1)["hash"]
+                    if b_first == old_hash:
+                        raise AssertionError("Competing fork did not replace credited block")
+
+                    # Reconnect precisely these two existing isolated LMDBs
+                    # through explicit localhost P2P; never use public peers.
+                    node.terminate()
+                    node.wait(timeout=15)
+                    b_offline.terminate()
+                    b_offline.wait(timeout=15)
+                    b_live_log = (home / "independent-fork-b-live.log").open("wb")
+                    a_live_log = (home / "credited-fork-a-live.log").open("wb")
+                    logs.extend((b_live_log, a_live_log))
+                    b_live = launch(daemon, b_dir, b_p2p, b_rpc, b_live_log)
+                    processes.append(b_live)
+                    wait_ready(b_live, b_rpc, time.monotonic() + max_seconds)
+                    a_live = launch(daemon, node_dir, p2p_port, RPC_PORT,
+                                    a_live_log, peer=b_p2p)
+                    processes.append(a_live)
+                    wait_ready(a_live, RPC_PORT, time.monotonic() + max_seconds)
+                    wait_for_reorg(RPC_PORT, b_rpc, 70, b_tip,
+                                   [a_live, b_live], time.monotonic() + max_seconds)
+                    if (header(RPC_PORT, 1)["hash"] != b_first or
+                            header(RPC_PORT, 1)["hash"] == old_hash or
+                            header(RPC_PORT, 0)["hash"] != FROZEN_GENESIS or
+                            info(RPC_PORT).get("height") != 71):
+                        raise AssertionError("Native P2P reorg did not orphan mature credited block")
+                    print("PASS: real native 62-deep P2P reorg replaced previously credited "
+                          "Stratum block at height 1", flush=True)
+
+                    # The real pool itself must discover the historical
+                    # rewrite through its native 2-second credited history
+                    # RPC audit, and WRITE the durable hold, not the fixture.
+                    audit_log = (home / "pool-post-credit-reorg.log").open("wb")
+                    logs.append(audit_log)
+                    audit_pool = subprocess.Popen(
+                        [str(pool_binary.resolve()), "--config-file", str(config)],
+                        cwd=str(home), stdin=subprocess.DEVNULL,
+                        stdout=audit_log, stderr=subprocess.STDOUT,
+                        close_fds=True, env=env,
+                    )
+                    processes.append(audit_pool)
+                    wait_stats(audit_pool, web_port,
+                               time.monotonic() + max_seconds,
+                               70, require_template=True)
+                    hold_args = [
+                        str(ledger_binary.resolve()), str(pool_dir), "held",
+                        "1", old_hash, FROZEN_GENESIS, address, TEST_FEE_ADDRESS,
+                    ]
+                    observed = None
+                    until = time.monotonic() + max_seconds
+                    while time.monotonic() < until:
+                        observed = subprocess.run(
+                            hold_args, capture_output=True, text=True,
+                            timeout=10, check=False,
+                        )
+                        if observed.returncode == 0:
+                            break
+                        if audit_pool.poll() is not None:
+                            raise AssertionError("Native pool exited before durable quarantine")
+                        time.sleep(0.5)
+                    if observed is None or observed.returncode != 0:
+                        raise AssertionError(
+                            "Historical native C pool quarantine not stored: " +
+                            (observed.stderr if observed else "no evidence")
+                        )
+                    print(observed.stdout.strip(), flush=True)
+                    audit_pool.terminate()
+                    if audit_pool.wait(timeout=10) != 0:
+                        raise AssertionError("Held pool failed clean shutdown")
+
+                    # Brand-new pool must refuse startup on the same LMDB
+                    # without altering the already-credited balances.
+                    denied_log = (home / "pool-denied-restart.log").open("wb")
+                    logs.append(denied_log)
+                    denied = subprocess.Popen(
+                        [str(pool_binary.resolve()), "--config-file", str(config)],
+                        cwd=str(home), stdin=subprocess.DEVNULL,
+                        stdout=denied_log, stderr=subprocess.STDOUT,
+                        close_fds=True, env=env,
+                    )
+                    processes.append(denied)
+                    if denied.wait(timeout=15) == 0:
+                        raise AssertionError("Native C pool reopened after deep-reorg hold")
+                    denied_log.flush()
+                    text = (home / "pool-denied-restart.log").read_text(errors="replace")
+                    if "FRG ledger quarantine is active or unreadable" not in text:
+                        raise AssertionError("Pool refusal was unrelated to LMDB quarantine")
+                    persisted = subprocess.run(
+                        hold_args, capture_output=True, text=True,
+                        timeout=10, check=True,
+                    )
+                    if "PASS: deep reorg LMDB quarantine persists" not in persisted.stdout:
+                        raise AssertionError("Quarantine or credited balances lost on restart")
+                    print("PASS: real 62-deep post-credit fork triggered native "
+                          "historical audit -> durable LMDB accounting quarantine; "
+                          "blocked restart; miner and operator 1% balances untouched; "
+                          "wallet payout disabled", flush=True)
         except Exception:
             for path in (home / "daemon.log", home / "pool.log",
                          home / "pool-maturity.log",
@@ -355,13 +485,15 @@ def main() -> None:
     parser.add_argument("--pow-helper", type=Path, required=True)
     parser.add_argument("--ledger-audit", type=Path, required=True)
     parser.add_argument("--mature", action="store_true")
+    parser.add_argument("--deep-reorg", action="store_true")
     parser.add_argument("--max-seconds", type=int, default=100)
     args = parser.parse_args()
     if not 30 <= args.max_seconds <= 240:
         raise SystemExit("Bounded disposable test timeout out of range")
     manifest = json.loads((ROOT / "config/mainnet.identity.json").read_text())
     run(args.daemon, args.pool, args.pow_helper, args.ledger_audit,
-        manifest, args.max_seconds, mature=args.mature)
+        manifest, args.max_seconds,
+        mature=args.mature, deep_reorg=args.deep_reorg)
 
 
 if __name__ == "__main__":

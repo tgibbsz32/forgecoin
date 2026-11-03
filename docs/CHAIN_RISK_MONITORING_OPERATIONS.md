@@ -51,6 +51,10 @@ On the first run, the observer creates a history baseline only from the most rec
 4. For any matured-block conflict, preserve the native pool's existing durable LMDB accounting-quarantine marker; never clear it automatically. Complete a full credited-block ledger reconciliation and independent review before manually authorizing payouts in a future production build.
 5. Publish an incident record and remediation plan. Genuine majority work may still reorder blocks/censor transactions; monitoring reduces detection latency and settlement exposure, not PoW takeover capability.
 
+## November 3, 2026: RPC difficulty parser correction
+
+[Merged PR #198](https://github.com/tgibbsz32/forgecoin/pull/198) corrects the read-only observer's `wide_difficulty` parsing. The ForgeCoin/Monero JSON-RPC convention represents this as **hexadecimal even without `0x`**, as explicitly checked by `tests/functional_tests/blockchain.py`. The watcher now parses bounded hex text and cross-checks supplied low/high 64-bit values, failing closed on malformed or contradictory fields. New offline regression cases passed in [GitHub Actions](https://github.com/tgibbsz32/forgecoin/actions/runs/41658675417). This is not a runtime deployment or a new consensus rule.
+
 ## Required next native-pool release gates
 
 - Continuously examine **all credited canonical heights** beyond the existing limited ten-header maturity window, with bounded batches and restart-safe coverage tracking. Verify each credited block's hash, parent, reward and orphan status against independently authenticated canonical headers.

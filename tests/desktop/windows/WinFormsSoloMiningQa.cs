@@ -218,6 +218,7 @@ namespace ForgeCoinDesktop
                 var offline = Field<CheckBox>(form, "bootstrapModeBox");
                 var start = Field<Button>(form, "startMiningButton");
                 var stop = Field<Button>(form, "stopMiningButton");
+                var miningDetail = Field<Label>(form, "miningDetailLabel");
                 var reward = Field<TextBox>(form, "miningAddressBox");
                 var threads = Field<NumericUpDown>(form, "miningThreads");
                 var pool = Field<Button>(form, "startPoolButton");
@@ -264,9 +265,16 @@ namespace ForgeCoinDesktop
                 SelectTab(tabs, "Solo Mining");
                 reward.Text = DisposablePayout;
                 threads.Value = Math.Min(2, (int)threads.Maximum);
+                Console.WriteLine("QA_SOLO_UI_ENABLED=" + start.Enabled);
                 Check(start.Enabled, "Private GUI solo mining control not enabled");
                 start.PerformClick();
-                Check(WaitUntil(delegate { return stop.Enabled; }, 65, node),
+                Console.WriteLine("QA_SOLO_START_CLICK_RETURNED");
+                Check(WaitUntil(delegate {
+                    Check(miningDetail.Text.IndexOf("rejected",
+                        StringComparison.OrdinalIgnoreCase) < 0,
+                        "Native GUI solo start was rejected");
+                    return stop.Enabled;
+                }, 65, node),
                       "WinForms did not confirm the asynchronous native mining start");
                 Check(WaitUntil(delegate
                 {
@@ -324,7 +332,24 @@ namespace ForgeCoinDesktop
             finally
             {
                 if (form != null) {
-                    try { form.Close(); form.Dispose(); } catch { }
+                    try
+                    {
+                        // Never invoke a modal "Stop node?" confirmation in
+                        // a headless test failure path. Kill only the daemon
+                        // process owned by this disposable MainForm instance.
+                        FieldInfo ownedField = typeof(MainForm).GetField(
+                            "daemon", BindingFlags.Instance |
+                                      BindingFlags.NonPublic);
+                        Process owned = ownedField == null ? null :
+                            ownedField.GetValue(form) as Process;
+                        if (owned != null && !owned.HasExited)
+                        {
+                            owned.Kill();
+                            owned.WaitForExit(7000);
+                        }
+                        form.Close(); form.Dispose();
+                    }
+                    catch { }
                 }
                 Environment.SetEnvironmentVariable("FRG_PRIVATE_UI_QA_ROOT", null);
                 Environment.SetEnvironmentVariable("FRG_PRIVATE_UI_QA_BIN", null);

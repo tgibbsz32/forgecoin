@@ -73,16 +73,30 @@ jobs:
           $dest = Join-Path $env:RUNNER_TEMP 'ForgeCoin-Desktop-Endpoint-Check.exe'
           $manifest = Join-Path $src 'app.manifest'
           $program = Join-Path $src 'Program.cs'
+          $frgWallet = Join-Path $src 'FrgWalletInput.cs'
           $wallet = Join-Path $src 'SolanaWallet.cs'
           $vault = Join-Path $src 'SolanaVault.cs'
           & $compiler /nologo /target:winexe /optimize+ /platform:anycpu `
             "/win32manifest:$manifest" "/out:$dest" `
             /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll `
             /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll `
-            $program $wallet $vault
+            $program $frgWallet $wallet $vault
           if ($LASTEXITCODE -ne 0) { throw 'Windows Forms source compilation failed' }
           if (!(Test-Path $dest)) { throw 'Compiled executable missing' }
           Write-Output 'PASS: Windows Forms source compiled with separated RPC/stat ports'
+      - name: Run native FRG offline wallet input and mnemonic validation cases
+        shell: pwsh
+        run: |
+          $src = Join-Path $PWD 'apps/desktop'
+          $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
+          $test = Join-Path $PWD 'tests/desktop/windows/FrgWalletInputTests.cs'
+          $exe = Join-Path $env:RUNNER_TEMP 'FRG-Native-Wallet-Input-Tests.exe'
+          & $compiler /nologo /target:exe /optimize+ "/out:$exe" `
+            /reference:System.dll `
+            (Join-Path $src 'FrgWalletInput.cs') $test
+          if ($LASTEXITCODE -ne 0) { throw 'Native FRG wallet input test compile failed' }
+          & $exe
+          if ($LASTEXITCODE -ne 0) { throw 'Native FRG wallet input assertions failed' }
       - name: Exercise fail-closed private packaging and source-only QA path
         shell: pwsh
         run: |

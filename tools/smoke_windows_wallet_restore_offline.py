@@ -151,7 +151,7 @@ def launch(binary: Path, home: Path, wallet_dir: Path,
         "--daemon-address", f"127.0.0.1:{dead_daemon_port}",
         "--rpc-bind-ip", "127.0.0.1",
         "--rpc-bind-port", str(rpc_port),
-        "--config-file", str(cfg),  # fail closed: digest auth is mandatory
+        "--rpc-login", login + ":" + secret,  # isolated QA only: test native CLI credential parsing
         "--no-dns",
         "--no-initial-sync",
         "--log-level", "0",

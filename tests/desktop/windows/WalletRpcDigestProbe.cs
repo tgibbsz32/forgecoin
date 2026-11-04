@@ -13,6 +13,18 @@ namespace ForgeCoinDesktop
         static int GetVersionCode(int port, string user, string password)
         {
             var url = "http://127.0.0.1:" + port + "/json_rpc";
+            if (user != null)
+            {
+                try
+                {
+                    string result = WalletRpcDigestTransport.PostJson(
+                        new Uri(url), user, password,
+                        "{\"jsonrpc\":\"2.0\",\"id\":\"real-native-qa\",\"method\":\"get_version\",\"params\":{}}",
+                        5000);
+                    return result.Contains("\"result\"") && result.Contains("\"version\"") ? 200 : 500;
+                }
+                catch (InvalidOperationException) { return 401; }
+            }
             var request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = "POST";
             request.ContentType = "application/json";

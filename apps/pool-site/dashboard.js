@@ -5,12 +5,50 @@
 // is displayed. Miner addresses, payouts, cookies and wallet secrets are absent.
 (() => {
   const byId = (id) => document.getElementById(id);
-  // Account-free address lookup is intentionally disabled until a verified,
-  // read-only per-address pool API has been integrated and audited.
-  document.getElementById("public-address-lookup")?.addEventListener("submit", (event) => {
+  // Explicit user-submitted public address only; no login/seed/cookie used.
+  // This endpoint is an unverified LOCAL-only backend observation, never payout
+  // evidence or proof that the frozen mainnet is public.
+  document.getElementById("public-address-lookup")?.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const result = document.getElementById("public-address-result");
-    if (result) result.textContent = "Per-address FRG mining statistics are not yet available: the verified pool API is not deployed. No account is required when it becomes available.";
+    const result = byId("public-address-result");
+    const field = byId("public-miner-address");
+    if (!result || !field) return;
+    const address = field.value.trim();
+    if (!/^[1-9A-HJ-NP-Za-km-z]{90,140}$/.test(address)) {
+      result.textContent = "Invalid public FRG address format. Never enter a recovery phrase or private key.";
+      return;
+    }
+    const endpoint = new URL("api/miner-stats", location.href);
+    if (endpoint.origin !== location.origin) return;
+    endpoint.searchParams.set("address", address);
+    const controller = new AbortController();
+    const deadline = setTimeout(() => controller.abort(), 7000);
+    result.textContent = "Checking read-only worker statistics...";
+    try {
+      const response = await fetch(endpoint.toString(), {
+        method: "GET", credentials: "omit", cache: "no-store",
+        redirect: "error", referrerPolicy: "no-referrer",
+        headers: {"Accept": "application/json"}, signal: controller.signal,
+      });
+      if (!response.ok) throw new Error("not connected");
+      const body = await response.json();
+      const when = Date.parse(body.asOf);
+      const stats = body.stats;
+      if (body.state !== "backend_observed_unverified"
+          || body.launchApproved !== false || !Number.isFinite(when)
+          || Math.abs(Date.now() - when) > 120000 || !stats
+          || !Number.isSafeInteger(stats.hashrate) || stats.hashrate < 0
+          || !Number.isSafeInteger(stats.workers) || stats.workers < 0) {
+        throw new Error("invalid or stale");
+      }
+      result.textContent = "Observed only (not independently verified): "
+        + "hashrate " + rate(stats.hashrate) + ", workers " + stats.workers
+        + ". Balance, shares and payouts remain unavailable.";
+    } catch (_) {
+      result.textContent = "Native FRG address statistics are unavailable or unverified. No mining or payout activity is implied.";
+    } finally {
+      clearTimeout(deadline);
+    }
   });
 
   const values = [

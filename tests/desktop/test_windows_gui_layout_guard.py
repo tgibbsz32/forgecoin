@@ -19,6 +19,8 @@ class WalletGuiSafety(unittest.TestCase):
         self.assertIn("private static readonly bool NativeMiningAuthorized = false;", self.gui)
         self.assertIn("if (!NativeMiningAuthorized && !bootstrapModeBox.Checked)", self.gui)
         self.assertIn("Public FRG node bootstrap is disabled until launch", self.gui)
+        self.assertNotIn("startMiningButton.Enabled = true", self.gui)
+        self.assertIn("startMiningButton.Enabled = NativeMiningAuthorized; stopMiningButton.Enabled = false;", self.gui)
         self.assertIn("Private offline node QA only", self.gui)
 
     def test_qa_only_storage_compilation_does_not_leak_into_release(self):

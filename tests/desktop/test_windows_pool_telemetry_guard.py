@@ -38,6 +38,14 @@ class WindowsPoolTelemetrySafety(unittest.TestCase):
         self.assertIn("http.AllowAutoRedirect = false;", self.gui)
         self.assertIn("output.Length + size > 512 * 1024", self.gui)
 
+    def test_stale_pool_poll_and_failed_launch_do_not_reuse_instance(self):
+        self.assertIn(
+            "poolApiId != expectedMonitor) return;", self.gui,
+            "Out-of-order HTTP poll errors must not mark a restarted miner unverified",
+        )
+        self.assertIn("if (poolMiner == null)\n                {\n                    poolApiId = null;", self.gui)
+        self.assertIn("poolApiId = null;", self.gui)
+
     def test_public_spending_mining_remain_locked(self):
         self.assertIn("private static readonly bool NativeMiningAuthorized = false;", self.gui)
         self.assertIn("private static readonly bool NativeSpendAuthorized = false;", self.gui)

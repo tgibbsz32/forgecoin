@@ -122,6 +122,15 @@ class NativeBackendPreflight(unittest.TestCase):
         self.assertIn("proposed >= (long double)remaining", helper)
         self.assertIn("block_reward != UINT64_C(0)", helper)
 
+    def test_unjournaled_pool_wallet_payout_flag_hard_fails_compilation(self):
+        # P0 #210: a successful native wallet transfer on FAKECHAIN is not
+        # proof that the C pool has an atomic payout journal and safe retries.
+        self.assertIn("#ifdef FRG_TESTED_WALLET_PAYOUTS", self.pool)
+        self.assertIn('#error "FRG native pool wallet payout path is unsafe', self.pool)
+        self.assertIn("journal/reconciliation acceptance required (issue 210)", self.pool)
+        self.assertIn("#ifndef FRG_TESTED_WALLET_PAYOUTS", self.pool)
+        self.assertIn("config.disable_payouts = true", self.pool)
+
     def test_all_block_status_updates_are_atomic_with_balances(self):
         reconciliation = self.pool.split("static int\nprocess_blocks(", 1)[1].split(
             "static void\nupdate_pool_hr(", 1

@@ -78,6 +78,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "growbag.h"
 #include "uthash.h"
 
+/* P0 #210: the legacy transfer_split callback is NOT an idempotent,
+ * crash-safe wallet payout journal. Never allow a compiler switch to revive
+ * that path until the entire sender/recipient/LMDB/reorg reconciliation
+ * design has passed native acceptance and independent security review.
+ *
+ * The approved source must be changed through a separately reviewed PR
+ * before this prohibition can be lifted. Disabling payouts in pool.conf
+ * alone is insufficient protection against accidentally built alternatives.
+ */
+#ifdef FRG_TESTED_WALLET_PAYOUTS
+#error "FRG native pool wallet payout path is unsafe and unreleased: journal/reconciliation acceptance required (issue 210)"
+#endif
+
 #define MAX_LINE 8192
 #define CLIENTS_INIT 8192
 #define RPC_BODY_MAX 65536

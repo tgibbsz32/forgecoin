@@ -2,6 +2,8 @@
 
 **Status: PRELAUNCH / NOT AUTHORIZED FOR PUBLIC MINING, FUNDED WALLETS OR POOL PAYOUTS.**
 
+**November 4 consensus integration:** The owner approved the frozen numeric parameters and [PR #185](https://github.com/tgibbsz32/forgecoin/pull/185) merged into `main` at `b2afc6047db6a229cc0e780efc67cf916b2957ae`. Seven independent CI workflows passed (native x86_64/ARM64, pool/native safety, frozen difficulty and private loopback tests). The compiled MAINNET mining and post-genesis block acceptance locks remain in force. `release_authorized=false`, pool public Stratum and wallet payouts stay disabled. **This is source integration, not mainnet activation or public wallet/miner release authorization.** Independent signed genesis-output spend rejection, peer review and public payout execution still require acceptance.
+
 This is the release-candidate evidence ledger for the **native FRG coin**. It
 separates actual native test-chain results from planned features, old desktop
 packages and the currently unlaunched public chain. It supersedes historical
@@ -41,7 +43,7 @@ See [selected consensus/tokenomics](CURRENT_MAINNET.md), [machine-readable docum
 | Two disposable native nodes and critical 66-deep reorg observation | [x86_64 41771760913](https://github.com/tgibbsz32/forgecoin/actions/runs/41771760913) | Two local processes on one runner, not independent operators/providers or eclipse resistance. |
 | C pool graceful stop / shared WebUI event loop | [merged #200](https://github.com/tgibbsz32/forgecoin/pull/200) | Linux x86_64 and ARM64 builds passed. Shutdown safety fixed in `main`; no payout enablement. |
 
-The advanced native validation source is reviewed as separate **draft frozen-consensus PR #185** and **isolated wallet PR #203**; passing *test-only* CI does not mean the old `main` runtime implements this final chain.
+The frozen consensus is now implemented in merged source `main` by **PR #185**, subject to its unconditional prelaunch lock; **wallet PR #203** remains isolated test-only work. Merging source does not activate the chain, validate release packages or authorize pool payouts.
 
 ## Release tracks — as of this checkpoint
 
@@ -89,7 +91,7 @@ No FRG core node, wallet, pool or Android miner becomes live merely by merging s
 
 ## Exact release decision sequence
 
-1. Independent consensus/source review of draft #185, permanent Genesis output-spend prohibition with a **full signed native MAINNET transaction input/mempool test**, and accepted canonical agreement across independent hosts (including adversarial forks/restarts).
+1. Independently review the merged frozen consensus from PR #185, prove permanent Genesis output-spend prohibition with a **full signed native MAINNET transaction input/mempool test**, and verify canonical agreement across independent hosts (including adversarial forks/restarts).
 2. Complete native C-pool payout signer and public read-only stats/explorer with exact atomic accounting; prove multiple recipient wallets, fees and 60-block maturity/reorg/idempotence.
 3. Finish Windows and Android native wallets/miners on matching approved consensus; verify actual solo and pool work, wallet restore/send, thermal/foreground safety, release package install on clean target devices.
 4. Audit mainnet identities, URLs, retired listeners/firewall, peer bootstrap, backups, payout controls and operational monitoring. Publish audited standalone read-only stats and accessibility-complete pages.

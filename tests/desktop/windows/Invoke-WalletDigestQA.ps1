@@ -19,7 +19,8 @@ New-Item -Path $temporary -ItemType Directory|Out-Null
 $wallets=Join-Path $temporary 'wallets'
 New-Item -Path $wallets -ItemType Directory|Out-Null
 $random=[byte[]]::new(32)
-[Security.Cryptography.RandomNumberGenerator]::Fill($random)
+$rng=[Security.Cryptography.RandomNumberGenerator]::Create()
+try { $rng.GetBytes($random) } finally { $rng.Dispose() }
 $secret=([BitConverter]::ToString($random)).Replace('-','').ToLowerInvariant()
 [Array]::Clear($random,0,$random.Length)
 $user='frgqa'+[Guid]::NewGuid().ToString('N').Substring(0,12)

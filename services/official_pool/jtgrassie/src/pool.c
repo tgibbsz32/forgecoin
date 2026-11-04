@@ -75,6 +75,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frg_reconcile_policy.h"
 #include "frg_accounting_quarantine.h"
 #include "frg_payout_intent_journal.h"
+#include "frg_stratum_job_bounds.h"
 #include "forkoff.h"
 #include "growbag.h"
 #include "uthash.h"
@@ -262,7 +263,8 @@ typedef struct client_t
     struct bufferevent *bev;
     char address[ADDRESS_MAX];
     char worker_id[64];
-    char client_id[32];
+    /* 16-byte UUID is 32 hex bytes plus a required C-string terminator. */
+    char client_id[33];
     char rig_id[MAX_RIG_ID];
     char agent[256];
     bstack_t *active_jobs;
@@ -1636,8 +1638,21 @@ client_find_job(client_t *client, const char *job_id)
 static void
 miner_send_job(client_t *client, bool response)
 {
-    job_t *job = bstack_push(client->active_jobs, NULL);
     block_template_t *bt = bstack_top(bst);
+    /* Do not place an unusable job on the miner's stack, and never
+     * copy into a daemon template whose nonce/reserved spans are short.
+     * Self-select templates arrive separately; their block span is
+     * checked before accepting the share. */
+    if (client->mode != MODE_SELF_SELECT &&
+        (!bt || !bt->block_blob ||
+         !frg_stratum_job_bounds_valid(bt->block_blob_size,
+                                       bt->reserved_offset, true,
+                                       client->is_xnp)))
+    {
+        log_warn("Refusing a miner job with missing or malformed template bounds");
+        return;
+    }
+    job_t *job = bstack_push(client->active_jobs, NULL);
     job->block_template = bt;
 
     if (client->mode == MODE_SELF_SELECT)
@@ -1654,13 +1669,6 @@ miner_send_job(client_t *client, bool response)
         return;
     }
 
-    /* Quick check we actually have a block template */
-    if (!bt)
-    {
-        log_warn("Cannot send client a job: No block template");
-        return;
-    }
-
     /*
       1. Copy block_template->block_blob
       2. Update bytes in reserved space at reserved_offset
@@ -1670,6 +1678,12 @@ miner_send_job(client_t *client, bool response)
 
     /* Copy */
     unsigned char *block = calloc(bt->block_blob_size, sizeof(char));
+    if (!block)
+    {
+        log_error("Cannot allocate native Stratum job blob");
+        bstack_drop(client->active_jobs);
+        return;
+    }
     memcpy(block, bt->block_blob, bt->block_blob_size);
 
     /* Set the extra nonce in our reserved space */
@@ -1686,8 +1700,16 @@ miner_send_job(client_t *client, bool response)
     /* Get hashing blob */
     size_t hashing_blob_size = 0;
     unsigned char *hashing_blob = NULL;
-    get_hashing_blob(block, bt->block_blob_size, &hashing_blob,
-            &hashing_blob_size);
+    if (get_hashing_blob(block, bt->block_blob_size, &hashing_blob,
+                         &hashing_blob_size) != 0 ||
+        !hashing_blob || hashing_blob_size == 0)
+    {
+        log_warn("Refusing a pool job with an invalid native hashing blob");
+        free(block);
+        free(hashing_blob);
+        bstack_drop(client->active_jobs);
+        return;
+    }
 
     /* Make hex */
     job->blob = calloc((hashing_blob_size << 1) +1, sizeof(char));
@@ -3548,6 +3570,14 @@ clear:
 static void
 miner_on_login(json_object *message, client_t *client)
 {
+    /* A second login previously incremented account/worker counters again
+     * and rewrote the address, while disconnect only removed one worker.
+     * A client must reconnect to change wallets or worker identity. */
+    if (client->client_id[0] != '\0')
+    {
+        send_validation_error(client, "Already logged in; reconnect to change account");
+        return;
+    }
     JSON_GET_OR_ERROR(params, message, json_type_object, client);
     JSON_GET_OR_ERROR(login, params, json_type_string, client);
     JSON_GET_OR_ERROR(pass, params, json_type_string, client);
@@ -3672,6 +3702,7 @@ miner_on_login(json_object *message, client_t *client)
     uuid_t cid;
     uuid_generate(cid);
     bin_to_hex((const unsigned char*)cid, sizeof(uuid_t), client->client_id);
+    client->client_id[32] = '\0';
     miner_send_job(client, true);
 }
 
@@ -3680,6 +3711,11 @@ miner_on_block_template(json_object *message, client_t *client)
 {
     struct evbuffer *output = bufferevent_get_output(client->bev);
 
+    if (client->client_id[0] == '\0')
+    {
+        send_validation_error(client, "Log in before setting a template");
+        return;
+    }
     if (client->mode != MODE_SELF_SELECT)
     {
         send_validation_error(client, "Cannot set template; wrong mode");
@@ -3695,9 +3731,9 @@ miner_on_block_template(json_object *message, client_t *client)
     JSON_GET_OR_ERROR(prev_hash, params, json_type_string, client);
 
     const char *jid = json_object_get_string(job_id);
-    if (strlen(jid) != 32)
+    if (strlen(jid) != 32 || is_hex_string(jid))
     {
-        send_validation_error(client, "job_id invalid length");
+        send_validation_error(client, "job_id must be exactly 32 hex characters");
         return;
     }
 
@@ -3776,6 +3812,11 @@ miner_on_submit(json_object *message, client_t *client)
 {
     struct evbuffer *output = bufferevent_get_output(client->bev);
 
+    if (client->client_id[0] == '\0')
+    {
+        send_validation_error(client, "Log in before submitting a share");
+        return;
+    }
     JSON_GET_OR_ERROR(params, message, json_type_object, client);
     JSON_GET_OR_ERROR(nonce, params, json_type_string, client);
     JSON_GET_OR_ERROR(result, params, json_type_string, client);
@@ -3810,9 +3851,9 @@ miner_on_submit(json_object *message, client_t *client)
     }
 
     const char *jid = json_object_get_string(job_id);
-    if (strlen(jid) != 32)
+    if (strlen(jid) != 32 || is_hex_string(jid))
     {
-        send_validation_error(client, "job_id invalid length");
+        send_validation_error(client, "job_id must be exactly 32 hex characters");
         return;
     }
 
@@ -3856,7 +3897,21 @@ miner_on_submit(json_object *message, client_t *client)
         bt = job->miner_template;
     else
         bt = job->block_template;
+    if (!bt || !bt->block_blob ||
+        !frg_stratum_job_bounds_valid(bt->block_blob_size,
+                                      bt->reserved_offset,
+                                      client->mode != MODE_SELF_SELECT,
+                                      client->is_xnp))
+    {
+        send_validation_error(client, "Block template bounds invalid");
+        return;
+    }
     unsigned char *block = calloc(bt->block_blob_size, sizeof(char));
+    if (!block)
+    {
+        send_validation_error(client, "Block template allocation failed");
+        return;
+    }
     memcpy(block, bt->block_blob, bt->block_blob_size);
 
     unsigned char *p = block;
@@ -4181,7 +4236,10 @@ miner_on_read(struct bufferevent *bev, void *ctx)
         }
         else if (strcmp(method_name, "getjob") == 0)
         {
-            miner_send_job(client, false);
+            if (client->client_id[0] == '\0')
+                send_validation_error(client, "Log in before requesting a job");
+            else
+                miner_send_job(client, false);
         }
         else if (strcmp(method_name, "keepalived") == 0)
         {

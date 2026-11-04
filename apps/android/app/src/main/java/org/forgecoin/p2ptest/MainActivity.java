@@ -9,6 +9,8 @@ import android.graphics.*;
 import android.graphics.drawable.*;
 import android.net.Uri;
 import android.view.*;
+import android.text.InputFilter;
+import android.text.InputType;
 import android.widget.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -71,6 +73,36 @@ public class MainActivity extends Activity {
         button("Create FRG wallet — unavailable",false,wallet,null);
         button("Restore FRG wallet — unavailable",false,wallet,null);
         button("Receive / send FRG — unavailable",false,wallet,null);
+        LinearLayout publicAddressPanel=panel(root);
+        publicAddressPanel.addView(label("CHECK A PUBLIC FRG ADDRESS",17,CYAN));
+        publicAddressPanel.addView(label("Offline standard, integrated and subaddress checksum verification for the frozen native FRG mainnet. This does not create a wallet or prove the owner controls the address.",12,MUTED));
+        final EditText publicAddressInput=new EditText(this);
+        publicAddressInput.setSingleLine(false);
+        publicAddressInput.setMaxLines(2);
+        publicAddressInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        publicAddressInput.setFilters(new InputFilter[]{new InputFilter.LengthFilter(140)});
+        publicAddressInput.setTextColor(WHITE);
+        publicAddressInput.setHintTextColor(MUTED);
+        publicAddressInput.setHint("Paste a public ForgeCoin address");
+        publicAddressInput.setContentDescription("Enter public FRG address for offline checksum validation; never enter a recovery phrase");
+        publicAddressPanel.addView(publicAddressInput);
+        final TextView addressResult=label("Public address not checked",12,WHITE);
+        addressResult.setContentDescription("ForgeCoin address checksum result");
+        button("Validate FRG public address",BuildConfig.DEBUG,publicAddressPanel,()->{
+            try {
+                FrgPublicAddress.Result parsed=FrgPublicAddress.parse(
+                    publicAddressInput.getText().toString().trim());
+                String kind=parsed.kind==FrgPublicAddress.Kind.STANDARD
+                    ? "Standard" : parsed.kind==FrgPublicAddress.Kind.INTEGRATED
+                    ? "Integrated" : "Subaddress";
+                addressResult.setText("PASS: Native FRG mainnet "+kind
+                    +" address. Prefix "+parsed.networkPrefix
+                    +" and Keccak-256 checksum match. Public-format check only; wallet, signing and mining remain unavailable.");
+            } catch(IllegalArgumentException exception) {
+                addressResult.setText("REJECTED: invalid address length, Base58, FRG network prefix or checksum.");
+            }
+        });
+        publicAddressPanel.addView(addressResult);
         LinearLayout mine=panel(root);mine.addView(label("RANDOMX MINING",17,CYAN));
         mine.addView(label("Solo and pool mining must use verified ARM64 RandomX executables and the frozen FRG chain identity.",13,WHITE));
         button("Start solo mining — unavailable",false,mine,null);

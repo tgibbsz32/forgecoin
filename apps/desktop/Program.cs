@@ -27,6 +27,12 @@ namespace ForgeCoinDesktop
     internal sealed partial class MainForm : Form
     {
         private const decimal AtomicUnits = 100000000m;
+        // This prelaunch GUI may scan/restore disposable wallets, but must NOT
+        // initiate native MAINNET mining or transfer before the reviewed launch.
+        // No environment variable or configuration file can override this.
+        private const bool NativeSpendAuthorized = false;
+        private const bool NativeMiningAuthorized = false;
+        private int transferInFlight;
         private readonly string appRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ForgeCoin");
         private readonly string binRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin");
         private readonly JavaScriptSerializer json = new JavaScriptSerializer();
@@ -60,6 +66,7 @@ namespace ForgeCoinDesktop
         private TextBox sendAmountBox;
         private Button createWalletButton;
         private Button openWalletButton;
+        private Button restoreWalletButton;
         private Button closeWalletButton;
         private Button seedButton;
         private Button sendButton;
@@ -234,16 +241,17 @@ namespace ForgeCoinDesktop
         {
             TabPage page = new TabPage("Wallet");
             TableLayoutPanel root = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(20), ColumnCount = 1, RowCount = 5 };
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 150));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 194));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 100));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 100));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 155));
             root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             GroupBox openGroup = new GroupBox { Text = "Wallet file", Dock = DockStyle.Fill };
-            TableLayoutPanel openGrid = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(10), ColumnCount = 6, RowCount = 2 };
+            TableLayoutPanel openGrid = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(10), ColumnCount = 6, RowCount = 3 };
             openGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
             openGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
+            openGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 49));
             openGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 95));
             openGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 35));
             openGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 85));
@@ -269,6 +277,12 @@ namespace ForgeCoinDesktop
             seedButton = SecondaryButton("Recovery seed", ShowRecoverySeed);
             seedButton.Enabled = false;
             openGrid.Controls.Add(seedButton, 5, 1);
+            Label restoreHint = new Label { Text = "Private QA only: recover a disposable 25-word native wallet. Never paste a funded seed into a preview.", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, ForeColor = Color.DarkRed };
+            openGrid.Controls.Add(restoreHint, 0, 2);
+            openGrid.SetColumnSpan(restoreHint, 4);
+            restoreWalletButton = SecondaryButton("Restore 25 words", RestoreWallet);
+            openGrid.Controls.Add(restoreWalletButton, 4, 2);
+            openGrid.SetColumnSpan(restoreWalletButton, 2);
             openGroup.Controls.Add(openGrid);
 
             TableLayoutPanel balances = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1 };
@@ -928,6 +942,9 @@ namespace ForgeCoinDesktop
             try
             {
                 string name = ValidWalletName();
+                RequireNewWalletPassword();
+                if (WalletFileAlreadyExists(name))
+                    throw new InvalidOperationException("The wallet file already exists. Use Open instead of overwriting it.");
                 EnsureWalletService();
                 Dictionary<string, object> p = new Dictionary<string, object> { { "filename", name }, { "password", passwordBox.Text }, { "language", "English" } };
                 Rpc("http://127.0.0.1:39484/json_rpc", "create_wallet", p);
@@ -935,6 +952,107 @@ namespace ForgeCoinDesktop
                 ShowRecoverySeed(null, EventArgs.Empty);
             }
             catch (Exception ex) { ShowError(ex.Message); }
+        }
+
+        private void RestoreWallet(object sender, EventArgs e)
+        {
+            // Explicit private QA operation only. Ask the native RPC to scan
+            // from genesis rather than reusing any prior restore height.
+            // No mnemonic is saved to settings, disk, logs, UI status or error.
+            try
+            {
+                if (walletOpen) throw new InvalidOperationException("Close the current wallet before restoring.");
+                string name = ValidWalletName();
+                RequireNewWalletPassword();
+                if (WalletFileAlreadyExists(name))
+                    throw new InvalidOperationException("This wallet file already exists. Choose a new name; existing wallets are never overwritten.");
+                EnsureWalletService(); // refuse missing native RPC before requesting a seed
+                using (Form dialog = new Form {
+                    Text = "Restore a disposable FRG test wallet", Size = new Size(760, 290),
+                    StartPosition = FormStartPosition.CenterParent, MinimizeBox = false,
+                    MaximizeBox = false, FormBorderStyle = FormBorderStyle.FixedDialog
+                })
+                {
+                    TableLayoutPanel layout = new TableLayoutPanel {
+                        Dock = DockStyle.Fill, Padding = new Padding(18),
+                        ColumnCount = 1, RowCount = 4
+                    };
+                    layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 66));
+                    layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 45));
+                    layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+                    layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+                    layout.Controls.Add(new Label {
+                        Dock = DockStyle.Fill, ForeColor = Color.DarkRed,
+                        Text = "PRELAUNCH PRIVATE QA ONLY. Do not restore a wallet containing real funds.\nOnly disposable native FRG test seeds are appropriate here."
+                    }, 0, 0);
+                    TextBox seedInput = new TextBox {
+                        Dock = DockStyle.Fill, UseSystemPasswordChar = true,
+                        AccessibleName = "Twenty-five English native wallet recovery words"
+                    };
+                    layout.Controls.Add(seedInput, 0, 1);
+                    CheckBox show = new CheckBox {
+                        Text = "Temporarily show recovery words", Dock = DockStyle.Fill,
+                        AccessibleName = "Show or conceal the recovery words"
+                    };
+                    show.CheckedChanged += delegate { seedInput.UseSystemPasswordChar = !show.Checked; };
+                    layout.Controls.Add(show, 0, 2);
+                    FlowLayoutPanel buttons = new FlowLayoutPanel {
+                        Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft
+                    };
+                    Button recover = new Button { Text = "Restore test wallet", Width = 165,
+                        DialogResult = DialogResult.OK };
+                    Button cancel = new Button { Text = "Cancel", Width = 100,
+                        DialogResult = DialogResult.Cancel };
+                    buttons.Controls.Add(recover); buttons.Controls.Add(cancel);
+                    layout.Controls.Add(buttons, 0, 3);
+                    dialog.Controls.Add(layout);
+                    dialog.AcceptButton = recover;
+                    dialog.CancelButton = cancel;
+                    if (dialog.ShowDialog(this) != DialogResult.OK) return;
+                    string seed = FrgWalletInput.NormalizeEnglishMnemonic(seedInput.Text);
+                    Dictionary<string, object> p = new Dictionary<string, object> {
+                        { "filename", name }, { "password", passwordBox.Text },
+                        { "seed", seed }, { "restore_height", 0 },
+                        { "language", "English" }
+                    };
+                    seedInput.Clear();
+                    show.Checked = false;
+                    try
+                    {
+                        IDictionary result = Rpc("http://127.0.0.1:39484/json_rpc",
+                                                 "restore_deterministic_wallet", p, 90000);
+                        if (!result.Contains("address") ||
+                            !FrgWalletInput.LooksLikePublicAddress(Convert.ToString(result["address"])))
+                            throw new InvalidOperationException("Native wallet did not return a plausible FRG address.");
+                    }
+                    catch
+                    {
+                        // Wallet-RPC errors can contain service-provided text.
+                        // Never echo returned payloads or any seed to the UI.
+                        throw new InvalidOperationException(
+                            "Recovery was not verified. Examine only redacted local RPC diagnostics; never retry with a funded seed.");
+                    }
+                    finally
+                    {
+                        p["seed"] = String.Empty;
+                    }
+                    WalletOpened("Restored test wallet " + name + " (genesis rescan)");
+                }
+            }
+            catch (Exception ex) { ShowError(ex.Message); }
+        }
+
+        private void RequireNewWalletPassword()
+        {
+            if (passwordBox.Text.Length < 12)
+                throw new InvalidOperationException("Use a test-wallet password of at least 12 characters.");
+        }
+
+        private bool WalletFileAlreadyExists(string name)
+        {
+            string baseName = Path.Combine(appRoot, "wallets", name);
+            return File.Exists(baseName) || File.Exists(baseName + ".keys") ||
+                   Directory.Exists(baseName);
         }
 
         private void OpenWallet(object sender, EventArgs e)
@@ -952,10 +1070,7 @@ namespace ForgeCoinDesktop
 
         private string ValidWalletName()
         {
-            string name = walletNameBox.Text.Trim();
-            if (name.Length == 0) throw new InvalidOperationException("Enter a wallet name.");
-            if (name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || name.Contains("\\") || name.Contains("/")) throw new InvalidOperationException("Use a simple wallet filename without folders.");
-            return name;
+            return FrgWalletInput.WalletName(walletNameBox.Text);
         }
 
         private void WalletOpened(string message)
@@ -963,7 +1078,7 @@ namespace ForgeCoinDesktop
             walletOpen = true;
             walletState.Text = message;
             walletState.ForeColor = Color.FromArgb(40, 125, 78);
-            createWalletButton.Enabled = false; openWalletButton.Enabled = false; closeWalletButton.Enabled = true; seedButton.Enabled = true; sendButton.Enabled = true;
+            createWalletButton.Enabled = false; openWalletButton.Enabled = false; restoreWalletButton.Enabled = false; closeWalletButton.Enabled = true; seedButton.Enabled = true; sendButton.Enabled = NativeSpendAuthorized;
             passwordBox.Clear();
             RefreshWallet();
             RefreshAddressLists();
@@ -974,7 +1089,7 @@ namespace ForgeCoinDesktop
             try { Rpc("http://127.0.0.1:39484/json_rpc", "close_wallet", new Dictionary<string, object>()); } catch { }
             walletOpen = false;
             walletState.Text = "Wallet closed"; walletState.ForeColor = Color.DimGray;
-            createWalletButton.Enabled = true; openWalletButton.Enabled = true; closeWalletButton.Enabled = false; seedButton.Enabled = false; sendButton.Enabled = false;
+            createWalletButton.Enabled = true; openWalletButton.Enabled = true; restoreWalletButton.Enabled = true; closeWalletButton.Enabled = false; seedButton.Enabled = false; sendButton.Enabled = false;
             balanceValue.Text = "—"; unlockedValue.Text = "—"; addressBox.Text = "Open a wallet to view its address.";
             receiveAddressGrid.Rows.Clear(); contactGrid.Rows.Clear();
         }
@@ -1380,12 +1495,12 @@ namespace ForgeCoinDesktop
             });
         }
 
-        private IDictionary Rpc(string url, string method, IDictionary<string, object> parameters)
+        private IDictionary Rpc(string url, string method, IDictionary<string, object> parameters, int timeoutMs = 2000)
         {
             Dictionary<string, object> request = new Dictionary<string, object> { { "jsonrpc", "2.0" }, { "id", "0" }, { "method", method }, { "params", parameters } };
             byte[] body = Encoding.UTF8.GetBytes(json.Serialize(request));
             HttpWebRequest http = (HttpWebRequest)WebRequest.Create(url);
-            http.Method = "POST"; http.ContentType = "application/json"; http.ContentLength = body.Length; http.Timeout = 2000;
+            http.Method = "POST"; http.ContentType = "application/json"; http.ContentLength = body.Length; http.Timeout = timeoutMs; http.ReadWriteTimeout = timeoutMs;
             using (Stream s = http.GetRequestStream()) s.Write(body, 0, body.Length);
             string text;
             using (HttpWebResponse response = (HttpWebResponse)http.GetResponse()) using (StreamReader reader = new StreamReader(response.GetResponseStream())) text = reader.ReadToEnd();

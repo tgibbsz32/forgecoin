@@ -44,6 +44,7 @@
 #include "cryptonote_basic/events.h"
 #include "cryptonote_config.h"
 #include "cryptonote_basic/forgecoin_difficulty.h"
+#include "cryptonote_basic/forgecoin_prelaunch.h"
 #include "cryptonote_basic/miner.h"
 #include "hardforks/hardforks.h"
 #include "misc_language.h"
@@ -228,6 +229,12 @@ bool Blockchain::scan_outputkeys_for_indexes(size_t tx_version, const txin_to_ke
         else
           output_index = m_db->get_output_key(tx_in_to_key.amount, i);
 
+        if (!forgecoin_prelaunch::output_allowed(m_nettype == MAINNET, output_index.height))
+        {
+          MERROR_VER("Mainnet genesis outputs are permanently excluded from spending rings");
+          return false;
+        }
+
         // call to the passed boost visitor to grab the public key for the output
         if (!vis.handle_output(output_index.unlock_time, output_index.pubkey, output_index.commitment))
         {
@@ -339,6 +346,10 @@ bool Blockchain::init(BlockchainDB* db, const network_type nettype, bool offline
   m_hardfork->init();
 
   m_db->set_hard_fork(m_hardfork);
+
+  CHECK_AND_ASSERT_MES(forgecoin_prelaunch::block_allowed(m_nettype == MAINNET,
+    m_db->height() == 0 ? 0 : m_db->height() - 1), false,
+    "PRELAUNCH: refusing a mainnet database containing blocks beyond genesis");
 
   // if the blockchain is new, add the genesis block
   // this feels kinda kludgy to do it this way, but can be looked at later.
@@ -904,7 +915,7 @@ difficulty_type Blockchain::get_difficulty_for_next_block()
   else
   {
     uint64_t offset = height - std::min <uint64_t> (height, static_cast<uint64_t>(DIFFICULTY_BLOCKS_COUNT));
-    if (offset == 0)
+    if (offset == 0 && m_nettype != MAINNET)
       ++offset;
 
     timestamps.clear();
@@ -964,7 +975,16 @@ size_t Blockchain::recalculate_difficulties(boost::optional<uint64_t> start_heig
   std::vector<difficulty_type> difficulties;
   timestamps.reserve(DIFFICULTY_BLOCKS_COUNT + 1);
   difficulties.reserve(DIFFICULTY_BLOCKS_COUNT + 1);
-  if (start_height > 1)
+  if (m_nettype == MAINNET && start_height > 0)
+  {
+    const uint64_t begin = start_height > DIFFICULTY_BLOCKS_COUNT ? start_height - DIFFICULTY_BLOCKS_COUNT : 0;
+    for (uint64_t height = begin; height < start_height; ++height)
+    {
+      timestamps.push_back(m_db->get_block_timestamp(height));
+      difficulties.push_back(m_db->get_block_cumulative_difficulty(height));
+    }
+  }
+  else if (start_height > 1)
   {
     for (uint64_t i = 0; i < DIFFICULTY_BLOCKS_COUNT; ++i)
     {
@@ -981,7 +1001,8 @@ size_t Blockchain::recalculate_difficulties(boost::optional<uint64_t> start_heig
   for (uint64_t height = start_height; height <= top_height; ++height)
   {
     size_t target = get_ideal_hard_fork_version(height) < 2 ? DIFFICULTY_TARGET_V1 : DIFFICULTY_TARGET_V2;
-    difficulty_type recalculated_diff = next_forgecoin_difficulty(timestamps, difficulties, target, height, m_nettype == MAINNET);
+    // Genesis is inserted with cumulative difficulty 1, not mined under startup rules.
+    difficulty_type recalculated_diff = (m_nettype == MAINNET && height == 0) ? difficulty_type(1) : next_forgecoin_difficulty(timestamps, difficulties, target, height, m_nettype == MAINNET);
 
     boost::multiprecision::uint256_t recalculated_cum_diff_256 = boost::multiprecision::uint256_t(recalculated_diff) + last_cum_diff;
     CHECK_AND_ASSERT_THROW_MES(recalculated_cum_diff_256 <= std::numeric_limits<difficulty_type>::max(), "Difficulty overflow!");
@@ -1004,7 +1025,7 @@ size_t Blockchain::recalculate_difficulties(boost::optional<uint64_t> start_heig
         LOG_ERROR(boost::format("%llu / %llu (%.1f%%)") % height % top_height % (100 * (height - drift_start_height) / float(top_height - drift_start_height)));
     }
 
-    if (height > 0)
+    if (height > 0 || m_nettype == MAINNET)
     {
       timestamps.push_back(m_db->get_block_timestamp(height));
       difficulties.push_back(recalculated_cum_diff);
@@ -1244,8 +1265,8 @@ difficulty_type Blockchain::get_next_difficulty_for_alternative_chain(const std:
     main_chain_count = std::min(main_chain_count, main_chain_stop_offset);
     size_t main_chain_start_offset = main_chain_stop_offset - main_chain_count;
 
-    if(!main_chain_start_offset)
-      ++main_chain_start_offset; //skip genesis block
+    if(!main_chain_start_offset && m_nettype != MAINNET)
+      ++main_chain_start_offset; // retain old non-mainnet genesis exclusion
 
     // get difficulties and timestamps from relevant main chain blocks
     for(; main_chain_start_offset < main_chain_stop_offset; ++main_chain_start_offset)
@@ -1785,6 +1806,18 @@ bool Blockchain::complete_timestamps_vector(uint64_t start_top_height, std::vect
     return true;
 
   CRITICAL_REGION_LOCAL(m_blockchain_lock);
+  if (m_nettype == MAINNET)
+  {
+    CHECK_AND_ASSERT_MES(start_top_height < m_db->height(), false, "Invalid timestamp ancestor height");
+    // Append newest first, including genesis when startup history reaches it.
+    while (timestamps.size() < BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW)
+    {
+      timestamps.push_back(m_db->get_block_timestamp(start_top_height));
+      if (start_top_height == 0) break;
+      --start_top_height;
+    }
+    return true;
+  }
   size_t need_elements = BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW - timestamps.size();
   CHECK_AND_ASSERT_MES(start_top_height < m_db->height(), false, "internal error: passed start_height not < " << " m_db->height() -- " << start_top_height << " >= " << m_db->height());
   size_t stop_offset = start_top_height > need_elements ? start_top_height - need_elements : 0;
@@ -1866,6 +1899,12 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
   m_timestamps_and_difficulties_height = 0;
   m_reset_timestamps_and_difficulties_height = true;
   uint64_t block_height = get_block_height(b);
+  if (!forgecoin_prelaunch::block_allowed(m_nettype == MAINNET, block_height))
+  {
+    bvc.m_verifivation_failed = true;
+    MERROR_VER("PRELAUNCH: mainnet alternative blocks are disabled");
+    return false;
+  }
   if(0 == block_height)
   {
     MERROR_VER("Block with id: " << epee::string_tools::pod_to_hex(id) << " (as alternative), but miner tx says height is 0.");
@@ -4005,6 +4044,17 @@ bool Blockchain::check_block_timestamp(const block& b, uint64_t& median_ts) cons
     return false;
   }
 
+  // Use the same available ancestor median and future bound on both branches,
+  // including startup heights before the upstream 60-block window is full.
+  if (m_nettype == MAINNET && b.major_version >= FORGE_LWMA_VERSION)
+  {
+    const uint64_t height = m_db->height();
+    const uint64_t begin = height > FORGE_LWMA_TIMESTAMP_WINDOW ? height - FORGE_LWMA_TIMESTAMP_WINDOW : 0;
+    std::vector<uint64_t> timestamps;
+    for (uint64_t i = begin; i < height; ++i)
+      timestamps.push_back(m_db->get_block_timestamp(i));
+    return check_block_timestamp(timestamps, b, median_ts);
+  }
   const auto h = m_db->height();
 
   // if not enough blocks, no proper median yet, return true
@@ -4063,6 +4113,14 @@ bool Blockchain::handle_block_to_main_chain(const block& bl, const crypto::hash&
   static bool seen_future_version = false;
 
   db_rtxn_guard rtxn_guard(m_db);
+  if (!forgecoin_prelaunch::block_allowed(m_nettype == MAINNET, m_db->height()))
+  {
+    bvc.m_verifivation_failed = true;
+    MERROR_VER("PRELAUNCH: mainnet blocks beyond genesis are disabled");
+    return false;
+  }
+
+
   uint64_t blockchain_height;
   const crypto::hash top_hash = get_tail_id(blockchain_height);
   ++blockchain_height; // block height to chain height

@@ -1,0 +1,108 @@
+name: Frozen FRG ARM64 native consensus and daemon acceptance
+
+on:
+  push:
+    branches:
+      - 'integration/frozen-mainnet-prelaunch-*'
+    paths:
+      - 'src/**'
+      - 'config/mainnet.identity.json'
+      - 'tests/mainnet/**'
+      - 'tools/smoke_frozen_prelaunch_daemon.py'
+      - 'tools/smoke_frozen_prelaunch_peers.py'
+      - '.github/workflows/frozen-mainnet-arm64-consensus-ci.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'config/mainnet.identity.json'
+      - 'tests/mainnet/**'
+      - 'tools/smoke_frozen_prelaunch_daemon.py'
+      - 'tools/smoke_frozen_prelaunch_peers.py'
+      - '.github/workflows/frozen-mainnet-arm64-consensus-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-arm64-frozen-policy:
+    name: Native aarch64 frozen policy, daemon and isolated loopback acceptance
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify CI is really native ARM64
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = aarch64
+          uname -a
+          free -h
+          df -h /
+      - name: Install native ARM64 build dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            cmake build-essential pkg-config xxd file binutils \
+            libevent-dev liblmdb-dev libjson-c-dev libsodium-dev libunbound-dev \
+            uuid-dev libssl-dev libzmq3-dev libreadline-dev libhidapi-dev libusb-1.0-0-dev \
+            libboost-system-dev libboost-date-time-dev libboost-chrono-dev \
+            libboost-filesystem-dev libboost-thread-dev libboost-regex-dev \
+            libboost-serialization-dev libboost-program-options-dev libboost-locale-dev
+      - name: Check frozen manifest remains prelaunch-locked
+        run: |
+          python3 - <<'PY'
+          import json
+          p=json.load(open("config/mainnet.identity.json",encoding="utf-8"))
+          assert p["genesis_nonce"] == 20261026
+          assert p["ports"] == {"p2p":39480,"daemon_rpc":39481,"zmq_rpc":39482}
+          assert p["release_authorized"] is False
+          assert p["pool"]["payouts_enabled"] is False
+          assert p["pool"]["stratum_public"] is False
+          assert p["consensus_guard_stage"] == "draft-unbuilt"
+          print("PASS: ARM64 runner loaded frozen, prelaunch-locked manifest")
+          PY
+      - name: Exercise actual C++ prelaunch and genesis ring predicates on ARM64
+        run: |
+          set -euo pipefail
+          g++ -std=c++17 -O2 -pedantic -Wall -Wextra -Werror -Isrc \
+            tests/mainnet/prelaunch_policy.cpp -o /tmp/frg-arm64-prelaunch
+          g++ -std=c++17 -O2 -pedantic -Wall -Wextra -Werror -Isrc \
+            tests/mainnet/genesis_ring_policy.cpp -o /tmp/frg-arm64-genesis-ring
+          /tmp/frg-arm64-prelaunch
+          /tmp/frg-arm64-genesis-ring
+      - name: Exercise frozen native LWMA90 difficulty vectors on ARM64
+        run: |
+          set -euo pipefail
+          g++ -std=c++17 -O2 -pedantic -Wall -Wextra -Werror -Isrc -Icontrib/epee/include \
+            tests/mainnet/frozen_difficulty_policy.cpp -o /tmp/frg-arm64-difficulty
+          /tmp/frg-arm64-difficulty
+      - name: Configure isolated ARM64 daemon build (no public services)
+        run: |
+          cmake -S . -B build/arm64-consensus-gated/release \
+            -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF \
+            -DBUILD_GUI_DEPS=OFF -DMANUAL_SUBMODULES=1 -DUSE_CCACHE=OFF
+      - name: Compile and link actual native ARM64 daemon
+        run: cmake --build build/arm64-consensus-gated/release --parallel 2 --target daemon
+      - name: Verify linked artifact architecture and fingerprint (no publication)
+        run: |
+          set -euo pipefail
+          bin=build/arm64-consensus-gated/release/bin/forged
+          test -s "$bin"
+          file "$bin" | grep -F 'ARM aarch64'
+          readelf -h "$bin" | grep -F 'AArch64'
+          sha256sum "$bin"
+          ldd "$bin" | tee /tmp/frg-arm64-daemon-deps.txt
+          ! grep -F 'not found' /tmp/frg-arm64-daemon-deps.txt
+      - name: Refuse mining, old chain and fixed-difficulty on ARM64 local daemon
+        run: |
+          python3 tools/smoke_frozen_prelaunch_daemon.py \
+            --daemon build/arm64-consensus-gated/release/bin/forged --max-seconds 90
+      - name: Verify two ARM64 daemons handshake only via loopback and refuse mined block
+        run: |
+          python3 tools/smoke_frozen_prelaunch_peers.py \
+            --daemon build/arm64-consensus-gated/release/bin/forged --max-seconds 90
+          echo 'PASS: native ARM64 prelaunch policy and isolated runtime; NOT a public launch'
+      # No upload, release or deployment of the ARM64 daemon or any keys.

@@ -60,9 +60,20 @@ def main():
             assert block["prev_hash"]==GENESIS
             body=rpc("get_block",{"height":1})
             assert body["block_header"]["hash"]==MINED
+            # Confirm LMDB indexes the frozen genesis output as height zero.
+            # This is provenance evidence, NOT a valid ring-spend rejection.
+            outs_req=urllib.request.Request(
+                "http://127.0.0.1:%d/get_outs"%(49783 if "--peer" in sys.argv else 49782),
+                data=json.dumps({"outputs":[{"amount":MANIFEST["currency"]["genesis_output_atomic"],"index":0}],
+                                 "get_txid":True}).encode(),
+                headers={"Content-Type":"application/json"})
+            with urllib.request.urlopen(outs_req,timeout=5) as response:
+                out_record=json.load(response)
+            assert out_record.get("status")=="OK" and len(out_record.get("outs",[]))==1
+            assert out_record["outs"][0]["height"]==0, "Genesis output missing height-zero provenance"
+            print("PASS_NATIVE_DB_GENESIS_OUTPUT_HEIGHT_ZERO",flush=True)
             # Exercise real read-only daemon HTTP paths used by the new
             # payout canonicality verifier (no wallet RPC required).
-            import sys
             sys.path.insert(0,str(REPO))
             from services.pool_settlement.verify_rpc import ReadOnlyRPCVerifier
             observer=ReadOnlyRPCVerifier("http://127.0.0.1:49782",

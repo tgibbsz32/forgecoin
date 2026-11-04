@@ -45,6 +45,7 @@ using namespace epee;
 #include "warnings.h"
 #include "crypto/crypto.h"
 #include "cryptonote_config.h"
+#include "cryptonote_basic/forgecoin_prelaunch.h"
 #include "misc_language.h"
 #include "file_io_utils.h"
 #include <csignal>
@@ -675,6 +676,13 @@ namespace cryptonote
       0
     };
     const difficulty_type fixed_difficulty = command_line::get_arg(vm, arg_fixed_difficulty);
+    // Never permit the inherited testing-only override to weaken real FRG
+    // mainnet consensus, including after the temporary prelaunch lock lifts.
+    if (m_nettype == MAINNET && fixed_difficulty != 0)
+    {
+      MERROR("Mainnet consensus forbids --fixed-difficulty");
+      return false;
+    }
     r = m_blockchain_storage.init(db.release(), m_nettype, m_offline, regtest ? &regtest_test_options : test_options, fixed_difficulty, get_checkpoints);
     CHECK_AND_ASSERT_MES(r, false, "Failed to initialize blockchain storage");
 
@@ -1213,16 +1221,31 @@ namespace cryptonote
   //-----------------------------------------------------------------------------------------------
   bool core::get_block_template(block& b, const account_public_address& adr, difficulty_type& diffic, uint64_t& height, uint64_t& expected_reward, const blobdata& ex_nonce, uint64_t &seed_height, crypto::hash &seed_hash)
   {
+    if (!forgecoin_prelaunch::mining_allowed(get_nettype() == MAINNET))
+    {
+      MERROR("PRELAUNCH: mainnet block templates are disabled");
+      return false;
+    }
     return m_blockchain_storage.create_block_template(b, adr, diffic, height, expected_reward, ex_nonce, seed_height, seed_hash);
   }
   //-----------------------------------------------------------------------------------------------
   bool core::get_block_template(block& b, const crypto::hash *prev_block, const account_public_address& adr, difficulty_type& diffic, uint64_t& height, uint64_t& expected_reward, const blobdata& ex_nonce, uint64_t &seed_height, crypto::hash &seed_hash)
   {
+    if (!forgecoin_prelaunch::mining_allowed(get_nettype() == MAINNET))
+    {
+      MERROR("PRELAUNCH: mainnet block templates are disabled");
+      return false;
+    }
     return m_blockchain_storage.create_block_template(b, prev_block, adr, diffic, height, expected_reward, ex_nonce, seed_height, seed_hash);
   }
   //-----------------------------------------------------------------------------------------------
   bool core::get_miner_data(uint8_t& major_version, uint64_t& height, crypto::hash& prev_id, crypto::hash& seed_hash, difficulty_type& difficulty, uint64_t& median_weight, uint64_t& already_generated_coins, std::vector<tx_block_template_backlog_entry>& tx_backlog)
   {
+    if (!forgecoin_prelaunch::mining_allowed(get_nettype() == MAINNET))
+    {
+      MERROR("PRELAUNCH: mainnet block templates are disabled");
+      return false;
+    }
     return m_blockchain_storage.get_miner_data(major_version, height, prev_id, seed_hash, difficulty, median_weight, already_generated_coins, tx_backlog);
   }
   //-----------------------------------------------------------------------------------------------

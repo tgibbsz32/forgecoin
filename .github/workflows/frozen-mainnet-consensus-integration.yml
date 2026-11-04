@@ -116,8 +116,8 @@ jobs:
           python3 tools/smoke_native_wallet_regtest.py \
             --daemon build/consensus-gated/release/bin/forged \
             --wallet build/consensus-gated/release/bin/forge-wallet-rpc \
-            --signed-transfer --validate-mempool --confirm-transfer --max-seconds 150
-          echo 'PASS: signed FAKECHAIN transfer admitted by native mempool, mined once, and credited to separate ephemeral recipient wallet; mainnet remains locked'
+            --signed-transfer --validate-mempool --confirm-transfer --verify-restart --max-seconds 150
+          echo 'PASS: FAKECHAIN signed 1 FRG transfer confirmed to separate wallet; native receiver RPC restarted and exact one incoming credit persisted; mainnet remains locked'
       - name: Build the C pool against these exact native consensus static archives
         env:
           FRG_BUILD_JOBS: '2'

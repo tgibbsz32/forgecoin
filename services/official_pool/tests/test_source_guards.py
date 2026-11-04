@@ -24,6 +24,21 @@ class NativeBackendPreflight(unittest.TestCase):
         cls.currency = (VENDOR / "src/frg_currency.h").read_text(encoding="utf-8")
         cls.chain = (ROOT / "src/cryptonote_config.h").read_text(encoding="utf-8")
 
+    def test_graceful_shutdown_is_in_libevent_thread_and_webui_is_not_detached(self):
+        self.assertIn("signal_sigint = evsignal_new(pool_base, SIGINT", self.pool)
+        self.assertIn("signal_sigterm = evsignal_new(pool_base, SIGTERM", self.pool)
+        self.assertIn("event_base_loopexit(pool_base, NULL);", self.pool)
+        self.assertNotIn("sigint_handler(int sig)", self.pool)
+        self.assertNotIn("signal(SIGTERM, sigint_handler)", self.pool)
+        self.assertIn("run(&uic);", self.pool)
+        self.assertIn("start_web_ui(web_context, pool_base)", self.pool)
+        self.assertIn("evhttp_new(base)", self.webui)
+        self.assertIn("evhttp_bind_socket_with_handle(webui_httpd", self.webui)
+        self.assertIn("evhttp_free(webui_httpd)", self.webui)
+        self.assertNotIn("pthread_detach", self.webui)
+        self.assertNotIn("event_base_dispatch(webui_base)", self.webui)
+        self.assertNotIn("event_base_free(webui_base)", self.webui)
+
     def test_frg_currency_matches_checkout_consensus(self):
         self.assertRegex(self.chain, r"#define COIN\s+\(\(uint64_t\)100000000\)")
         self.assertRegex(self.chain, r"#define CRYPTONOTE_DISPLAY_DECIMAL_POINT\s+8")
@@ -40,6 +55,31 @@ class NativeBackendPreflight(unittest.TestCase):
         self.assertIn("frg_pool_fee_atomic(amount)", self.pool)
         self.assertIn("return amount / UINT64_C(100);", self.currency)
         self.assertNotIn("amount * config.pool_fee", self.pool)
+
+    def test_complete_credited_history_audit_is_fail_closed(self):
+        """Historical validation supplements, not replaces, recent 10-header maturity checks."""
+        self.assertIn('#include "frg_credited_history_audit.h"', self.pool)
+        self.assertIn('#include "frg_credited_ledger_scan.h"', self.pool)
+        self.assertIn("frg_history_scan_credited(", self.pool)
+        self.assertIn("get_block_header_by_height", self.pool)
+        self.assertIn("rpc_on_frq_historical_credit", self.pool)
+        self.assertIn("FRG_HISTORY_CONFLICT", self.pool)
+        self.assertIn("frg_quarantine_mark(env, db_properties, expected->stored.height)", self.pool)
+        self.assertIn("frg_history_sweep_verified = false;", self.pool)
+        self.assertIn("frg_history_epoch++;", self.pool)
+        self.assertIn("frg_history_payout_allowed(frg_accounting_held,", self.pool)
+        self.assertIn("timer_on_history", self.pool)
+        self.assertIn("frg_history_requested_at", self.pool)
+        self.assertIn("frg_history_request_sequence", self.pool)
+        self.assertIn("frg_history_unverified", self.pool)
+        self.assertIn("#ifndef FRG_TESTED_WALLET_PAYOUTS", self.pool)
+        self.assertIn("#ifndef FRG_REVIEWED_PUBLIC_POOL", self.pool)
+        scan = (VENDOR / "src/frg_credited_ledger_scan.h").read_text(encoding="utf-8")
+        self.assertIn("MDB_NEXT", scan)  # includes DUPFIXED blocks sharing a height
+        self.assertIn("value.mv_size != sizeof(frg_history_saved_t)", scan)
+        self.assertIn("item.height != key_height", scan)
+        self.assertIn("item.status != FRG_HISTORY_UNLOCKED", scan)
+        self.assertIn("return rc == MDB_NOTFOUND ? 0 : rc;", scan)
 
     def test_native_maturity_policy_is_wired_at_both_unlock_paths(self):
         self.assertIn('#include "frg_reward_maturity.h"', self.pool)
@@ -72,6 +112,37 @@ class NativeBackendPreflight(unittest.TestCase):
         self.assertIn("block_reward - credited_so_far", helper)
         self.assertIn("proposed >= (long double)remaining", helper)
         self.assertIn("block_reward != UINT64_C(0)", helper)
+
+    def test_unjournaled_pool_wallet_payout_flag_hard_fails_compilation(self):
+        # P0 #210: a successful native wallet transfer on FAKECHAIN is not
+        # proof that the C pool has an atomic payout journal and safe retries.
+        self.assertIn("#ifdef FRG_TESTED_WALLET_PAYOUTS", self.pool)
+        self.assertIn('#error "FRG native pool wallet payout path is unsafe', self.pool)
+        self.assertIn("journal/reconciliation acceptance required (issue 210)", self.pool)
+        self.assertIn("#ifndef FRG_TESTED_WALLET_PAYOUTS", self.pool)
+        self.assertIn("config.disable_payouts = true", self.pool)
+
+    def test_lmdb_payout_intent_wired_fail_closed_to_pool_startup_and_sender(self):
+        self.assertIn('#include "frg_payout_intent_journal.h"', self.pool)
+        self.assertIn('frg_payout_intent_open(txn, &db_payout_intents)', self.pool)
+        self.assertIn('mdb_dbi_close(env, db_payout_intents)', self.pool)
+        startup = self.pool.split("static int\ndatabase_init(", 1)[1].split(
+            "static void\ndatabase_close(", 1)[0]
+        self.assertIn("frg_payout_intent_held(audit, db_payout_intents", startup)
+        self.assertIn("refusing startup pending independent payout reconciliation", startup)
+        sender = self.pool.split("static int\nsend_payments(void)", 1)[1].split(
+            "static void\nfetch_view_key(", 1)[0]
+        self.assertIn("frg_payout_intent_held(hold_txn, db_payout_intents", sender)
+        self.assertIn("payouts blocked by unresolved or invalid journal intent", sender)
+        self.assertLess(sender.index("frg_payout_intent_held("),
+                        sender.index("#ifndef FRG_TESTED_WALLET_PAYOUTS"))
+        self.assertIn("#ifdef FRG_TESTED_WALLET_PAYOUTS", self.pool)
+        journal = (VENDOR / "src/frg_payout_intent_journal.h").read_text(encoding="utf-8")
+        self.assertIn("MDB_NOOVERWRITE", journal)
+        self.assertIn("FRG_PAYOUT_INTENT_AMBIGUOUS", journal)
+        self.assertIn("FRG_PAYOUT_INTENT_CANDIDATE_UNVERIFIED", journal)
+        self.assertNotIn("frg_payout_intent_clear(", journal)
+        self.assertNotIn("frg_payout_intent_settle(", journal)
 
     def test_all_block_status_updates_are_atomic_with_balances(self):
         reconciliation = self.pool.split("static int\nprocess_blocks(", 1)[1].split(

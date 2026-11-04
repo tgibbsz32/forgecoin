@@ -51,6 +51,15 @@ jobs:
           gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
             -o /tmp/frg-canonical-headers services/official_pool/tests/test_canonical_headers.c -ljson-c
           /tmp/frg-canonical-headers
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
+            -o /tmp/frg-credited-history-audit services/official_pool/tests/test_credited_history_audit.c -ljson-c
+          /tmp/frg-credited-history-audit
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
+            -o /tmp/frg-credited-ledger-scan services/official_pool/tests/test_credited_ledger_scan_lmdb.c -llmdb -ljson-c
+          /tmp/frg-credited-ledger-scan
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
+            -o /tmp/frg-reorg-240-history services/official_pool/tests/test_240_height_historical_reorg_lmdb.c -llmdb -ljson-c
+          /tmp/frg-reorg-240-history
           bash -n services/official_pool/tools/build-native-static.sh
       - name: Build reviewed ForgeCoin static libraries (no wallet, network or deployment)
         env:

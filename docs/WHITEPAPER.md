@@ -29,6 +29,12 @@ ForgeCoin uses a CryptoNote-derived transaction model. The isolated fresh-mainne
 
 Full nodes verify every accepted block and transaction. Miners select valid transactions, perform RandomX proof of work, and extend the chain with the greatest cumulative difficulty. A miner with majority hash power can reorganize recent blocks or censor transactions, but it cannot create rewards or transactions that violate the rules enforced by honest full nodes.
 
+## Research proposals: merged mining and majority-hashpower resilience
+
+ForgeCoin's frozen native launch is **not merge-mined**. After the native launch and independent review, two separate options may be researched: (1) **FRG-parent/Tari-auxiliary** RandomX merged mining, contingent on Tari's actual patched proxy, aux proof and parent seed validation accepting FRG-origin work; (2) **Monero-parent/FRG-auxiliary** merged mining, which would require new FRG proof-of-work/block validation rules and a coordinated hard fork, as well as real adoption by Monero pools. A dual reward opportunity is not a claim of imported security. Neither proposal is committed for release, and neither changes FRG token issuance or the frozen network identity today.
+
+Short-term defense is to widen independent miner, node and pool participation; monitor separate node views for unexpected forks; audit pool mature-block credits and persist payout holds on deep reorganizations; and demand risk-based confirmations before transfers into exchanges or a future FRG/mFRG bridge. Such controls cannot prevent a genuine majority from extending its higher-work chain. [Technical research and rollout gates](SECURITY_51_PERCENT_AND_TARI_MERGE_MINING_2026-11-02.md).
+
 ## Network identity
 
 | Item | Frozen October 26 mainnet (prelaunch) |

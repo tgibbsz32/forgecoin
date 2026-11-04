@@ -2,7 +2,13 @@
 
 > **Current mFRG policy (November 2026):** 50,000,000 total mFRG: 5M presale, 5M liquidity, 40M combined ecosystem/staking/collateral reserve. Proposed flat presale $0.12/mFRG; maximum $600,000 gross if all 5M sell. Proceeds: 90% project, 10% founders (half immediate, half over six months). No founder token allocation. No sale or mint authorized. [Current policy](docs/MFRG_50M_CITY_TOKENOMICS.md) · [Discover Your City](docs/discover-your-city.html).
 
+[Current project status](docs/project-status.html) · [Security and future Tari/XMR merged-mining proposals](docs/SECURITY_51_PERCENT_AND_TARI_MERGE_MINING_2026-11-02.md).
+
 > **Current mainnet specification:** [October 26 frozen identity, tokenomics and release status](docs/CURRENT_MAINNET.md). Public launch is not authorized.
+
+> **November 4 release readiness:** [Desktop wallet/miner, Android wallet/miner, native pool, explorer and public deployment acceptance matrix](docs/RELEASE_READINESS_2026-11-04.md). Native FAKECHAIN transaction signature, confirmed receipt and recipient-wallet restart tests **passed**; these do **not** mean public wallet payouts or mainnet mining are enabled. Official Windows/Android public downloads and a live mining pool remain **unavailable**. No seed phrase, private key, wallet password or miner credentials should be submitted to a website or third party.
+
+> **Windows and Android test builds, not public releases:** [Windows native wallet recovery QA #218](https://github.com/tgibbsz32/forgecoin/pull/218) created and restored a 25-word disposable wallet using a genuine hash-pinned Windows wallet RPC, then reopened it after process restart without mining. A private Windows GUI ZIP was built locally, with native sends and mining still locked. [Android RandomX QA #219](https://github.com/tgibbsz32/forgecoin/pull/219) added a one-shot native ARM64 known-answer hash test; the restricted APK and 23 JVM tests passed, but the physical ARM64 hash has not been exercised and the app still has no native FRG wallet/miner. **These tests do not authorize public mainnet activation, Oracle cutover, wallet funding or downloads.**
 
 ![ForgeCoin mark](docs/images/forgecoin-logo.png)
 
@@ -41,7 +47,7 @@ See [current mainnet specification](docs/CURRENT_MAINNET.md) for source provenan
 
 ## Desktop and joining status
 
-Windows Forms private prelaunch create/restore tests passed as recorded in the feature-branch handoffs. Tauri compilation and a local debug installer build passed; clean-machine installation and runtime validation remain open. Mining remains locked. No official new-mainnet public peer or pool is approved. Do not use the retired peer or main-branch binaries as a new-mainnet release. Never expose wallet RPC or unrestricted daemon RPC publicly.
+Windows Forms private prelaunch create/restore tests passed as recorded in feature-branch handoffs. The desktop source compiles, but new-mainnet matching native sidecars and clean-machine installer acceptance remain unresolved. Tauri frontend and a local debug installer have been built, not certified for release. The Android **restricted UI preview** compiles, but deliberately contains no native FRG daemon, spending wallet or functional solo/pool miner. Native C-pool RandomX blocks, exact 1% ledger allocation and deep-reorg quarantine passed isolated FAKECHAIN tests; native **pool wallet payouts have not**. The read-only pool bridge can look up worker count/hashrate by public payout address without login, but public Pages stats stay unconnected until a reviewed backend is deployed. Public mining, network activation, payouts and official Windows/Android downloads remain prohibited. Never use retired peers or legacy binaries as a new-mainnet release; never expose wallet RPC or unrestricted daemon RPC publicly. See [release readiness](docs/RELEASE_READINESS_2026-11-04.md).
 
 ## Source layout
 

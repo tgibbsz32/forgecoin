@@ -70,11 +70,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frg_reward_maturity.h"
 #include "frg_pplns_accounting.h"
 #include "frg_canonical_headers.h"
+#include "frg_credited_history_audit.h"
+#include "frg_credited_ledger_scan.h"
 #include "frg_reconcile_policy.h"
 #include "frg_accounting_quarantine.h"
+#include "frg_payout_intent_journal.h"
+#include "frg_stratum_job_bounds.h"
 #include "forkoff.h"
 #include "growbag.h"
 #include "uthash.h"
+
+/* P0 #210: the legacy transfer_split callback is NOT an idempotent,
+ * crash-safe wallet payout journal. Never allow a compiler switch to revive
+ * that path until the entire sender/recipient/LMDB/reorg reconciliation
+ * design has passed native acceptance and independent security review.
+ *
+ * The approved source must be changed through a separately reviewed PR
+ * before this prohibition can be lifted. Disabling payouts in pool.conf
+ * alone is insufficient protection against accidentally built alternatives.
+ */
+#ifdef FRG_TESTED_WALLET_PAYOUTS
+#error "FRG native pool wallet payout path is unsafe and unreleased: journal/reconciliation acceptance required (issue 210)"
+#endif
 
 #define MAX_LINE 8192
 #define CLIENTS_INIT 8192
@@ -246,7 +263,8 @@ typedef struct client_t
     struct bufferevent *bev;
     char address[ADDRESS_MAX];
     char worker_id[64];
-    char client_id[32];
+    /* 16-byte UUID is 32 hex bytes plus a required C-string terminator. */
+    char client_id[33];
     char rig_id[MAX_RIG_ID];
     char agent[256];
     bstack_t *active_jobs;
@@ -291,6 +309,12 @@ typedef struct block_t
     uint64_t reward;
     time_t timestamp;
 } block_t;
+_Static_assert(sizeof(block_t) == sizeof(frg_history_saved_t),
+               "FRG saved history must match actual native pool block layout");
+_Static_assert(offsetof(block_t, timestamp) == offsetof(frg_history_saved_t, timestamp),
+               "FRG saved history timestamp layout mismatch");
+_Static_assert(offsetof(block_t, reward) == offsetof(frg_history_saved_t, reward),
+               "FRG saved history reward layout mismatch");
 
 typedef struct payment_t
 {
@@ -323,8 +347,11 @@ static struct event_base *pool_base;
 static struct event *listener_event;
 static struct event *timer_30s;
 static struct event *timer_10m;
+static struct event *timer_history;
 static struct event *timer_template;
 static struct event *signal_usr1;
+static struct event *signal_sigint;
+static struct event *signal_sigterm;
 static time_t template_triggered;
 static uint32_t extra_nonce;
 static uint32_t instance_id;
@@ -334,9 +361,19 @@ static MDB_dbi db_shares;
 static MDB_dbi db_blocks;
 static MDB_dbi db_balance;
 static MDB_dbi db_payments;
+static MDB_dbi db_payout_intents;
 static MDB_dbi db_properties;
 /* Runtime latch is immediate; durable lockout lives in LMDB properties. */
 static bool frg_accounting_held;
+/* Every credited candidate must be rechecked across a complete scan after
+ * startup or new credit. This does not establish consensus finality. */
+static bool frg_history_sweep_verified;
+static bool frg_history_pending;
+static uint64_t frg_history_cursor;
+static uint64_t frg_history_last_count;
+static uint64_t frg_history_epoch;
+static uint64_t frg_history_request_sequence;
+static time_t frg_history_requested_at;
 static BN_CTX *bn_ctx;
 static BIGNUM *base_diff;
 static pool_stats_t pool_stats;
@@ -636,6 +673,16 @@ database_init(const char* data_dir)
         log_fatal("%s", err);
         exit(rc);
     }
+    /* A separate nonmonetary journal DB cannot reactivate payouts.
+     * Any future submitted payout intent must be committed before wallet RPC.
+     * Startup and send-path scanners below fail closed on pending records.
+     */
+    if ((rc = frg_payout_intent_open(txn, &db_payout_intents)))
+    {
+        log_fatal("Cannot open durable FRG payout intent journal: %s", mdb_strerror(rc));
+        mdb_txn_abort(txn);
+        return rc;
+    }
     MDB_val k, v;
     k.mv_data = "upstream_last_height";
     k.mv_size = strlen(k.mv_data);
@@ -673,6 +720,22 @@ database_init(const char* data_dir)
                   "refusing startup; manually audit matured rewards first");
         return rc ? rc : EACCES;
     }
+    /* An ambiguous native wallet send is never safe to retry on restart.
+     * This v1 journal has no settlement/removal API; it must be manually
+     * reconciled in a separately reviewed implementation (#210).
+     */
+    if ((rc = pdb_txn_begin(env, NULL, MDB_RDONLY, &audit)))
+        return rc;
+    bool payout_held = true;
+    rc = frg_payout_intent_held(audit, db_payout_intents, &payout_held);
+    mdb_txn_abort(audit);
+    if (rc || payout_held)
+    {
+        frg_accounting_held = true;
+        log_fatal("FRG payout journal contains unresolved or corrupt intent: "
+                  "refusing startup pending independent payout reconciliation");
+        return rc ? rc : EACCES;
+    }
     return 0;
 }
 
@@ -684,6 +747,7 @@ database_close(void)
     mdb_dbi_close(env, db_blocks);
     mdb_dbi_close(env, db_balance);
     mdb_dbi_close(env, db_payments);
+    mdb_dbi_close(env, db_payout_intents);
     mdb_dbi_close(env, db_properties);
     mdb_env_close(env);
 }
@@ -960,6 +1024,8 @@ payout_block(block_t *block, MDB_txn *parent)
         log_error("Cannot credit mature pool rewards: verified 1%% fee wallet absent");
         return EINVAL;
     }
+    frg_history_sweep_verified = false; /* newly credited candidate requires full re-audit */
+    frg_history_epoch++;
     log_info("Allocating validated block rewards at height: %"PRIu64, block->height);
     int rc = 0;
     char *err = NULL;
@@ -1572,8 +1638,21 @@ client_find_job(client_t *client, const char *job_id)
 static void
 miner_send_job(client_t *client, bool response)
 {
-    job_t *job = bstack_push(client->active_jobs, NULL);
     block_template_t *bt = bstack_top(bst);
+    /* Do not place an unusable job on the miner's stack, and never
+     * copy into a daemon template whose nonce/reserved spans are short.
+     * Self-select templates arrive separately; their block span is
+     * checked before accepting the share. */
+    if (client->mode != MODE_SELF_SELECT &&
+        (!bt || !bt->block_blob ||
+         !frg_stratum_job_bounds_valid(bt->block_blob_size,
+                                       bt->reserved_offset, true,
+                                       client->is_xnp)))
+    {
+        log_warn("Refusing a miner job with missing or malformed template bounds");
+        return;
+    }
+    job_t *job = bstack_push(client->active_jobs, NULL);
     job->block_template = bt;
 
     if (client->mode == MODE_SELF_SELECT)
@@ -1590,13 +1669,6 @@ miner_send_job(client_t *client, bool response)
         return;
     }
 
-    /* Quick check we actually have a block template */
-    if (!bt)
-    {
-        log_warn("Cannot send client a job: No block template");
-        return;
-    }
-
     /*
       1. Copy block_template->block_blob
       2. Update bytes in reserved space at reserved_offset
@@ -1606,6 +1678,12 @@ miner_send_job(client_t *client, bool response)
 
     /* Copy */
     unsigned char *block = calloc(bt->block_blob_size, sizeof(char));
+    if (!block)
+    {
+        log_error("Cannot allocate native Stratum job blob");
+        bstack_drop(client->active_jobs);
+        return;
+    }
     memcpy(block, bt->block_blob, bt->block_blob_size);
 
     /* Set the extra nonce in our reserved space */
@@ -1622,8 +1700,16 @@ miner_send_job(client_t *client, bool response)
     /* Get hashing blob */
     size_t hashing_blob_size = 0;
     unsigned char *hashing_blob = NULL;
-    get_hashing_blob(block, bt->block_blob_size, &hashing_blob,
-            &hashing_blob_size);
+    if (get_hashing_blob(block, bt->block_blob_size, &hashing_blob,
+                         &hashing_blob_size) != 0 ||
+        !hashing_blob || hashing_blob_size == 0)
+    {
+        log_warn("Refusing a pool job with an invalid native hashing blob");
+        free(block);
+        free(hashing_blob);
+        bstack_drop(client->active_jobs);
+        return;
+    }
 
     /* Make hex */
     job->blob = calloc((hashing_blob_size << 1) +1, sizeof(char));
@@ -2003,6 +2089,167 @@ rpc_on_block_headers_range(const char* data, rpc_callback_t *callback)
     if (process_blocks(verified, headers_len, expected->tip_height))
         log_error("Validated canonical header range could not be reconciled; credits not confirmed");
     json_object_put(root);
+}
+
+/* The native pool ledger is a DUPFIXED height->block_t LMDB database.
+ * Scan all credited records, including duplicate heights; never silently
+ * skip corrupt or unknown entries. The scan cursor is intentionally volatile:
+ * after any restart no payout can proceed until a fresh complete pass.
+ */
+typedef struct frg_history_request_t
+{
+    block_t stored;
+    uint64_t sequence;
+    uint64_t index;
+    uint64_t total;
+    uint64_t ledger_epoch;
+} frg_history_request_t;
+
+static int
+frg_history_select(block_t *selected, bool *has_selection, uint64_t *total)
+{
+    if (!selected || !has_selection || !total) return EINVAL;
+    MDB_txn *txn = NULL;
+    int rc = pdb_txn_begin(env, NULL, MDB_RDONLY, &txn);
+    if (rc) return rc;
+    frg_history_saved_t saved = {0};
+    rc = frg_history_scan_credited(txn, db_blocks, frg_history_cursor,
+                                   &saved, has_selection, total);
+    if (!rc && *has_selection)
+        memcpy(selected, &saved, sizeof(*selected));
+    mdb_txn_abort(txn);
+    return rc;
+}
+
+static void
+frg_history_unverified(const char *why)
+{
+    log_error("FRG complete credited-block history audit unverified: %s; no payouts", why);
+    frg_history_sweep_verified = false;
+    frg_history_cursor = 0;
+    frg_history_last_count = 0;
+}
+
+static void
+rpc_on_frq_historical_credit(const char *data, rpc_callback_t *callback)
+{
+    const frg_history_request_t *expected =
+        callback ? (const frg_history_request_t *)callback->data : NULL;
+    if (!expected || !frg_history_pending ||
+        expected->sequence != frg_history_request_sequence)
+        return; /* stale response after timer timeout: never mark verified */
+    frg_history_pending = false;
+    const enum frg_history_verdict verdict =
+        frg_history_evaluate_rpc(data, expected->stored.height,
+                                 expected->stored.hash, expected->stored.prev_hash,
+                                 expected->stored.difficulty, expected->stored.reward);
+    if (verdict == FRG_HISTORY_CONFLICT)
+    {
+        /* Existing credit and/or a prior payout can no longer be trusted.
+         * The quarantine must survive restart; never clear automatically.
+         */
+        frg_accounting_held = true;
+        frg_history_sweep_verified = false;
+        const int rc = frg_quarantine_mark(env, db_properties, expected->stored.height);
+        if (rc)
+        {
+            log_fatal("Cannot persist credited-history reorg quarantine: %s", mdb_strerror(rc));
+            exit(EXIT_FAILURE);
+        }
+        log_error("PERSISTENT FRG POOL QUARANTINE: previously credited height %"PRIu64
+                  " disagrees with canonical RPC response", expected->stored.height);
+        return;
+    }
+    if (verdict != FRG_HISTORY_MATCH)
+    {
+        frg_history_unverified("invalid/unavailable historical block RPC");
+        return;
+    }
+    if (expected->ledger_epoch != frg_history_epoch ||
+        expected->total != frg_history_last_count ||
+        expected->index != frg_history_cursor)
+    {
+        frg_history_unverified("ledger changed while history audit was in flight");
+        return;
+    }
+    ++frg_history_cursor;
+    if (frg_history_cursor == expected->total)
+    {
+        frg_history_sweep_verified = true;
+        frg_history_cursor = 0; /* schedule another full retrospective cycle */
+        log_info("Full FRG credited-block history audit passed: %"PRIu64" entries",
+                 expected->total);
+    }
+}
+
+static void
+frg_history_poll(void)
+{
+    if (!abattoir || frg_accounting_held) return;
+    if (frg_history_pending)
+    {
+        const time_t now = time(NULL);
+        if (now < frg_history_requested_at ||
+            difftime(now, frg_history_requested_at) <= (double)config.rpc_timeout + 5)
+            return;
+        frg_history_pending = false;
+        ++frg_history_request_sequence; /* reject any late callback */
+        frg_history_unverified("historical RPC timed out");
+    }
+    block_t selected = {0};
+    bool found = false;
+    uint64_t total = 0;
+    const int rc = frg_history_select(&selected, &found, &total);
+    if (rc)
+    {
+        frg_history_unverified("LMDB credited-history selection failed");
+        return;
+    }
+    if (total != frg_history_last_count)
+    {
+        frg_history_last_count = total;
+        frg_history_cursor = 0;
+        frg_history_sweep_verified = false;
+        /* A newly credited record may precede the last checked candidate;
+         * restart the pass rather than count it as already inspected.
+         */
+        return;
+    }
+    if (total == 0)
+    {
+        frg_history_sweep_verified = true;
+        return; /* no credited funds yet */
+    }
+    if (!found)
+    {
+        frg_history_unverified("credited-history index out of range");
+        return;
+    }
+    frg_history_request_t *expected = calloc(1, sizeof(*expected));
+    if (!expected)
+    {
+        frg_history_unverified("no memory for audit callback");
+        return;
+    }
+    expected->stored = selected;
+    expected->index = frg_history_cursor;
+    expected->total = total;
+    expected->ledger_epoch = frg_history_epoch;
+    expected->sequence = ++frg_history_request_sequence;
+    char body[RPC_BODY_MAX] = {0};
+    rpc_get_request_body(body, "get_block_header_by_height", "sd",
+                         "height", selected.height);
+    rpc_callback_t *callback = rpc_callback_new(
+        rpc_on_frq_historical_credit, expected, 0);
+    if (!callback)
+    {
+        free(expected);
+        frg_history_unverified("no memory for audit RPC");
+        return;
+    }
+    frg_history_pending = true;
+    frg_history_requested_at = time(NULL);
+    rpc_request(pool_base, body, callback);
 }
 
 static void
@@ -2483,8 +2730,13 @@ send_payments(void)
     /* In a future reviewed payout build the durable LMDB quarantine must
      * be checked before any wallet transfer is even considered.
      */
-    if (frg_accounting_held)
+    if (!frg_history_payout_allowed(frg_accounting_held,
+                                    frg_history_sweep_verified,
+                                    frg_history_pending))
+    {
+        log_error("FRG payouts blocked until entire credited-block history is independently audited");
         return EACCES;
+    }
     MDB_txn *hold_txn = NULL;
     int hold_rc = pdb_txn_begin(env, NULL, MDB_RDONLY, &hold_txn);
     if (hold_rc)
@@ -2496,6 +2748,16 @@ send_payments(void)
     {
         frg_accounting_held = true;
         log_error("FRG payouts blocked by durable reorganization quarantine");
+        return hold_rc ? hold_rc : EACCES;
+    }
+    if ((hold_rc = pdb_txn_begin(env, NULL, MDB_RDONLY, &hold_txn)))
+        return hold_rc;
+    bool intent_held = true;
+    hold_rc = frg_payout_intent_held(hold_txn, db_payout_intents, &intent_held);
+    mdb_txn_abort(hold_txn);
+    if (hold_rc || intent_held)
+    {
+        log_error("FRG payouts blocked by unresolved or invalid journal intent");
         return hold_rc ? hold_rc : EACCES;
     }
 #ifndef FRG_TESTED_WALLET_PAYOUTS
@@ -3126,6 +3388,14 @@ timer_on_30s(int fd, short kind, void *ctx)
 }
 
 static void
+timer_on_history(int fd, short kind, void *ctx)
+{
+    struct timeval timeout = {.tv_sec = 2, .tv_usec = 0};
+    frg_history_poll(); /* one bounded historical RPC per timer, never a wallet RPC */
+    evtimer_add(timer_history, &timeout);
+}
+
+static void
 timer_on_10m(int fd, short kind, void *ctx)
 {
     struct timeval timeout = { .tv_sec = 600, .tv_usec = 0 };
@@ -3300,6 +3570,14 @@ clear:
 static void
 miner_on_login(json_object *message, client_t *client)
 {
+    /* A second login previously incremented account/worker counters again
+     * and rewrote the address, while disconnect only removed one worker.
+     * A client must reconnect to change wallets or worker identity. */
+    if (client->client_id[0] != '\0')
+    {
+        send_validation_error(client, "Already logged in; reconnect to change account");
+        return;
+    }
     JSON_GET_OR_ERROR(params, message, json_type_object, client);
     JSON_GET_OR_ERROR(login, params, json_type_string, client);
     JSON_GET_OR_ERROR(pass, params, json_type_string, client);
@@ -3424,6 +3702,7 @@ miner_on_login(json_object *message, client_t *client)
     uuid_t cid;
     uuid_generate(cid);
     bin_to_hex((const unsigned char*)cid, sizeof(uuid_t), client->client_id);
+    client->client_id[32] = '\0';
     miner_send_job(client, true);
 }
 
@@ -3432,6 +3711,11 @@ miner_on_block_template(json_object *message, client_t *client)
 {
     struct evbuffer *output = bufferevent_get_output(client->bev);
 
+    if (client->client_id[0] == '\0')
+    {
+        send_validation_error(client, "Log in before setting a template");
+        return;
+    }
     if (client->mode != MODE_SELF_SELECT)
     {
         send_validation_error(client, "Cannot set template; wrong mode");
@@ -3447,9 +3731,9 @@ miner_on_block_template(json_object *message, client_t *client)
     JSON_GET_OR_ERROR(prev_hash, params, json_type_string, client);
 
     const char *jid = json_object_get_string(job_id);
-    if (strlen(jid) != 32)
+    if (strlen(jid) != 32 || is_hex_string(jid))
     {
-        send_validation_error(client, "job_id invalid length");
+        send_validation_error(client, "job_id must be exactly 32 hex characters");
         return;
     }
 
@@ -3528,6 +3812,11 @@ miner_on_submit(json_object *message, client_t *client)
 {
     struct evbuffer *output = bufferevent_get_output(client->bev);
 
+    if (client->client_id[0] == '\0')
+    {
+        send_validation_error(client, "Log in before submitting a share");
+        return;
+    }
     JSON_GET_OR_ERROR(params, message, json_type_object, client);
     JSON_GET_OR_ERROR(nonce, params, json_type_string, client);
     JSON_GET_OR_ERROR(result, params, json_type_string, client);
@@ -3562,9 +3851,9 @@ miner_on_submit(json_object *message, client_t *client)
     }
 
     const char *jid = json_object_get_string(job_id);
-    if (strlen(jid) != 32)
+    if (strlen(jid) != 32 || is_hex_string(jid))
     {
-        send_validation_error(client, "job_id invalid length");
+        send_validation_error(client, "job_id must be exactly 32 hex characters");
         return;
     }
 
@@ -3608,7 +3897,21 @@ miner_on_submit(json_object *message, client_t *client)
         bt = job->miner_template;
     else
         bt = job->block_template;
+    if (!bt || !bt->block_blob ||
+        !frg_stratum_job_bounds_valid(bt->block_blob_size,
+                                      bt->reserved_offset,
+                                      client->mode != MODE_SELF_SELECT,
+                                      client->is_xnp))
+    {
+        send_validation_error(client, "Block template bounds invalid");
+        return;
+    }
     unsigned char *block = calloc(bt->block_blob_size, sizeof(char));
+    if (!block)
+    {
+        send_validation_error(client, "Block template allocation failed");
+        return;
+    }
     memcpy(block, bt->block_blob, bt->block_blob_size);
 
     unsigned char *p = block;
@@ -3933,7 +4236,10 @@ miner_on_read(struct bufferevent *bev, void *ctx)
         }
         else if (strcmp(method_name, "getjob") == 0)
         {
-            miner_send_job(client, false);
+            if (client->client_id[0] == '\0')
+                send_validation_error(client, "Log in before requesting a job");
+            else
+                miner_send_job(client, false);
         }
         else if (strcmp(method_name, "keepalived") == 0)
         {
@@ -4610,11 +4916,15 @@ sigusr1_handler(evutil_socket_t fd, short event, void *arg)
     fetch_last_block_header();
 }
 
+/* Never call exit() or atexit cleanup from an asynchronous signal handler.
+ * libevent invokes this callback on the normal pool dispatcher thread.
+ */
 static void
-sigint_handler(int sig)
+signal_shutdown_handler(evutil_socket_t fd, short event, void *ctx)
 {
-    signal(sig, SIG_DFL);
-    exit(0);
+    log_info("Graceful pool shutdown requested by signal %d", (int)fd);
+    if (pool_base)
+        event_base_loopexit(pool_base, NULL);
 }
 
 static void *
@@ -4684,7 +4994,7 @@ bail:
 }
 
 static void
-run(void)
+run(wui_context_t *web_context)
 {
     evutil_socket_t listener;
     struct addrinfo *info = NULL;
@@ -4740,7 +5050,26 @@ run(void)
     }
 
     signal_usr1 = evsignal_new(pool_base, SIGUSR1, sigusr1_handler, NULL);
-    event_add(signal_usr1, NULL);
+    signal_sigint = evsignal_new(pool_base, SIGINT, signal_shutdown_handler, NULL);
+    signal_sigterm = evsignal_new(pool_base, SIGTERM, signal_shutdown_handler, NULL);
+    if (!signal_usr1 || !signal_sigint || !signal_sigterm ||
+        event_add(signal_usr1, NULL) ||
+        event_add(signal_sigint, NULL) ||
+        event_add(signal_sigterm, NULL))
+    {
+        log_fatal("Unable to register native pool libevent signal handlers");
+        goto bail;
+    }
+
+    /* Serve the research WebUI on the SAME event base as Stratum/RPC.
+     * A detached second event loop previously raced cleanup and made
+     * SIGTERM restart acceptance hang after 'Performing cleanup'.
+     */
+    if (config.webui_port && start_web_ui(web_context, pool_base))
+    {
+        log_fatal("Native pool WebUI failed to bind; refusing startup");
+        goto bail;
+    }
 
     if (*config.trusted_listen && config.trusted_port)
     {
@@ -4770,6 +5099,15 @@ run(void)
     {
         timer_10m = evtimer_new(pool_base, timer_on_10m, NULL);
         timer_on_10m(-1, EV_TIMEOUT, NULL);
+        timer_history = evtimer_new(pool_base, timer_on_history, NULL);
+        if (!timer_history)
+        {
+            log_fatal("FRG history audit timer creation failed; refusing pool startup");
+            goto bail;
+        }
+        /* Payouts start held; no historical proof is assumed on restart. */
+        struct timeval audit_start = {.tv_sec = 2, .tv_usec = 0};
+        evtimer_add(timer_history, &audit_start);
     }
 
     if (*config.upstream_host)
@@ -4796,6 +5134,8 @@ cleanup(void)
         event_free(timer_30s);
     if (timer_10m)
         event_free(timer_10m);
+    if (timer_history)
+        event_free(timer_history);
     if (timer_template)
         event_free(timer_template);
     if (listener_event)
@@ -4808,6 +5148,10 @@ cleanup(void)
         stop_web_ui();
     if (signal_usr1)
         event_free(signal_usr1);
+    if (signal_sigint)
+        event_free(signal_sigint);
+    if (signal_sigterm)
+        event_free(signal_sigterm);
     if (trusted_base)
         event_base_loopbreak(trusted_base);
     if (pool_base)
@@ -5011,8 +5355,9 @@ int main(int argc, char **argv)
 
     log_set_udata(&mutex_log);
     log_set_lock(log_lock);
-    signal(SIGINT, sigint_handler);
-    signal(SIGTERM, sigint_handler);
+    /* SIGINT/SIGTERM are dispatched by libevent on the normal main
+     * thread, never via async-handler exit() or concurrent atexit.
+     */
     signal(SIGPIPE, SIG_IGN);
     atexit(cleanup);
 
@@ -5048,10 +5393,7 @@ int main(int argc, char **argv)
     uic.pool_ssl_port = config.pool_ssl_port;
     uic.allow_self_select = !config.disable_self_select;
     uic.payment_threshold = config.payment_threshold;
-    if (config.webui_port)
-        start_web_ui(&uic);
-
-    run();
+    run(&uic);
 
 cleanup:
     return 0;

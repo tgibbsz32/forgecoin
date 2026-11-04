@@ -9,6 +9,7 @@ on:
       - 'docs/index.html'
       - 'docs/sale.css'
       - 'tools/test_mfrg_policy.py'
+      - 'tools/test_mfrg_current_policy.py'
       - '.github/workflows/mfrg-sale-offline.yml'
   push:
     branches: [main]
@@ -20,6 +21,7 @@ on:
       - 'docs/index.html'
       - 'docs/sale.css'
       - 'tools/test_mfrg_policy.py'
+      - 'tools/test_mfrg_current_policy.py'
       - '.github/workflows/mfrg-sale-offline.yml'
   workflow_dispatch:
 permissions:
@@ -42,5 +44,5 @@ jobs:
         run: python3 apps/sale/tests/test_site.py
       - name: Read-only wallet and payment-lock browser simulation
         run: node apps/sale/tests/test_browser.cjs
-      - name: Full lifetime tokenomics and mint gate tests
-        run: python3 tools/test_mfrg_policy.py
+      - name: Current 50M public mFRG planning and strict sale-disable gates
+        run: python3 tools/test_mfrg_current_policy.py

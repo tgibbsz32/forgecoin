@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#08111d">
+<meta name="description" content="ForgeCoin prelaunch release readiness for Windows desktop, Android miner/wallet, native mining pool, explorer and mainnet.">
+<title>Release readiness | ForgeCoin</title>
+<link rel="icon" href="images/forgecoin-logo.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header"><div class="container nav-wrap">
+<a class="brand" href="index.html"><img class="brand-logo" src="images/forgecoin-logo.png" alt=""><span>FORGE<span class="accent">COIN</span></span></a>
+<nav class="nav-links" aria-label="Main navigation">
+<a href="index.html">Home</a><a href="downloads.html">Downloads</a><a href="mining.html">Mining</a><a href="pool.html">Pool</a><a href="project-status.html">Project status</a>
+</nav>
+</div></header>
+<main id="main">
+<section class="section"><div class="container">
+<span class="kicker">PUBLIC RELEASE READINESS · NOVEMBER 4, 2026</span>
+<h1>ForgeCoin <span class="accent">software readiness</span></h1>
+<p class="lead"><strong>The selected FRG mainnet is frozen but not launched.</strong> There are no approved public Windows wallet installers, Android FRG wallet/miner APKs, mining-pool payout services or live public mining endpoints. Source availability and test-chain successes do not authorize real wallet spending or mining.</p>
+<p><a class="btn secondary" href="current-mainnet.html">View frozen network identity</a> <a class="btn secondary" href="https://github.com/tgibbsz32/forgecoin/blob/main/docs/RELEASE_READINESS_2026-11-04.md" rel="noopener noreferrer">Detailed acceptance ledger on GitHub</a></p>
+<div class="card-grid two">
+<article class="card">
+<span class="tag">NOT RELEASED</span><h2>Windows desktop wallet / miner</h2>
+<p>Windows Forms compilation, private packaging and native wallet recovery checks passed. The <strong>actual desktop GUI</strong> has now completed Create Wallet, private 25-word backup, Close Wallet and Restore Wallet against a hash-pinned native RPC, independently verifying the <strong>same public address</strong> on disposable wallet files. Additional GUI tests verified small-window scrolling and repaired a timer bug that had re-enabled Solo Mining during prelaunch. The desktop GUI's <strong>real native RandomX solo Start / active-hashrate / Stop</strong> sequence has now passed <strong>134 checks</strong> against a hash-pinned isolated Windows daemon at the frozen genesis, on localhost with zero peers. This fixes a previously blocking startup RPC timeout and moves native worker initialization off the UI thread. <strong>Public mainnet mining, public peer bootstrap, wallet sends, pool/Stratum acceptance, production consensus review, clean install and signed distribution remain locked or outstanding.</strong> Oracle and public mainnet remain inactive.</p>
+<p><a class="text-link" href="https://github.com/tgibbsz32/forgecoin/pull/225">Windows native RandomX solo GUI acceptance</a> · <a class="text-link" href="https://github.com/tgibbsz32/forgecoin/pull/224">Wallet recovery and GUI safety</a></p>
+<p><a class="text-link" href="https://github.com/tgibbsz32/forgecoin/pull/218">Windows wallet restore evidence and QA</a></p>
+<p><a class="text-link" href="https://github.com/tgibbsz32/forgecoin/tree/main/apps/desktop">Windows Forms source</a> · <a class="text-link" href="https://github.com/tgibbsz32/forgecoin/tree/main/apps/desktop-tauri">Tauri source</a></p>
+</article>
+<article class="card">
+<span class="tag">DEBUG UI ONLY</span><h2>Android wallet / miner</h2>
+<p>The restricted Android preview displays battery, thermal and CPU diagnostics and provides a <strong>one-hash offline ARM64 RandomX self-test</strong> using the vendored native hashing library. The debug APK compiles and its unit tests pass, but <strong>actual hashing on a physical ARM64 phone remains unverified</strong>. It cannot create or restore a native FRG wallet, transfer coins or perform native solo/pool mining. Native ARM64 daemon/miner/wallet integration, encrypted recoverable custody, background limits and real-device tests are outstanding.</p>
+<p>The latest restricted debug build also verifies <strong>native FRG public-address Base58, Keccak-256 checksums and frozen mainnet prefixes 190/191/192 offline</strong>. It passed 28 Android JVM tests, 10 Android source-safety checks, and Linux/Android preview CI; no native FRG keys, funds or transaction signing were involved. This is public-address validation, <strong>not wallet creation, ownership or spendable balance verification</strong>.</p>
+<p><a class="text-link" href="https://github.com/tgibbsz32/forgecoin/pull/221">FRG public-address decoder and Android QA evidence</a> · <a class="text-link" href="https://github.com/tgibbsz32/forgecoin/pull/219">ARM64 one-hash QA</a></p>
+<p><a class="text-link" href="https://github.com/tgibbsz32/forgecoin/tree/main/apps/android">Android source and engineering status</a></p>
+</article>
+<article class="card">
+<span class="tag">TEST-CHAIN VERIFIED · NOT LIVE</span><h2>Native C mining pool</h2>
+<p>Native test-chain Stratum blocks, 60-block maturity, exact 99% miner / 1% operator atomic-unit accounting, clean restart and deep-reorg quarantine have passed. The actual wallet payout signer, complete idempotent payout settlement, retries, recipient confirmation and independently observed canonical chain remain release blockers. A durable intent journal and source-bound manifest now exist, but do not authorize transfers. <strong>No public pool payouts or login are enabled.</strong></p>
+<p><a class="text-link" href="pool.html">Pool preparation and statistics</a> · <a class="text-link" href="pool-workers.html">Public-address worker lookup</a></p>
+</article>
+<article class="card">
+<span class="tag">NOT AUTHORIZED</span><h2>Mainnet, explorer and downloads</h2>
+<p>Public network bootstrap peers, Oracle cutover, verified explorer API, Windows/Android release packages and signed SHA-256 distribution manifests are pending. Any historic downloaded test package is not an authorized public-mainnet wallet. Do not enter recovery phrases, spend keys or passwords on websites or mining pools.</p>
+<p><a class="text-link" href="downloads.html">Official software distribution status</a> · <a class="text-link" href="https://github.com/tgibbsz32/forgecoin/issues/194">Security and consensus launch gates</a></p>
+</article>
+</div>
+<h2>What has been verified in test-only native CI?</h2>
+<p>The independent native wallet received exactly 1.00000000 FRG from a test sender in a mined FAKECHAIN block and retained it after the receiving RPC process was restarted. The real C pool separately matured a test block, allocated a 1% fee and quarantined a deeply orphaned credited block. These successes <strong>do not</strong> prove a real production pool payout, public network agreement or permanent inability to spend genesis outputs.</p>
+<p><a href="https://github.com/tgibbsz32/forgecoin/actions/runs/41796542812">Native wallet restart test</a> · <a href="https://github.com/tgibbsz32/forgecoin/actions/runs/41731489643">C pool reward/reorg test</a> · <a href="https://github.com/tgibbsz32/forgecoin/issues/210">Unfinished payout journal</a></p>
+<h2>Public release requirements</h2>
+<p>Independent frozen-consensus and signed genesis-spend rejection review; independently operated node comparisons; real C-pool wallet payout journal and exactly-once settlement; native Windows and Android wallet/miner tests with safe recovery and actual devices; verified explorer/HTTPS and Oracle configuration; signed, checksummed, reproducible releases; and explicit launch authorization.</p>
+<p>ForgeCoin's separately proposed <strong>50,000,000 mFRG</strong> Solana token, reserve-backed FRG bridge, liquidity, staking, and Discover Your City integration are future possibilities, not part of the initial native FRG release. The earlier 500M mFRG plan is superseded. <strong>No mint, sale, bridge or mFRG payments are active.</strong></p>
+</div></section>
+</main>
+<footer><div class="container"><a href="index.html">ForgeCoin homepage</a><p>Open-source experimental software · No production funds or public mining authorized by this status page.</p></div></footer>
+</body></html>

@@ -36,6 +36,12 @@ jobs:
             libboost-serialization-dev libboost-program-options-dev xxd
       - name: Verify source-level fail-closed build guards
         run: python3 -m unittest discover -s services/official_pool/tests -p 'test_*.py' -v
+      - name: Exercise native Stratum nonce and reserved template bounds
+        run: |
+          cc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
+            -o "$RUNNER_TEMP/frg-stratum-job-bounds" \
+            services/official_pool/tests/test_stratum_job_bounds.c
+          "$RUNNER_TEMP/frg-stratum-job-bounds"
       - name: Compile native C, C++ bridge and web UI objects (NO LINK)
         working-directory: services/official_pool/jtgrassie
         env:

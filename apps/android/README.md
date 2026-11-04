@@ -15,6 +15,86 @@ The source contains a fail-closed APK verifier at `tools/verify_android_preview_
 
 This preview intentionally does **not** create/restore an FRG wallet, transfer coins, mine, start an approved daemon, or connect to a public pool. P2P port `39480` is selected for future verified peers, while local RPC uses a private ephemeral loopback port. Public launch approval is unchanged.
 
+## November 4, 2026: read-only mining safety diagnostics and build validation
+
+A restricted Android GUI now displays **battery percentage and charging state,
+Android thermal status (when API 29+ exposes it), power-saver state and logical
+CPU count** as read-only diagnostics. This is groundwork for a future
+temperature/battery-aware native RandomX worker, **not** the worker itself.
+The solo and pool mining buttons, native FRG wallet creation/recovery, FRG
+send/receive and payout functions remain disabled.
+
+The connected Windows development computer compiled this branch using
+JDK 21, Gradle 8.11.1, Android Gradle Plugin 8.9.2 and SDK 35.
+`assembleDebug`, `testDebugUnitTest` and six offline Android preview
+source/negative security checks passed. After removing the deprecated
+`android:extractNativeLibs` manifest override and targeting Java 17, the
+restricted preview verifier passed against a **3,629,747-byte** debug APK,
+SHA-256 `24ae102b12a003671f8345d2f68fa7fe4481ec943ca4e246333a2ddad7ae97e3`,
+application ID `org.forgecoin.p2ptest.isolatedqa` (debug signed, not a release).
+Only `libforge_randomx.so` and `libforge_runtime_probe.so` are bundled;
+**no native FRG daemon, wallet RPC, funded wallet or usable mining executable**.
+The general MainActivity deprecated-API note still requires review. ADB found
+**no connected physical handset**. None of this is verified on a real ARM64
+device and no production APK or public download has been approved.
+
+## November 4, 2026 — offline RandomX ARM64 self-test
+
+The restricted DEBUG UI now offers **Verify one RandomX hash** on the Mining
+screen. It runs the existing vendored native ARM64 RandomX light VM on a
+background thread **exactly once** using the public RandomX test vector:
+`test key 000` and `This is a test`. It compares the 32-byte output to the
+upstream known-answer digest. This is NOT a miner: no nonce search, Stratum,
+wallet, daemon, network, block submission, repeating hash loop or public FRG.
+
+The one-hash button requires explicit confirmation and is blocked in release
+builds, on battery saver, moderate-or-higher temperature, less than 20% battery
+while unplugged, unreliable sensor state, or less than 512 MiB free RAM.
+The screen reports only PASS/FAIL and elapsed duration, not an invented
+continuous mining hashrate. Solo/pool mining and FRG wallet send/restore
+buttons remain disabled.
+
+The connected Windows QA machine passed Gradle
+`:app:assembleDebug :app:testDebugUnitTest`, **23 JVM tests** (including
+four new RandomX vector/negative tests), and eight Android release/security
+source checks. The restricted debug APK was **3,634,999 bytes**, SHA-256
+`f3fb70edf3c71ce887072d6059bb707ed74ea7bcb2185f3ec13e1c13f20bf224`,
+with `org.forgecoin.p2ptest.isolatedqa`. It contains only ARM64
+`libforge_randomx.so` and `libforge_runtime_probe.so`, with no native
+FRG daemon, wallet or mining executable.
+
+**A physical ARM64 Android device is still needed** to observe the actual
+JNI known-answer test. Connected ADB devices were x86_64 emulators only.
+Use disposable QA installations; do not import a funded wallet or expect
+network mining or pool earnings.
+
+## Native FRG public-address checksum validation (November 4)
+
+The restricted debug app now verifies the selected 20261026 mainnet's
+**standard (190), integrated (191), and subaddress (192)** prefixes using
+CryptoNote's 8-byte-block Base58 and a **Keccak-256** checksum (not SHA3-256).
+The Bouncy Castle Keccak implementation already included in the Android
+build is reused; no private-key derivation or wallet custody is added.
+An offline input box allows validation of *public addresses only*.
+This catches malformed Base58, wrong-prefix, bad-length and corrupt-checksum
+inputs, but deliberately **does not prove curve-point validity, wallet
+ownership or spendability**. The reviewed native wallet must still validate
+an actual transaction recipient.
+
+Unit tests use the public address from the repository's genuine isolated
+native Windows mining test, two independent Keccak-256 known-answer vectors,
+test-generated checksummed integrated/subaddress forms, checksum/overflow
+negative cases, and defensive public-key copying.
+
+Connected Windows QA: Gradle 8.11.1 **assembleDebug and testDebugUnitTest**
+passed, with **28 JVM tests, zero failures**, and eight existing Android
+safety/source tests passed. The resulting restricted debug APK was
+**3,638,316 bytes**, SHA-256
+`8261942742f97196efd3ed38bc945114d4ec87970bd1be6dd3a9fd043ff63ca5`.
+It contains only the two ARM64 support JNI libraries and no usable FRG
+wallet, daemon or mining worker. No public network was activated and no
+FRG keys, seeds or funds were handled.
+
 ## Remaining mandatory engineering gates
 1. Port, compile and verify ARM64-v8a native ForgeCoin daemon, wallet APIs and RandomX mining component for the frozen 20261026 mainnet, with consensus and genesis checks against independent x64/ARM64 nodes. No old P2P daemon.
 2. Implement native non-custodial wallet creation, wallet restoration from seed, encrypted seed storage using Android Keystore-backed keys, address display, synchronization, balance, safe send and restore tests. Avoid server custody and remote wallet RPC.

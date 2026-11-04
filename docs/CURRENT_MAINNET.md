@@ -37,7 +37,18 @@ The project intends to determine and publish governance procedures **before mFRG
 
 See [technical roadmap](../ROADMAP.md), [miniFORGE sale details](miniforge-sale.html), [mFRG custody/specification](MINIFORGE_SPL_TREASURIES.md) and [future privacy architecture](SOLANA_FCMP_CARROT_FUTURE_ARCHITECTURE.md).
 
+## Potential future Tari and Monero merged-mining integrations (not approved)
+
+The selected and unlaunched FRG mainnet remains **independent RandomX PoW**. Neither merged-mining mode is implemented, promised, or part of the frozen genesis/launch rules.
+
+- **Tari + FRG:** study FRG as a *parent* and Tari as an auxiliary chain, using a patched Tari proxy and FRG's Monero-derived templates on an isolated test network. Tari must independently accept the proof structure and parent RandomX seed. If successful, FRG miners might also compete for Tari rewards; this does not automatically increase FRG's security or attach Monero hashrate.
+- **XMR + FRG:** study Monero as a *parent* and FRG as an auxiliary chain using a newly reviewed FRG AuxPoW consensus path. Actual adoption by independent Monero miners and pools—not protocol compatibility alone—would determine possible security benefits. This is **consensus-changing** and would require a separately approved hard fork, full tests and external review.
+
+Early low-hashrate 51% risks are instead addressed first through diversified mining and peers, independently monitored chain tips/reorganizations, conservative settlement confirmations, and persistent pool payout holds. These controls detect or limit loss; **they do not make a majority-hashpower attack impossible**. See [security research and engineering gates](SECURITY_51_PERCENT_AND_TARI_MERGE_MINING_2026-11-02.md).
+
 ## Source and release status
+
+**Current status, November 4:** A consolidated [public-release readiness matrix](RELEASE_READINESS_2026-11-04.md) tracks independent native C-pool block/maturity/reorg tests, genuine signed native wallet transfer, separate-recipient confirmed 1 FRG credit and wallet restart. These all passed on **disposable FAKECHAIN tests**; none constitutes public MAINNET mining, native pool-wallet payouts, a signed Windows installer or an operational Android FRG wallet/miner. The frozen native-consensus integration [draft #185](https://github.com/tgibbsz32/forgecoin/pull/185) and test-only wallet acceptance [draft #203](https://github.com/tgibbsz32/forgecoin/pull/203) are still unmerged to public `main`. The approved launch state remains false and any production deployment requires the remaining full signed-genesis input rejection and independent network review.
 
 The machine-readable [documentation identity](mainnet.identity.json) mirrors the frozen manifest from new-mainnet source snapshot `62fc0b875431d7fa64f887bb20b7b51d67abcdfa` on draft PR #111. **Main still includes legacy runtime/consensus code. Updating documentation does not retarget a main-branch binary.** Do not build main and assume it implements this identity. PR #111 and #114 remain unfinished and unmerged; no public release or network activation is authorized.
 

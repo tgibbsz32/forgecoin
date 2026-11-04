@@ -1,0 +1,31 @@
+name: ForgeCoin read-only chain-risk observer tests
+
+on:
+  push:
+    paths:
+      - 'tools/forgecoin_chain_history.py'
+      - 'tools/test_forgecoin_chain_history.py'
+      - 'tools/forgecoin_chain_risk.py'
+      - 'tools/test_forgecoin_chain_risk.py'
+      - '.github/workflows/chain-risk-observer.yml'
+  pull_request:
+    paths:
+      - 'tools/forgecoin_chain_risk.py'
+      - 'tools/test_forgecoin_chain_risk.py'
+      - '.github/workflows/chain-risk-observer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-chain-risk-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Deterministic read-only watcher tests (no RPC/network interaction)
+        run: python -m unittest discover -s tools -p 'test_forgecoin_chain_*.py' -v

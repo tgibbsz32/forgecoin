@@ -1,0 +1,34 @@
+name: ForgeCoin durable payout-intent LMDB safety (test-only)
+on:
+  pull_request:
+    paths:
+      - 'services/official_pool/**'
+      - '.github/workflows/pool-payout-intent-lmdb-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  payout-intent-lmdb:
+    name: Durable intent restart, replay and corruption
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build-only LMDB headers/library
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends build-essential liblmdb-dev libssl-dev
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Assert native pool payout sender remains build-locked
+        run: python3 -m unittest services.official_pool.tests.test_source_guards -v
+      - name: Build real LMDB journal regression binary
+        run: |
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 -o /tmp/frg-payout-intent-test services/official_pool/tests/test_payout_intent_journal_lmdb.c -llmdb
+      - name: Exercise on-disk LMDB restart, duplicate prevention and fail-closed recovery
+        run: /tmp/frg-payout-intent-test
+      - name: Build and verify source-bound canonical payout-manifest SHA256
+        run: |
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 -o /tmp/frg-payout-manifest-test services/official_pool/tests/test_payout_manifest.c -lcrypto
+          /tmp/frg-payout-manifest-test

@@ -107,6 +107,44 @@ class DisposableReorgSafety(unittest.TestCase):
             reorg.wait_for_reorg(39801, 39802, reorg.FORK_B_BLOCKS,
                                  "a" * 64, [Stopped()], reorg.time.monotonic() + 5)
 
+    def test_real_observer_is_wired_to_divergence_and_deep_reorg(self):
+        source = (ROOT / "tools/smoke_regtest_reorg.py").read_text(encoding="utf-8")
+        self.assertIn("risk_snapshot(", source)
+        self.assertIn("assess_chain_risk(", source)
+        self.assertIn('"node_divergence" not in pre_codes', source)
+        self.assertIn('"node_height_gap" not in pre_codes', source)
+        self.assertIn("previous=pre_observation", source)
+        self.assertIn('"observed_reorg"', source)
+        self.assertIn('event.get("severity") == "critical"', source)
+        self.assertIn("event.get(\"minimum_depth\", 0) >= FORK_A_BLOCKS", source)
+        self.assertIn('"node_divergence", "node_height_gap"', source)
+
+    def test_observer_readback_only_queries_loopback_rpc(self):
+        snapshots = [{"tip": {"height": 66}}, {"tip": {"height": 70}}]
+        with patch.object(reorg, "risk_snapshot", side_effect=snapshots) as reader:
+            result = reorg.observe_real_nodes(39481, 39581,
+                                              reorg.time.monotonic() + 3)
+        self.assertEqual(set(result), {"fork-a", "fork-b"})
+        self.assertEqual(result["fork-a"]["tip"]["height"], 66)
+        self.assertEqual(result["fork-b"]["tip"]["height"], 70)
+        self.assertEqual(reader.call_args_list[0].args[0],
+                         "http://127.0.0.1:39481/json_rpc")
+        self.assertEqual(reader.call_args_list[1].args[0],
+                         "http://127.0.0.1:39581/json_rpc")
+        self.assertTrue(all(call.kwargs.get("window") == 96
+                            for call in reader.call_args_list))
+
+    def test_transient_observer_rpc_timeout_can_retry_without_fabricating_snapshot(self):
+        snapshot = {"tip": {"height": 66}}
+        with patch.object(reorg, "risk_snapshot",
+                          side_effect=[TimeoutError("busy"), snapshot, snapshot]) as reader:
+            with patch.object(reorg.time, "sleep", return_value=None):
+                result = reorg.observe_real_nodes(39481, 39581,
+                                                  reorg.time.monotonic() + 5)
+        self.assertEqual(result["fork-a"], snapshot)
+        self.assertEqual(result["fork-b"], snapshot)
+        self.assertEqual(reader.call_count, 3)
+
     def test_fork_test_never_contains_external_oracle_endpoint(self):
         source = (ROOT / "tools/smoke_regtest_reorg.py").read_text(encoding="utf-8")
         self.assertNotIn("150.136.209.227", source)

@@ -37,6 +37,9 @@ namespace ForgeCoinDesktop
 #if FRG_PRIVATE_MINING_QA && !FRG_PRIVATE_UI_QA
 #error Isolated native mining QA must use the temporary private UI sandbox.
 #endif
+#if FRG_PRIVATE_POOL_QA && !FRG_PRIVATE_UI_QA
+#error Isolated native pool QA must use the temporary private UI sandbox.
+#endif
 #if FRG_PRIVATE_MINING_QA
         // Strict test-only build. Ordinary and private-prelaunch binaries do
         // not define this symbol; NativeMiningAuthorized remains false.
@@ -72,6 +75,34 @@ namespace ForgeCoinDesktop
                 if (digest != QaDaemonSha256)
                     throw new InvalidOperationException(
                         "Local mining QA requires the exact pinned private daemon.");
+            }
+        }
+#endif
+#if FRG_PRIVATE_POOL_QA
+        // Test-only offline XMRig path; deliberately no Stratum service or
+        // CPU/GPU backend, no FRG credentials and no externally reachable peer.
+        // The ordinary Windows desktop never defines this symbol.
+        private const string QaXmrigSha256 =
+            "e5cd22ffe8725fbabf32ae2ba993d5b791e65e2ef159ad32ad260505f2e22480";
+
+        private bool IsolatedPoolQaReady()
+        {
+            return !IsRunning(daemon) && !IsRunning(poolMiner) &&
+                !stopMiningButton.Enabled &&
+                String.Equals(poolUrlBox.Text.Trim(), "127.0.0.1:49690",
+                              StringComparison.Ordinal);
+        }
+
+        private void RequirePinnedPrivateQaXmrig(string file)
+        {
+            using (FileStream stream = File.OpenRead(file))
+            using (SHA256 sha = SHA256.Create())
+            {
+                string digest = BitConverter.ToString(sha.ComputeHash(stream))
+                    .Replace("-", "").ToLowerInvariant();
+                if (digest != QaXmrigSha256)
+                    throw new InvalidOperationException(
+                        "Private pool GUI QA requires the locally pinned XMRig executable.");
             }
         }
 #endif
@@ -858,6 +889,9 @@ namespace ForgeCoinDesktop
             controls.Controls.Add(poolThreads, 1, 0);
             startPoolButton = PrimaryButton("Start Pool", StartPoolMining);
             startPoolButton.Enabled = NativeMiningAuthorized;
+#if FRG_PRIVATE_POOL_QA
+            startPoolButton.Enabled = true; // isolated localhost / no CPU or GPU
+#endif
             startPoolButton.Text = NativeMiningAuthorized ? "Start Pool" : "Launch locked";
             startPoolButton.AccessibleDescription = "Native pool mining is disabled until launch and payout acceptance.";
             stopPoolButton = SecondaryButton("Stop", StopPoolMining);
@@ -1691,12 +1725,21 @@ namespace ForgeCoinDesktop
         {
             try
             {
+#if FRG_PRIVATE_POOL_QA
+                if (!IsolatedPoolQaReady())
+                    throw new InvalidOperationException(
+                        "Private GUI pool QA requires an unused disconnected loopback Stratum endpoint.");
+#else
                 if (!NativeMiningAuthorized)
                     throw new InvalidOperationException("Public pool mining remains disabled until approved launch and payout acceptance.");
+#endif
                 if (IsRunning(poolMiner)) return;
                 if (stopMiningButton.Enabled) throw new InvalidOperationException("Stop solo mining before starting pool mining.");
                 string exe = Path.Combine(binRoot, "xmrig", "xmrig.exe");
                 if (!File.Exists(exe)) throw new FileNotFoundException("The packaged XMRig pool backend is missing.", exe);
+#if FRG_PRIVATE_POOL_QA
+                RequirePinnedPrivateQaXmrig(exe);
+#endif
                 string url = poolUrlBox.Text.Trim();
                 string user = poolUserBox.Text.Trim();
                 string pass = poolPassBox.Text;
@@ -1721,6 +1764,10 @@ namespace ForgeCoinDesktop
                     "--http-host", "127.0.0.1", "--http-port", "39483", "--no-color", "--print-time", "5"
                 };
                 if (worker.Length > 0) { args.Add("--rig-id"); args.Add(Quote(worker)); }
+#if FRG_PRIVATE_POOL_QA
+                // The test GUI NEVER hashes or contacts any public pool.
+                args.Add("--no-cpu"); args.Add("--no-opencl"); args.Add("--no-cuda");
+#endif
                 poolLogBox.Clear();
                 poolMiner = StartPoolCaptured(exe, string.Join(" ", args.ToArray()));
                 if (poolMiner == null) return;
@@ -1739,6 +1786,9 @@ namespace ForgeCoinDesktop
             poolState.Text = "Stopped"; poolState.BackColor = Color.FromArgb(110, 118, 130);
             poolDetailLabel.Text = "Pool miner status: stopped at " + DateTime.Now.ToString("HH:mm:ss");
             startPoolButton.Enabled = NativeMiningAuthorized; stopPoolButton.Enabled = false;
+#if FRG_PRIVATE_POOL_QA
+            startPoolButton.Enabled = true;
+#endif
         }
 
         private Process StartPoolCaptured(string exe, string args)

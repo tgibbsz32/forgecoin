@@ -30,8 +30,8 @@ namespace ForgeCoinDesktop
         // This prelaunch GUI may scan/restore disposable wallets, but must NOT
         // initiate native MAINNET mining or transfer before the reviewed launch.
         // No environment variable or configuration file can override this.
-        private const bool NativeSpendAuthorized = false;
-        private const bool NativeMiningAuthorized = false;
+        private static readonly bool NativeSpendAuthorized = false;
+        private static readonly bool NativeMiningAuthorized = false;
         private int transferInFlight;
         private readonly string appRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ForgeCoin");
         private readonly string binRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin");

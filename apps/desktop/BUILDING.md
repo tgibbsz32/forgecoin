@@ -273,6 +273,44 @@ spend, public Stratum, native pool payout and Oracle launch gates remain
 off. **Do not package another public or private ZIP as a completion
 milestone until remaining application work has passed.**
 
+## November 4 — Windows XMRig pool GUI monitoring and no-hash QA
+
+An XMRig process returning localhost `/2/summary` alone must **never**
+be presented as successful FRG pool mining. The desktop now distinguishes
+**Connecting, Connected, Hashing, Paused, Other pool, and Unverified**,
+checks the exact requested pool and `rx/0`, counts accepted/rejected
+shares separately, and rejects telemetry from an unrelated miner API
+instance. The HTTP status reader is limited to direct
+`127.0.0.1:39483/2/summary`, no proxy or redirects, with a 512 KiB
+response bound.
+
+**Live compatibility discovery:** real XMRig **6.22.0** truncates an
+`--api-id` longer than 31 visible characters. The earlier 32-hex
+random identifier caused the actual API's identity check to fail.
+The Windows app now uses **12 random bytes / 24 hex characters**.
+On the connected Windows PC the actual XMRig API reported the exact
+24-character ID and **Connecting / zero accepted shares / zero hashrate**
+against an intentionally unreachable loopback Stratum address.
+The parser rejects synthetic 32-character IDs to prevent regression.
+
+An isolated test-only GUI build, compiled with **both**
+`FRG_PRIVATE_UI_QA` and `FRG_PRIVATE_POOL_QA`, verified **37 actual
+WinForms Start Pool → local XMRig API status → Stop checks**, with
+**CPU, CUDA, and OpenCL explicitly disabled** and an intentionally
+unused `127.0.0.1:49690` pool endpoint. It used a locally
+SHA-256-pinned historical XMRig executable and a disposable temporary
+application directory; no wallet, daemon, public pool, shares, mining
+or external peers were involved. All test processes were terminated.
+A pool-QA build **without** the private UI sandbox is a compile error.
+The normal desktop build never defines either test flag.
+
+These tests establish correct **Windows pool process launch/stop and
+honest telemetry** only; they **do not** establish a real native FRG
+Stratum login, accepted RandomX share, mined pool block, reward
+credit or payout settlement. Those separate acceptance gates are
+still outstanding, and no new Windows ZIP/APK should be published as
+a release candidate on this evidence alone.
+
 ## Release gates (separate from build success)
 
 - Merge only independently reviewed frozen consensus and permanently reject

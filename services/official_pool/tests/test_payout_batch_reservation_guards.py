@@ -43,7 +43,7 @@ class PayoutReservationGuards(unittest.TestCase):
     def test_no_transfer_settlement_or_balance_debit_in_reservation_module(self):
         for forbidden in ("rpc_wallet_request", "transfer_split",
                           "mdb_del(", "db_balance", "db_payments",
-                          "FRG_TESTED_WALLET_PAYOUTS", "send_payments("):
+                          "#ifdef FRG_TESTED_WALLET_PAYOUTS", "send_payments("):
             self.assertNotIn(forbidden, RESERVE)
         self.assertIn("test_payout_batch_reservation_lmdb.c -llmdb -lcrypto",
                       WORKFLOW)

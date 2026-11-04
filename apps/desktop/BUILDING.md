@@ -164,10 +164,43 @@ existing wallet, connect to peers or Oracle, mine, or send funds**.
   PoW work, wallet transfer, Oracle or public P2P connection.
 
 The Windows Forms source build and **35 desktop source/security tests**
-also pass. The private login integration has **not yet been visually
-accepted by clicking the GUI** or used with a funded transaction, and the
+passed at this checkpoint. The GUI has subsequently been opened and
+its controls/layout tested in a temporary QA sandbox (see below),
+but native Create/Restore button clicks have **not** been validated
+through the real GUI, nor has it been used with a funded transaction. The
 pinned historical candidate is not a final independently verified
 mainnet release. Native solo/pool mining and sends stay hard-locked.
+
+## November 4 — Actual Windows Forms layout and offline-node acceptance
+
+The **real WinForms GUI** was instantiated on the authorized Windows QA PC
+with production-form source compiled under the **test-only**
+`FRG_PRIVATE_UI_QA` symbol. That symbol is **not defined in normal desktop
+builds or packages**. It redirects wallet/application storage to an empty
+temporary sandbox, and the harness includes **no daemon, wallet-RPC or miner
+executables**.
+
+The test opened all seven tabs, exercised wallet controls at
+**900×680** and **1040×760**, verified that Restore/Create/Send buttons
+remain scroll-reachable, and confirmed that native Send, Solo Mining
+and Pool Mining controls are disabled with short, readable captions.
+Node startup is **disabled by default** before launch, and the local
+offline test node option must be explicitly selected to enable it.
+The public peer input is disabled in prelaunch. Unchecking offline mode
+immediately disables node startup again. The test did not invoke node,
+wallet or mining actions, and it verified there were no native processes
+launched and no wallet files created.
+
+**Connected Windows test result:** 44 real Windows Forms assertions passed
+with zero failures, plus 38 Python desktop source/security tests passed.
+The regression is compiled and run in GitHub Windows CI as
+`tests/desktop/windows/WinFormsGuiLayoutQa.cs`, including its strict
+temporary-directory isolation.
+
+This is **GUI visibility and launch-lock acceptance**, not end-to-end
+interaction with native wallet creation/recovery or a physical software
+installation. Pinned authenticated native wallet create/restore/restart
+acceptance was performed separately. Neither check authorizes mainnet.
 
 ## Release gates (separate from build success)
 

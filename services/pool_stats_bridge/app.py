@@ -1,7 +1,8 @@
 """Read-only, localhost-only ForgeCoin pool UI preview and upstream stats bridge.
 
-No Stratum socket, wallet RPC, keys, template issuance, payout, account lookup,
-block submission or mining is possible here. No upstream? Return unavailable,
+No Stratum socket, wallet RPC, keys, template issuance, payouts, account changes,
+block submission or mining is possible here. Public-address nonmonetary worker
+stats may be observed from a separately approved localhost-only C pool. No upstream? Return unavailable,
 not illustrative figures. jfgrassie's original JSON /stats is an aggregate
 interface; miner_balance is deliberately NOT proxied until FRG atomic units
 and payout ownership are independently validated.
@@ -25,7 +26,7 @@ from urllib.request import Request, ProxyHandler, HTTPRedirectHandler, build_ope
 
 MAX_RESPONSE_BYTES = 65536
 MAX_U64 = 2**64 - 1
-BASE58_ADDRESS = re.compile(r"[1-9A-HJ-NP-Za-km-z]{90,140}\\Z", re.ASCII)
+BASE58_ADDRESS = re.compile(r"[1-9A-HJ-NP-Za-km-z]{90,140}\Z", re.ASCII)
 ALLOWED_ASSETS = {
     "/dashboard.html": ("dashboard.html", "text/html; charset=utf-8"),
     "/dashboard.css": ("dashboard.css", "text/css; charset=utf-8"),
@@ -163,7 +164,7 @@ def public_miner_payload(upstream: str | None, address: str,
     return 200, {
         "state": "backend_observed_unverified",
         "launchApproved": False,
-        "network": "frg-mainnet-20261026",
+        "expectedNetwork": "frg-mainnet-20261026",
         "asOf": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "stats": data,
     }
@@ -238,6 +239,8 @@ class PreviewHandler(BaseHTTPRequestHandler):
             # supplied by the browser. This is a public-address lookup only.
             parts = urlsplit(route)
             try:
+                if len(route) > 256 or parts.fragment:
+                    raise ValueError("oversized or fragmented query")
                 fields = parse_qs(parts.query, strict_parsing=True,
                                   keep_blank_values=True)
             except ValueError:

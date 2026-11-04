@@ -50,7 +50,12 @@ namespace ForgeCoinDesktop
             catch (WebException e)
             {
                 var response = e.Response as HttpWebResponse;
-                if (response == null) throw;
+                if (response == null)
+                {
+                    Console.Error.WriteLine("SAFE_DIAG: RPC connection failure category " +
+                                            e.Status);
+                    throw;
+                }
                 try { return (int)response.StatusCode; }
                 finally { response.Dispose(); }
             }
@@ -66,7 +71,9 @@ namespace ForgeCoinDesktop
                     port < 1024 || port > 65535)
                     throw new InvalidOperationException("Expected private test port and credentials");
                 int noCredentials = GetVersionCode(port, null, null);
+                Console.WriteLine("SAFE_STAGE_NOAUTH_HTTP=" + noCredentials);
                 int wrongCredentials = GetVersionCode(port, args[1], args[2] + "incorrect");
+                Console.WriteLine("SAFE_STAGE_WRONG_HTTP=" + wrongCredentials);
                 int correctCredentials = GetVersionCode(port, args[1], args[2]);
                 Console.WriteLine("NATIVE_NO_AUTH_HTTP=" + noCredentials);
                 Console.WriteLine("NATIVE_WRONG_AUTH_HTTP=" + wrongCredentials);
@@ -77,10 +84,11 @@ namespace ForgeCoinDesktop
                 Console.WriteLine("PASS: .NET HttpWebRequest authenticated native Windows wallet RPC via HTTP Digest");
                 return 0;
             }
-            catch
+            catch (Exception error)
             {
                 // Intentionally no exception messages, RPC output, secret or
-                // process arguments in logs.
+                // process arguments in logs. Type name only.
+                Console.Error.WriteLine("SAFE_DIAG_EXCEPTION=" + error.GetType().Name);
                 Console.Error.WriteLine("FAIL: .NET native wallet Digest QA did not pass");
                 return 2;
             }

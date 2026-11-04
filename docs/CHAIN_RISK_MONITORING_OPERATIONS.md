@@ -55,7 +55,13 @@ On the first run, the observer creates a history baseline only from the most rec
 
 [Merged PR #198](https://github.com/tgibbsz32/forgecoin/pull/198) corrects the read-only observer's `wide_difficulty` parsing. The ForgeCoin/Monero JSON-RPC convention represents this as **hexadecimal even without `0x`**, as explicitly checked by `tests/functional_tests/blockchain.py`. The watcher now parses bounded hex text and cross-checks supplied low/high 64-bit values, failing closed on malformed or contradictory fields. New offline regression cases passed in [GitHub Actions](https://github.com/tgibbsz32/forgecoin/actions/runs/41658675417). This is not a runtime deployment or a new consensus rule.
 
-## Required next native-pool release gates
+## Required next native-pool release gates## November 3/4 — genuine native two-node observer fork acceptance
+
+[GitHub x86_64 native CI 41771760913](https://github.com/tgibbsz32/forgecoin/actions/runs/41771760913) **PASSED** on [PR #202](https://github.com/tgibbsz32/forgecoin/pull/202), merged only into the **isolated test-only validation branch**. The actual compiled daemon produced separate 66- and 70-block FAKECHAIN histories in two disposable localhost-only LMDBs. The **unmodified production read-only `forgecoin_chain_risk` snapshot/assessment code** fetched both native daemon RPC histories and reported `node_divergence` plus `node_height_gap` (four blocks) before synchronization. After a genuine P2P reorganization replaced the entire 66-block shorter fork, a second live RPC observation reported a critical `observed_reorg` of at least 66 blocks on the losing node, with no remaining divergence/height-gap event. No fabricated header data, public node listener, mining on MAINNET, wallet keys or payouts were involved.
+
+**Scope:** This validates the observer's real daemon RPC integration and alarm classification. Both nodes ran on the same disposable GitHub CI host; this does **not** satisfy the required two *independently operated/hosted* production nodes, authenticated separate tunnels, eclipse-resistant cross-checking, or settlement authorization. The observer remains an alert, not a payout gate, checkpoint or consensus safeguard.
+
+
 
 - Continuously examine **all credited canonical heights** beyond the existing limited ten-header maturity window, with bounded batches and restart-safe coverage tracking. Verify each credited block's hash, parent, reward and orphan status against independently authenticated canonical headers.
 - Treat unavailable, truncated, malformed or conflicting historical RPC as unverified; preserve current ledger balances; on a canonical mismatch, persist first-conflict quarantine to LMDB before any future transfer.

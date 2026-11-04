@@ -989,6 +989,9 @@ namespace ForgeCoinDesktop
                     " --shared-ringdb-dir " + Quote(Path.Combine(appRoot, "ringdb")) +
                     " --log-level 0 --log-file " + Quote(Path.Combine(appRoot, "logs", "wallet-rpc.log"));
                 walletRpc = StartCaptured(exe, args, "WALLET");
+#if FRG_PRIVATE_UI_QA
+                Console.WriteLine("QA_GUI: wallet process start attempted");
+#endif
                 if (walletRpc == null)
                     throw new InvalidOperationException("Native wallet RPC process could not be started.");
                 for (int i = 0; i < 35; i++)
@@ -1005,6 +1008,9 @@ namespace ForgeCoinDesktop
                             // A successful authenticated Digest request is
                             // mandatory before the private config is removed.
                             walletSession.DeleteStartupConfig();
+#if FRG_PRIVATE_UI_QA
+                            Console.WriteLine("QA_GUI: authenticated native wallet RPC ready");
+#endif
                             return;
                         }
                     }
@@ -1035,7 +1041,13 @@ namespace ForgeCoinDesktop
                 EnsureWalletService();
                 Dictionary<string, object> p = new Dictionary<string, object> { { "filename", name }, { "password", passwordBox.Text }, { "language", "English" } };
                 Rpc("http://127.0.0.1:39484/json_rpc", "create_wallet", p);
+#if FRG_PRIVATE_UI_QA
+                Console.WriteLine("QA_GUI: native wallet creation RPC accepted");
+#endif
                 WalletOpened("Created " + name);
+#if FRG_PRIVATE_UI_QA
+                Console.WriteLine("QA_GUI: wallet open refresh completed");
+#endif
                 ShowRecoverySeed(null, EventArgs.Empty);
             }
             catch (Exception ex) { ShowError(ex.Message); }
@@ -1169,6 +1181,9 @@ namespace ForgeCoinDesktop
             passwordBox.Clear();
             RefreshWallet();
             RefreshAddressLists();
+#if FRG_PRIVATE_UI_QA
+            Console.WriteLine("QA_GUI: address book refresh returned");
+#endif
         }
 
         private void CloseWallet(object sender, EventArgs e)
@@ -1200,6 +1215,9 @@ namespace ForgeCoinDesktop
                 buttons.Controls.Add(copy); buttons.Controls.Add(done);
                 dialog.AcceptButton = done;
                 dialog.Controls.Add(words); dialog.Controls.Add(warning); dialog.Controls.Add(buttons);
+#if FRG_PRIVATE_UI_QA
+                Console.WriteLine("QA_GUI: entering native seed backup dialog");
+#endif
                 dialog.ShowDialog(this);
             }
             catch (Exception ex) { ShowError(ex.Message); }

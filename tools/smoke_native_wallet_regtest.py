@@ -137,13 +137,16 @@ def assert_confirmed_receipt(block_json: object, incoming: dict,
 def run(daemon_binary: Path, wallet_binary: Path, manifest: dict,
         max_seconds: int, *, signed_transfer: bool = False,
         validate_mempool: bool = False,
-        confirm_transfer: bool = False) -> None:
+        confirm_transfer: bool = False,
+        verify_restart: bool = False) -> None:
     if os.name == "nt":
         raise AssertionError("Use disposable Linux runner only")
     if validate_mempool and not signed_transfer:
         raise AssertionError("Daemon validation requires signed local-only wallet transfer")
     if confirm_transfer and not (validate_mempool and signed_transfer):
         raise AssertionError("Confirmation requires signed transfer and local mempool validation")
+    if verify_restart and not confirm_transfer:
+        raise AssertionError("Recipient restart requires independently confirmed test transfer")
     # A locked configuration is required even though the daemon is launched
     # FAKECHAIN only. No launch flag is accepted as a CLI argument.
     require_manifest(manifest)
@@ -173,6 +176,7 @@ def run(daemon_binary: Path, wallet_binary: Path, manifest: dict,
         daemon_log = (home / "native-daemon.log").open("wb")
         wallet_log = (home / "native-wallet.log").open("wb")
         receiver_log = None
+        receiver_restart_log = None
         processes: list[subprocess.Popen] = []
         try:
             node = launch(daemon_binary, node_dir, p2p_port, daemon_port,
@@ -232,9 +236,10 @@ def run(daemon_binary: Path, wallet_binary: Path, manifest: dict,
                 )
                 processes.append(receiver_proc)
                 wait_wallet(receiver_proc, receiver_port, deadline)
+                receiver_password = secrets.token_urlsafe(24)
                 wallet_rpc(receiver_port, "create_wallet", {
                     "filename": "disposable_regtest_recipient",
-                    "password": secrets.token_urlsafe(24), "language": "English",
+                    "password": receiver_password, "language": "English",
                 })
                 receiver_address = must_public_address(
                     wallet_rpc(receiver_port, "get_address",
@@ -346,6 +351,56 @@ def run(daemon_binary: Path, wallet_binary: Path, manifest: dict,
                               "canonical block; independent recipient wallet "
                               "refreshed and recorded exact 1 FRG inbound "
                               "with matching tx hash; no production payout", flush=True)
+                        if verify_restart:
+                            # Force wallet-file persistence and a real RPC
+                            # process restart; a mere refresh is insufficient.
+                            wallet_rpc(receiver_port, "close_wallet")
+                            receiver_proc.terminate()
+                            receiver_proc.wait(timeout=10)
+                            if receiver_proc.poll() is None:
+                                raise AssertionError("Native recipient did not stop")
+                            receiver_restart_log = (
+                                home / "native-receiver-restart.log").open("wb")
+                            receiver_proc = subprocess.Popen(
+                                receiver_args, cwd=str(home),
+                                stdin=subprocess.DEVNULL,
+                                stdout=receiver_restart_log,
+                                stderr=subprocess.STDOUT, close_fds=True,
+                                env={**os.environ, "HOME": str(home)},
+                            )
+                            processes.append(receiver_proc)
+                            wait_wallet(receiver_proc, receiver_port,
+                                        time.monotonic() + max_seconds)
+                            wallet_rpc(receiver_port, "open_wallet", {
+                                "filename": "disposable_regtest_recipient",
+                                "password": receiver_password,
+                            })
+                            restored_address = must_public_address(
+                                wallet_rpc(receiver_port, "get_address",
+                                           {"account_index": 0}).get("address"))
+                            if restored_address != receiver_address:
+                                raise AssertionError("Restarted native payee identity changed")
+                            wait_wallet_height(
+                                receiver_port, wanted_height + 1,
+                                time.monotonic() + max_seconds)
+                            if (info(daemon_port).get("height") != wanted_height + 1
+                                    or header(daemon_port, wanted_height)["hash"] != mined[0]):
+                                raise AssertionError("Canonical test block changed during restart")
+                            restored_balance = wallet_rpc(
+                                receiver_port, "get_balance", {"account_index": 0})
+                            restored_incoming = wallet_rpc(
+                                receiver_port, "get_transfers", {"in": True})
+                            assert_confirmed_receipt(
+                                block.get("json"), restored_incoming,
+                                restored_balance, tx_hash)
+                            if (restored_balance.get("balance") != received.get("balance")
+                                    or restored_incoming.get("in") != incoming.get("in")):
+                                raise AssertionError(
+                                    "Native recipient credit/history changed after restart")
+                            print("PASS: separate payee wallet closed, native RPC process "
+                                  "restarted and password-reopened; identical address, "
+                                  "one confirmed incoming hash and exact 1 FRG credit "
+                                  "persisted without duplicate", flush=True)
                 # FAKECHAIN mempool validation does not prove full MAINNET
                 # genesis-spend exclusion, confirmation, or payee settlement.
         finally:
@@ -362,6 +417,8 @@ def run(daemon_binary: Path, wallet_binary: Path, manifest: dict,
             daemon_log.close()
             if receiver_log is not None:
                 receiver_log.close()
+            if receiver_restart_log is not None:
+                receiver_restart_log.close()
 
 
 def main() -> None:
@@ -374,12 +431,14 @@ def main() -> None:
     parser.add_argument("--signed-transfer", action="store_true")
     parser.add_argument("--validate-mempool", action="store_true")
     parser.add_argument("--confirm-transfer", action="store_true")
+    parser.add_argument("--verify-restart", action="store_true")
     args = parser.parse_args()
     run(args.daemon, args.wallet,
         json.loads(args.manifest.read_text(encoding="utf-8")),
         args.max_seconds, signed_transfer=args.signed_transfer,
         validate_mempool=args.validate_mempool,
-        confirm_transfer=args.confirm_transfer)
+        confirm_transfer=args.confirm_transfer,
+        verify_restart=args.verify_restart)
 
 
 if __name__ == "__main__":

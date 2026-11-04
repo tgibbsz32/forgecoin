@@ -48,6 +48,11 @@ class WalletFAKECHAINGuards(unittest.TestCase):
         self.assertIn('snapshot.get("tx_hashes")', s)
         self.assertIn('args.validate_mempool', s)
         self.assertIn('args.confirm_transfer', s)
+        self.assertIn('args.verify_restart', s)
+        self.assertIn('wallet_rpc(receiver_port, "close_wallet")', s)
+        self.assertIn('wallet_rpc(receiver_port, "open_wallet"', s)
+        self.assertIn('receiver_proc.wait(timeout=10)', s)
+        self.assertIn('restored_incoming.get("in") != incoming.get("in")', s)
         self.assertIn('if confirm_transfer and not (validate_mempool and signed_transfer)', s)
         self.assertIn('receiver_args[receiver_args.index("--rpc-bind-port") + 1]', s)
         self.assertIn('wallet_rpc(receiver_port, "get_transfers"', s)
@@ -75,6 +80,24 @@ class WalletFAKECHAINGuards(unittest.TestCase):
                                {}, 120, signed_transfer=signed,
                                validate_mempool=mempool,
                                confirm_transfer=True)
+
+    def test_restart_never_runs_without_real_confirmed_transfer_gate(self):
+        with patch.object(sw.os, "name", "posix"):
+            for signed, mempool, confirmed in (
+                (False, False, False),
+                (True, False, False),
+                (True, True, False),
+            ):
+                with self.subTest(signed=signed, mempool=mempool,
+                                  confirmed=confirmed):
+                    with self.assertRaisesRegex(AssertionError,
+                                                "Recipient restart requires"):
+                        sw.run(
+                            Path("/tmp/nonexistent"),
+                            Path("/tmp/nonexistent"),
+                            {}, 120, signed_transfer=signed,
+                            validate_mempool=mempool,
+                            confirm_transfer=confirmed, verify_restart=True)
 
     def test_confirmed_receipt_requires_block_and_independent_credit(self):
         txid = "ab" * 32

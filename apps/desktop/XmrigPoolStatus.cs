@@ -107,7 +107,11 @@ namespace ForgeCoinDesktop
             if (summary == null)
                 throw new ArgumentException("XMRig summary was absent.");
             string actualId = Text(summary, "id");
+            // XMRig's --api-id is limited to 31 visible characters in
+            // the native 6.22 API. A longer synthetic ID can falsely pass
+            // unit tests even though the real miner truncates it.
             if (String.IsNullOrEmpty(expectedApiId) ||
+                expectedApiId.Length > 31 || actualId.Length > 31 ||
                 !String.Equals(actualId, expectedApiId,
                                StringComparison.Ordinal))
                 throw new ArgumentException("XMRig API instance identity mismatch.");

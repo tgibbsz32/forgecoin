@@ -30,6 +30,7 @@ class WalletFAKECHAINGuards(unittest.TestCase):
         self.assertIn('"--daemon-address", f"127.0.0.1:{daemon_port}"', s)
         self.assertIn('"--wallet-dir", str(wallet_dir)', s)
         self.assertIn('"--disable-rpc-login"', s)
+        self.assertIn('"--no-dns"', s)
         self.assertIn('"--no-initial-sync"', s)
         self.assertIn('"do_not_relay": True', s)
         self.assertIn('"ring_size": 16', s)

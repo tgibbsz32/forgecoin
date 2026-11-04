@@ -141,21 +141,23 @@ namespace ForgeCoinDesktop
                     string combined = String.Join("\n", rawHeaders);
                     MatchCollection schemes = Regex.Matches(combined,
                         @"Digest\s+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                    // Prefer simple RFC2617 MD5/qop=auth. Epee also offers
+                    // MD5-sess as an alternative, but our interoperable client
+                    // only uses the exact challenge whose algorithm is MD5.
+                    // Never merge the nonce or attributes of two alternatives.
                     for (int i = 0; i < schemes.Count; i++)
                     {
                         int start = schemes[i].Index;
                         int end = i + 1 < schemes.Count ? schemes[i + 1].Index : combined.Length;
                         string candidate = combined.Substring(start, end - start)
                                                    .Trim(' ', ',', '\r', '\n');
-                        if (candidate.IndexOf("algorithm=MD5-sess",
-                              StringComparison.OrdinalIgnoreCase) >= 0)
+                        if (Regex.IsMatch(candidate,
+                            @"(?:^|,)\s*algorithm\s*=\s*MD5\s*(?:,|$)",
+                            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
                         {
                             challenge = candidate;
                             break;
                         }
-                        if (challenge == null && candidate.IndexOf("algorithm=MD5",
-                              StringComparison.OrdinalIgnoreCase) >= 0)
-                            challenge = candidate;
                     }
                     Check(challenge != null);
                 }

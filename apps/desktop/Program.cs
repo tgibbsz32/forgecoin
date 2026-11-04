@@ -945,8 +945,8 @@ namespace ForgeCoinDesktop
                         peersValue.Text = (incoming + outgoing).ToString(CultureInfo.InvariantCulture);
                         bool synchronized = result.Contains("synchronized") && Convert.ToBoolean(result["synchronized"], CultureInfo.InvariantCulture);
                         bool offline = result.Contains("offline") && Convert.ToBoolean(result["offline"], CultureInfo.InvariantCulture);
-                        syncValue.Text = offline ? "Bootstrap / offline" : (synchronized ? "Synchronized" : (target > height ? height.ToString("N0") + " / " + target.ToString("N0") : "Waiting for peer"));
-                        nodeState.Text = offline ? "Offline mining" : "Running";
+                        syncValue.Text = offline ? "Private offline QA" : (synchronized ? "Synchronized" : (target > height ? height.ToString("N0") + " / " + target.ToString("N0") : "Waiting for peer"));
+                        nodeState.Text = offline ? "Offline QA node" : "Running";
                         nodeState.BackColor = offline ? Color.FromArgb(176, 112, 32) : Color.FromArgb(53, 145, 92);
                         IDictionary h = header.Contains("block_header") ? header["block_header"] as IDictionary : null;
                         if (h != null && h.Contains("hash")) hashValue.Text = Shorten(Convert.ToString(h["hash"]), 16);
@@ -1484,9 +1484,11 @@ namespace ForgeCoinDesktop
                 hashRateValue.Text = "0"; miningThreadsValue.Text = "0";
                 miningDifficultyValue.Text = "—"; miningBlockHeightValue.Text = "—"; miningNetworkRateValue.Text = "—";
                 miningRewardValue.Text = "—"; miningTargetValue.Text = "—"; miningBlocksFoundValue.Text = minedBlocksSession.ToString(CultureInfo.InvariantCulture);
-                miningNodeDetailLabel.Text = "Node monitor: stopped • Start online for peers or use Offline Bootstrap Mining.";
+                miningNodeDetailLabel.Text = "Node monitor: stopped • Public bootstrap and native mining remain launch-locked.";
                 miningDetailLabel.Text = "Miner monitor: stopped";
-                startMiningButton.Enabled = true; stopMiningButton.Enabled = false;
+                // Timer-driven refresh must NEVER override the explicit
+                // prelaunch mining authorization, even with no daemon.
+                startMiningButton.Enabled = NativeMiningAuthorized; stopMiningButton.Enabled = false;
                 return;
             }
             if (Interlocked.Exchange(ref miningRefreshInFlight, 1) != 0) return;

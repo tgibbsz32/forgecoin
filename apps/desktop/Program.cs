@@ -698,6 +698,8 @@ namespace ForgeCoinDesktop
             miningThreads = new NumericUpDown { Minimum = 1, Maximum = Math.Max(1, Environment.ProcessorCount), Value = Math.Max(1, Environment.ProcessorCount / 2), Dock = DockStyle.Fill, Margin = new Padding(4, 12, 8, 10) };
             controls.Controls.Add(miningThreads, 1, 0);
             startMiningButton = PrimaryButton("Start Mining", StartMining);
+            startMiningButton.Enabled = NativeMiningAuthorized;
+            startMiningButton.Text = NativeMiningAuthorized ? "Start Mining" : "Solo mining — launch locked";
             stopMiningButton = SecondaryButton("Stop", StopMining);
             stopMiningButton.Enabled = false;
             miningState = Badge("Stopped", Color.FromArgb(110, 118, 130));
@@ -776,6 +778,8 @@ namespace ForgeCoinDesktop
             poolThreads = new NumericUpDown { Minimum = 1, Maximum = Math.Max(1, Environment.ProcessorCount), Value = Math.Max(1, Environment.ProcessorCount / 2), Dock = DockStyle.Fill, Margin = new Padding(4, 12, 8, 10) };
             controls.Controls.Add(poolThreads, 1, 0);
             startPoolButton = PrimaryButton("Start Pool", StartPoolMining);
+            startPoolButton.Enabled = NativeMiningAuthorized;
+            startPoolButton.Text = NativeMiningAuthorized ? "Start Pool" : "Pool mining — launch locked";
             stopPoolButton = SecondaryButton("Stop", StopPoolMining);
             stopPoolButton.Enabled = false;
             poolState = Badge("Stopped", Color.FromArgb(110, 118, 130));
@@ -1253,28 +1257,94 @@ namespace ForgeCoinDesktop
 
         private void SendFunds(object sender, EventArgs e)
         {
+            // Guard at the actual send entrypoint, not just on the button.
+            // No native FRG spend is authorized before independent consensus
+            // review, signed builds and deliberate owner launch activation.
+            if (!NativeSpendAuthorized)
+            {
+                ShowError("Public native FRG spending is disabled before mainnet release authorization.");
+                return;
+            }
+            if (Interlocked.CompareExchange(ref transferInFlight, 1, 0) != 0) return;
+            bool submissionAttempted = false;
             try
             {
-                decimal amount;
-                if (!decimal.TryParse(sendAmountBox.Text.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out amount) || amount <= 0) throw new InvalidOperationException("Enter a valid positive amount using a period for decimals.");
-                long atomic = checked((long)decimal.Round(amount * AtomicUnits, 0, MidpointRounding.AwayFromZero));
+                if (!walletOpen || !IsRunning(walletRpc))
+                    throw new InvalidOperationException("Open the native wallet before transferring.");
+                long atomic = FrgWalletInput.ParseAmountAtoms(sendAmountBox.Text.Trim());
                 string address = sendAddressBox.Text.Trim();
-                if (address.Length < 20) throw new InvalidOperationException("Enter a valid ForgeCoin destination address.");
-                DialogResult confirm = MessageBox.Show("Send " + amount.ToString("0.########", CultureInfo.InvariantCulture) + " FRG to\n\n" + address + "?", "Confirm transaction", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-                if (confirm != DialogResult.Yes) return;
-                ArrayList destinations = new ArrayList { new Dictionary<string, object> { { "amount", atomic }, { "address", address } } };
-                IDictionary result = Rpc("http://127.0.0.1:39484/json_rpc", "transfer", new Dictionary<string, object> { { "destinations", destinations }, { "account_index", 0 }, { "priority", 0 }, { "get_tx_key", true } });
-                string tx = result.Contains("tx_hash") ? Convert.ToString(result["tx_hash"]) : "submitted";
-                MessageBox.Show("Transaction submitted.\n\n" + tx, "ForgeCoin", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                sendAddressBox.Clear(); sendAmountBox.Clear(); RefreshWallet();
+                if (!FrgWalletInput.LooksLikePublicAddress(address))
+                    throw new InvalidOperationException("Enter a public FRG address, not a recovery phrase.");
+                IDictionary validation = Rpc("http://127.0.0.1:39484/json_rpc",
+                    "validate_address", new Dictionary<string, object> {
+                        { "address", address }, { "any_net_type", false },
+                        { "allow_openalias", false }
+                    }, 10000);
+                if (!validation.Contains("valid") ||
+                    !Convert.ToBoolean(validation["valid"], CultureInfo.InvariantCulture))
+                    throw new InvalidOperationException("The native wallet rejected the destination address checksum/network.");
+                if (validation.Contains("nettype") &&
+                    !String.Equals(Convert.ToString(validation["nettype"]), "mainnet",
+                        StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException("A testnet or stagenet address cannot receive a mainnet transfer.");
+                DialogResult confirmed = MessageBox.Show(
+                    "Native wallet validated the destination. Send " +
+                    FormatCoin(atomic) + " FRG to\n\n" + address +
+                    "?\n\nThis action cannot be reversed.",
+                    "Confirm native FRG transfer", MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+                if (confirmed != DialogResult.Yes) return;
+                sendButton.Enabled = false;
+                ArrayList destinations = new ArrayList {
+                    new Dictionary<string, object> { { "amount", atomic }, { "address", address } }
+                };
+                submissionAttempted = true;
+                IDictionary result = Rpc("http://127.0.0.1:39484/json_rpc",
+                    "transfer", new Dictionary<string, object> {
+                        { "destinations", destinations }, { "account_index", 0 },
+                        { "priority", 0 }, { "get_tx_key", false }
+                    }, 120000);
+                string tx = result.Contains("tx_hash") ?
+                    Convert.ToString(result["tx_hash"]) : String.Empty;
+                if (!FrgWalletInput.IsTransactionId(tx))
+                    throw new InvalidOperationException("Native wallet did not return a valid transaction identifier.");
+                MessageBox.Show("Native wallet reported transaction hash:\n\n" + tx +
+                    "\n\nCheck confirmation on the canonical chain before considering this settled.",
+                    "FRG transfer submitted (not yet confirmed)",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                sendAddressBox.Clear();
+                sendAmountBox.Clear();
+                RefreshWallet();
             }
-            catch (Exception ex) { ShowError(ex.Message); }
+            catch (Exception ex)
+            {
+                if (submissionAttempted)
+                {
+                    // A wallet-RPC timeout may mean the transfer ALREADY
+                    // broadcast. Repeating it can spend twice.
+                    MessageBox.Show(
+                        "The native wallet's transfer outcome is ambiguous. Do NOT " +
+                        "retry automatically. Reopen the wallet and reconcile " +
+                        "outgoing transfers, transaction hashes and chain state " +
+                        "before making another payment.",
+                        "Transfer outcome unverified", MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
+                else ShowError(ex.Message);
+            }
+            finally
+            {
+                Interlocked.Exchange(ref transferInFlight, 0);
+                if (!IsDisposed) sendButton.Enabled = NativeSpendAuthorized && walletOpen;
+            }
         }
 
         private void StartMining(object sender, EventArgs e)
         {
             try
             {
+                if (!NativeMiningAuthorized)
+                    throw new InvalidOperationException("Native mainnet mining cannot start before the owner's authorized Oracle/network launch.");
                 if (!IsRunning(daemon)) throw new InvalidOperationException("Start the ForgeCoin node before mining.");
                 if (IsRunning(poolMiner)) throw new InvalidOperationException("Stop pool mining before starting solo mining.");
                 string address = miningAddressBox.Text.Trim();
@@ -1300,7 +1370,7 @@ namespace ForgeCoinDesktop
             miningState.Text = "Stopped"; miningState.BackColor = Color.FromArgb(110, 118, 130);
             hashRateValue.Text = "0"; miningThreadsValue.Text = "0";
             miningDetailLabel.Text = "Miner monitor: stopped at " + DateTime.Now.ToString("HH:mm:ss");
-            startMiningButton.Enabled = true; stopMiningButton.Enabled = false;
+            startMiningButton.Enabled = NativeMiningAuthorized; stopMiningButton.Enabled = false;
         }
 
         private void RefreshMining()
@@ -1344,7 +1414,7 @@ namespace ForgeCoinDesktop
                         miningBlockHeightValue.Text = Math.Max(0, chainHeight - 1).ToString("N0", CultureInfo.InvariantCulture);
                         miningState.Text = active ? "Mining" : "Stopped";
                         miningState.BackColor = active ? Color.FromArgb(53, 145, 92) : Color.FromArgb(110, 118, 130);
-                        startMiningButton.Enabled = !active; stopMiningButton.Enabled = active;
+                        startMiningButton.Enabled = NativeMiningAuthorized && !active; stopMiningButton.Enabled = active;
                         string payout = status.Contains("address") ? Shorten(Convert.ToString(status["address"]), 18) : Shorten(fallbackPayout, 18);
                         miningNodeDetailLabel.Text = "Node monitor: " + (offline ? "OFFLINE BOOTSTRAP" : (synchronized ? "ONLINE / synchronized" : "ONLINE / waiting for peer")) + " • Block " + Math.Max(0, chainHeight - 1) + " • Peers " + peers;
                         miningDetailLabel.Text = "Miner monitor: " + (active ? "ACTIVE" : "stopped") + " • " + FormatRate(speed) + " • Payout " + payout + " • Updated " + DateTime.Now.ToString("HH:mm:ss");
@@ -1363,6 +1433,8 @@ namespace ForgeCoinDesktop
         {
             try
             {
+                if (!NativeMiningAuthorized)
+                    throw new InvalidOperationException("Public pool mining remains disabled until approved launch and payout acceptance.");
                 if (IsRunning(poolMiner)) return;
                 if (stopMiningButton.Enabled) throw new InvalidOperationException("Stop solo mining before starting pool mining.");
                 string exe = Path.Combine(binRoot, "xmrig", "xmrig.exe");
@@ -1395,7 +1467,7 @@ namespace ForgeCoinDesktop
             poolMiner = null;
             poolState.Text = "Stopped"; poolState.BackColor = Color.FromArgb(110, 118, 130);
             poolDetailLabel.Text = "Pool miner status: stopped at " + DateTime.Now.ToString("HH:mm:ss");
-            startPoolButton.Enabled = true; stopPoolButton.Enabled = false;
+            startPoolButton.Enabled = NativeMiningAuthorized; stopPoolButton.Enabled = false;
         }
 
         private Process StartPoolCaptured(string exe, string args)

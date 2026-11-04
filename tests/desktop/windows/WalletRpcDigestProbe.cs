@@ -1,0 +1,88 @@
+using System;
+using System.IO;
+using System.Net;
+using System.Text;
+
+namespace ForgeCoinDesktop
+{
+    // Executable acceptance probe: launch separately against an isolated
+    // Windows native wallet RPC with disposable credentials. No wallet keys.
+    // Arguments: <loopback port> <ephemeral username> <ephemeral password>
+    internal static class WalletRpcDigestProbe
+    {
+        static int GetVersionCode(int port, string user, string password)
+        {
+            var url = "http://127.0.0.1:" + port + "/json_rpc";
+            var request = (HttpWebRequest)WebRequest.Create(url);
+            request.Method = "POST";
+            request.ContentType = "application/json";
+            request.AllowAutoRedirect = false;
+            request.Proxy = null;
+            request.Timeout = 5000;
+            request.ReadWriteTimeout = 5000;
+            request.KeepAlive = false;
+            if (user != null)
+            {
+                request.Credentials = new NetworkCredential(user, password);
+                request.PreAuthenticate = true;
+            }
+            var body = Encoding.UTF8.GetBytes(
+                "{\"jsonrpc\":\"2.0\",\"id\":\"local-qa\",\"method\":\"get_version\",\"params\":{}}");
+            request.ContentLength = body.Length;
+            try
+            {
+                using (var stream = request.GetRequestStream())
+                    stream.Write(body, 0, body.Length);
+                using (var response = (HttpWebResponse)request.GetResponse())
+                {
+                    if (response.StatusCode != HttpStatusCode.OK)
+                        return (int)response.StatusCode;
+                    using (var reader = new StreamReader(response.GetResponseStream()))
+                    {
+                        var result = reader.ReadToEnd();
+                        if (!result.Contains("\"result\"") ||
+                            !result.Contains("\"version\""))
+                            throw new InvalidOperationException("No valid RPC version result");
+                    }
+                    return 200;
+                }
+            }
+            catch (WebException e)
+            {
+                var response = e.Response as HttpWebResponse;
+                if (response == null) throw;
+                try { return (int)response.StatusCode; }
+                finally { response.Dispose(); }
+            }
+        }
+
+        public static int Main(string[] args)
+        {
+            try
+            {
+                if (args.Length != 3 ||
+                    !Int32.TryParse(args[0], out var port) ||
+                    port < 1024 || port > 65535)
+                    throw new InvalidOperationException("Expected private test port and credentials");
+                int noCredentials = GetVersionCode(port, null, null);
+                int wrongCredentials = GetVersionCode(port, args[1], args[2] + "incorrect");
+                int correctCredentials = GetVersionCode(port, args[1], args[2]);
+                Console.WriteLine("NATIVE_NO_AUTH_HTTP=" + noCredentials);
+                Console.WriteLine("NATIVE_WRONG_AUTH_HTTP=" + wrongCredentials);
+                Console.WriteLine("NATIVE_DOTNET_DIGEST_HTTP=" + correctCredentials);
+                if (noCredentials != 401 || wrongCredentials != 401 ||
+                    correctCredentials != 200)
+                    return 1;
+                Console.WriteLine("PASS: .NET HttpWebRequest authenticated native Windows wallet RPC via HTTP Digest");
+                return 0;
+            }
+            catch
+            {
+                // Intentionally no exception messages, RPC output, secret or
+                // process arguments in logs.
+                Console.Error.WriteLine("FAIL: .NET native wallet Digest QA did not pass");
+                return 2;
+            }
+        }
+    }
+}

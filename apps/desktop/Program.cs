@@ -985,7 +985,7 @@ namespace ForgeCoinDesktop
                 string args = "--wallet-dir " + Quote(Path.Combine(appRoot, "wallets")) +
                     " --rpc-bind-ip 127.0.0.1 --rpc-bind-port 39484" +
                     " --config-file " + Quote(walletSession.ConfigFile) +
-                    " --daemon-address 127.0.0.1:39481 --trusted-daemon --no-dns --no-initial-sync" +
+                    " --daemon-address 127.0.0.1:39481 --no-dns --no-initial-sync" +
                     " --shared-ringdb-dir " + Quote(Path.Combine(appRoot, "ringdb")) +
                     " --log-level 0 --log-file " + Quote(Path.Combine(appRoot, "logs", "wallet-rpc.log"));
                 walletRpc = StartCaptured(exe, args, "WALLET");
@@ -1040,7 +1040,9 @@ namespace ForgeCoinDesktop
                     throw new InvalidOperationException("The wallet file already exists. Use Open instead of overwriting it.");
                 EnsureWalletService();
                 Dictionary<string, object> p = new Dictionary<string, object> { { "filename", name }, { "password", passwordBox.Text }, { "language", "English" } };
-                Rpc("http://127.0.0.1:39484/json_rpc", "create_wallet", p);
+                // Native encrypted wallet creation is disk-heavy and may
+                // exceed the 2-second status-poll timeout on a cold system.
+                Rpc("http://127.0.0.1:39484/json_rpc", "create_wallet", p, 15000);
 #if FRG_PRIVATE_UI_QA
                 Console.WriteLine("QA_GUI: native wallet creation RPC accepted");
 #endif
@@ -1161,7 +1163,7 @@ namespace ForgeCoinDesktop
                 string name = ValidWalletName();
                 EnsureWalletService();
                 Dictionary<string, object> p = new Dictionary<string, object> { { "filename", name }, { "password", passwordBox.Text } };
-                Rpc("http://127.0.0.1:39484/json_rpc", "open_wallet", p);
+                Rpc("http://127.0.0.1:39484/json_rpc", "open_wallet", p, 15000);
                 WalletOpened("Opened " + name);
             }
             catch (Exception ex) { ShowError(ex.Message); }
@@ -1201,7 +1203,7 @@ namespace ForgeCoinDesktop
             try
             {
                 if (!walletOpen) throw new InvalidOperationException("Open a wallet first.");
-                IDictionary result = Rpc("http://127.0.0.1:39484/json_rpc", "query_key", new Dictionary<string, object> { { "key_type", "mnemonic" } });
+                IDictionary result = Rpc("http://127.0.0.1:39484/json_rpc", "query_key", new Dictionary<string, object> { { "key_type", "mnemonic" } }, 15000);
                 string seed = result.Contains("key") ? Convert.ToString(result["key"]) : "";
                 if (seed.Length == 0) throw new InvalidOperationException("The wallet service did not return a recovery seed.");
 

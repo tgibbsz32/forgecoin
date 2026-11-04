@@ -266,7 +266,8 @@ namespace ForgeCoinDesktop
                 threads.Value = Math.Min(2, (int)threads.Maximum);
                 Check(start.Enabled, "Private GUI solo mining control not enabled");
                 start.PerformClick();
-                Check(stop.Enabled, "WinForms did not enable Stop Mining after RPC start");
+                Check(WaitUntil(delegate { return stop.Enabled; }, 65, node),
+                      "WinForms did not confirm the asynchronous native mining start");
                 Check(WaitUntil(delegate
                 {
                     IDictionary status = Mining();

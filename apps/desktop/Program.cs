@@ -182,6 +182,7 @@ namespace ForgeCoinDesktop
         private RichTextBox explorerResultBox;
         private int nodeRefreshInFlight;
         private int miningRefreshInFlight;
+        private int miningStartInFlight;
         private int walletRefreshInFlight;
         private int poolRefreshInFlight;
 
@@ -1507,6 +1508,9 @@ namespace ForgeCoinDesktop
         {
             try
             {
+                // Production is frozen. A separately compiled test-only build
+                // can mine only through its GUI-owned hash-pinned, localhost,
+                // zero-peer offline node; never through public P2P.
                 if (!NativeMiningAuthorized)
                 {
 #if FRG_PRIVATE_MINING_QA
@@ -1514,25 +1518,81 @@ namespace ForgeCoinDesktop
                         throw new InvalidOperationException(
                             "Isolated solo QA requires a GUI-owned offline pinned daemon.");
 #else
-                    throw new InvalidOperationException("Native mainnet mining cannot start before the owner's authorized Oracle/network launch.");
+                    throw new InvalidOperationException(
+                        "Native mainnet mining cannot start before the owner's authorized Oracle/network launch.");
 #endif
                 }
-                if (!IsRunning(daemon)) throw new InvalidOperationException("Start the ForgeCoin node before mining.");
-                if (IsRunning(poolMiner)) throw new InvalidOperationException("Stop pool mining before starting solo mining.");
+                if (!IsRunning(daemon))
+                    throw new InvalidOperationException("Start the ForgeCoin node before mining.");
+                if (IsRunning(poolMiner))
+                    throw new InvalidOperationException("Stop pool mining before solo mining.");
                 string address = miningAddressBox.Text.Trim();
                 if (!FrgWalletInput.LooksLikePublicAddress(address))
-                    throw new InvalidOperationException("Enter a public FRG payout address, never a seed.");
+                    throw new InvalidOperationException(
+                        "Enter a public FRG payout address, never a recovery seed.");
+                if (Interlocked.CompareExchange(ref miningStartInFlight, 1, 0) != 0)
+                    return;
                 Dictionary<string, object> request = new Dictionary<string, object> {
                     { "miner_address", address },
                     { "threads_count", Decimal.ToInt32(miningThreads.Value) },
                     { "do_background_mining", false },
-                    { "ignore_battery", true }
+                    { "ignore_battery", false }
                 };
-                RestRpc("http://127.0.0.1:39481/start_mining", request);
-                miningState.Text = "Mining"; miningState.BackColor = Color.FromArgb(53, 145, 92);
-                miningDetailLabel.Text = "Miner monitor: starting RandomX workers…";
-                startMiningButton.Enabled = false; stopMiningButton.Enabled = true;
-                RefreshMining();
+                startMiningButton.Enabled = false;
+                miningState.Text = "Starting";
+                miningState.BackColor = Color.FromArgb(205, 139, 36);
+                miningDetailLabel.Text = "Miner monitor: initializing local RandomX workers...";
+                // Native RandomX initialization can take longer than the
+                // two-second polling deadline. Never block the Windows UI
+                // while native workers initialize their cache and dataset.
+                ThreadPool.QueueUserWorkItem(delegate
+                {
+                    bool accepted = false;
+                    string failure = null;
+                    try
+                    {
+                        IDictionary reply = RestRpc(
+                            "http://127.0.0.1:39481/start_mining", request, 60000);
+                        accepted = reply != null;
+                    }
+                    catch (Exception ex)
+                    {
+                        // No secret wallet material is sent in this request,
+                        // but still keep backend stack traces out of the GUI.
+                        failure = ex is WebException
+                            ? "Local daemon mining RPC timed out or disconnected."
+                            : "Native solo mining RPC rejected the start request.";
+                    }
+                    finally
+                    {
+                        Interlocked.Exchange(ref miningStartInFlight, 0);
+                    }
+                    PostUi(delegate
+                    {
+                        if (IsDisposed || !IsRunning(daemon)) return;
+                        if (accepted)
+                        {
+                            miningState.Text = "Mining";
+                            miningState.BackColor = Color.FromArgb(53, 145, 92);
+                            miningDetailLabel.Text =
+                                "Miner monitor: native RandomX start confirmed; checking hashrate...";
+                            stopMiningButton.Enabled = true;
+                            startMiningButton.Enabled = false;
+                            RefreshMining();
+                        }
+                        else
+                        {
+                            miningState.Text = "Stopped";
+                            miningState.BackColor = Color.FromArgb(110, 118, 130);
+                            miningDetailLabel.Text = "Miner monitor: " + failure;
+                            stopMiningButton.Enabled = false;
+                            startMiningButton.Enabled = NativeMiningAuthorized;
+#if FRG_PRIVATE_MINING_QA
+                            startMiningButton.Enabled = IsolatedSoloQaReady();
+#endif
+                        }
+                    });
+                });
             }
             catch (Exception ex) { ShowError(ex.Message); }
         }
@@ -1592,7 +1652,10 @@ namespace ForgeCoinDesktop
                         miningBlockHeightValue.Text = Math.Max(0, chainHeight - 1).ToString("N0", CultureInfo.InvariantCulture);
                         miningState.Text = active ? "Mining" : "Stopped";
                         miningState.BackColor = active ? Color.FromArgb(53, 145, 92) : Color.FromArgb(110, 118, 130);
-                        startMiningButton.Enabled = NativeMiningAuthorized && !active; stopMiningButton.Enabled = active;
+                        startMiningButton.Enabled = NativeMiningAuthorized && !active && Interlocked.CompareExchange(ref miningStartInFlight, 0, 0) == 0; stopMiningButton.Enabled = active;
+#if FRG_PRIVATE_MINING_QA
+                        startMiningButton.Enabled = !active && IsolatedSoloQaReady() && Interlocked.CompareExchange(ref miningStartInFlight, 0, 0) == 0;
+#endif
 #if FRG_PRIVATE_MINING_QA
                         startMiningButton.Enabled = !active && IsolatedSoloQaReady();
 #endif
@@ -1797,11 +1860,14 @@ namespace ForgeCoinDesktop
             return parsed.Contains("result") ? (IDictionary)parsed["result"] : parsed;
         }
 
-        private IDictionary RestRpc(string url, IDictionary<string, object> request)
+        private IDictionary RestRpc(string url, IDictionary<string, object> request, int timeoutMs = 3000)
         {
             byte[] body = Encoding.UTF8.GetBytes(json.Serialize(request));
             HttpWebRequest http = (HttpWebRequest)WebRequest.Create(url);
-            http.Method = "POST"; http.ContentType = "application/json"; http.ContentLength = body.Length; http.Timeout = 3000;
+            http.Method = "POST"; http.ContentType = "application/json";
+            http.ContentLength = body.Length; http.Timeout = timeoutMs;
+            http.ReadWriteTimeout = timeoutMs; http.Proxy = null;
+            http.AllowAutoRedirect = false; http.ServicePoint.Expect100Continue = false;
             using (Stream s = http.GetRequestStream()) s.Write(body, 0, body.Length);
             string text;
             using (HttpWebResponse response = (HttpWebResponse)http.GetResponse()) using (StreamReader reader = new StreamReader(response.GetResponseStream())) text = reader.ReadToEnd();

@@ -1299,8 +1299,8 @@ namespace ForgeCoinDesktop
                     new Dictionary<string, object> { { "amount", atomic }, { "address", address } }
                 };
                 submissionAttempted = true;
-                IDictionary result = Rpc("http://127.0.0.1:39484/json_rpc",
-                    "transfer", new Dictionary<string, object> {
+                IDictionary result = Rpc("http://127.0.0.1:39484/json_rpc", "transfer",
+                    new Dictionary<string, object> {
                         { "destinations", destinations }, { "account_index", 0 },
                         { "priority", 0 }, { "get_tx_key", false }
                     }, 120000);

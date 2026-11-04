@@ -18,12 +18,14 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import argparse
 import json
 import os
+import re
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 from urllib.request import Request, ProxyHandler, HTTPRedirectHandler, build_opener
 
 MAX_RESPONSE_BYTES = 65536
 MAX_U64 = 2**64 - 1
+BASE58_ADDRESS = re.compile(r"[1-9A-HJ-NP-Za-km-z]{90,140}\\Z", re.ASCII)
 ALLOWED_ASSETS = {
     "/dashboard.html": ("dashboard.html", "text/html; charset=utf-8"),
     "/dashboard.css": ("dashboard.css", "text/css; charset=utf-8"),
@@ -91,6 +93,82 @@ def normalize_stats(raw: object) -> dict:
     return data
 
 
+def validate_public_address(value: str) -> str:
+    """Syntax-only public-address filter; no claim of cryptographic FRG validity.
+
+    Never accept a seed, private key, JSON, cookie characters or whitespace.
+    A valid-looking address is an identifier, not wallet authentication.
+    """
+    if type(value) is not str or BASE58_ADDRESS.fullmatch(value) is None:
+        raise StatsBridgeError("invalid public FRG address syntax")
+    return value
+
+
+def normalize_miner_stats(raw: object) -> dict:
+    """Only read-only, nonmonetary miner metrics from native pool /stats.
+
+    No reported balance, payout threshold, cookie, worker identity, network
+    endpoint, address or wallet state may be forwarded to the browser.
+    """
+    if not isinstance(raw, dict):
+        raise StatsBridgeError("unexpected native miner stats payload")
+    periods = raw.get("miner_hashrate_stats")
+    if (not isinstance(periods, list) or len(periods) != 6
+            or any(type(v) is not int or not 0 <= v <= MAX_U64 for v in periods)):
+        raise StatsBridgeError("invalid miner hashrate windows")
+    return {
+        "hashrate": nonnegative_int(raw, "miner_hashrate", required=True),
+        "workers": nonnegative_int(raw, "worker_count", required=True),
+        "hashrateWindows": periods,
+    }
+
+
+def fetch_miner_stats(url: str, public_address: str, *, timeout: float = 2) -> dict:
+    """Local-only cookie-based lookup supported by the native C pool WebUI."""
+    endpoint = validate_upstream(url)
+    address = validate_public_address(public_address)
+    req = Request(endpoint, method="GET", headers={
+        "Accept": "application/json", "Cookie": "wa=" + address,
+    })
+    opener = build_opener(ProxyHandler({}), NoRedirects())
+    with opener.open(req, timeout=timeout) as response:
+        if response.status != 200:
+            raise StatsBridgeError("upstream stats unavailable")
+        body = response.read(MAX_RESPONSE_BYTES + 1)
+    if not body or len(body) > MAX_RESPONSE_BYTES:
+        raise StatsBridgeError("invalid bounded upstream stats response")
+    try:
+        raw = json.loads(body, parse_constant=lambda _: (_ for _ in ()).throw(
+            StatsBridgeError("nonfinite pool statistic")))
+    except (UnicodeError, ValueError) as exc:
+        raise StatsBridgeError("invalid upstream JSON") from exc
+    return normalize_miner_stats(raw)
+
+
+def public_miner_payload(upstream: str | None, address: str,
+                         fetcher=fetch_miner_stats) -> tuple[int, dict]:
+    try:
+        identifier = validate_public_address(address)
+    except StatsBridgeError:
+        return 400, {"state": "invalid_address", "launchApproved": False,
+                     "message": "Enter a public FRG payout address only."}
+    if not upstream:
+        return 503, {"state": "not_connected", "launchApproved": False,
+                     "message": "Native FRG worker statistics are not connected."}
+    try:
+        data = fetcher(upstream, identifier)
+    except Exception:
+        return 503, {"state": "unavailable", "launchApproved": False,
+                     "message": "Native worker statistics unavailable or invalid."}
+    return 200, {
+        "state": "backend_observed_unverified",
+        "launchApproved": False,
+        "network": "frg-mainnet-20261026",
+        "asOf": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "stats": data,
+    }
+
+
 def fetch_stats(url: str, *, timeout: float = 2) -> dict:
     endpoint = validate_upstream(url)
     req = Request(endpoint, method="GET", headers={"Accept": "application/json"})
@@ -155,6 +233,27 @@ class PreviewHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         route = self.path
+        if route.startswith("/api/miner-stats"):
+            # Reject duplicate/unknown query keys and any cookie credentials
+            # supplied by the browser. This is a public-address lookup only.
+            parts = urlsplit(route)
+            try:
+                fields = parse_qs(parts.query, strict_parsing=True,
+                                  keep_blank_values=True)
+            except ValueError:
+                fields = {}
+            if (parts.path != "/api/miner-stats" or
+                    set(fields) != {"address"} or len(fields["address"]) != 1):
+                code, data = 400, {
+                    "state": "invalid_request", "launchApproved": False,
+                    "message": "Only one public payout address is accepted.",
+                }
+            else:
+                code, data = public_miner_payload(self.upstream, fields["address"][0])
+            body = json.dumps(data, separators=(",", ":")).encode("utf-8")
+            self._headers(code, "application/json; charset=utf-8", len(body))
+            self.wfile.write(body)
+            return
         if route in ("/", "/dashboard.html"):
             route = "/dashboard.html"
         if route == "/api/pool-stats":

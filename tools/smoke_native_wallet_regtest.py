@@ -66,6 +66,28 @@ def wait_wallet(proc: subprocess.Popen, port: int, deadline: float) -> None:
     raise AssertionError("Native wallet RPC did not become ready")
 
 
+def local_daemon_plain_rpc(port: int, method: str, params: dict,
+                           timeout: int = 20) -> dict:
+    """Contact ONLY the already launched, loopback-only FAKECHAIN daemon."""
+    if method not in ("sendrawtransaction", "get_transaction_pool_hashes"):
+        raise AssertionError("Unreviewed native daemon RPC method")
+    body = json.dumps(params).encode("utf-8")
+    if len(body) > 512_000:
+        raise AssertionError("Oversized local daemon request")
+    req = urllib.request.Request(
+        f"http://127.0.0.1:{port}/{method}", method="POST", data=body,
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as response:
+        raw = response.read(512_001)
+    if len(raw) > 512_000:
+        raise AssertionError("Oversized local daemon response")
+    answer = json.loads(raw)
+    if not isinstance(answer, dict):
+        raise AssertionError("Invalid local daemon response object")
+    return answer
+
+
 def must_public_address(value: object) -> str:
     if not isinstance(value, str) or not 90 <= len(value) <= 140:
         raise AssertionError("Invalid test-only wallet public address length")
@@ -87,9 +109,12 @@ def wait_wallet_height(wallet_port: int, wanted: int,
 
 
 def run(daemon_binary: Path, wallet_binary: Path, manifest: dict,
-        max_seconds: int, *, signed_transfer: bool = False) -> None:
+        max_seconds: int, *, signed_transfer: bool = False,
+        validate_mempool: bool = False) -> None:
     if os.name == "nt":
         raise AssertionError("Use disposable Linux runner only")
+    if validate_mempool and not signed_transfer:
+        raise AssertionError("Daemon validation requires signed local-only wallet transfer")
     # A locked configuration is required even though the daemon is launched
     # FAKECHAIN only. No launch flag is accepted as a CLI argument.
     require_manifest(manifest)
@@ -200,9 +225,37 @@ def run(daemon_binary: Path, wallet_binary: Path, manifest: dict,
                 print("PASS: native wallet constructed signed 16-member-ring "
                       "serialized transfer; nonzero fee, no relay or wallet spending",
                       flush=True)
-                # Intentionally DO NOT submit to any daemon or real network here.
-                # A distinct, stricter test must validate native mempool receipt
-                # and destination balance without weakening mainnet prelaunch.
+                if validate_mempool:
+                    # Require FAKECHAIN from the same exact local daemon before
+                    # asking the native mempool to verify the signed tx.
+                    state = info(daemon_port)
+                    if (state.get("nettype") not in ("fakechain", "regtest")
+                            or state.get("height") != wanted_height
+                            or header(daemon_port, 0)["hash"] != FROZEN_GENESIS):
+                        raise AssertionError("Never submit signed bytes to a non-FAKECHAIN node")
+                    accepted = local_daemon_plain_rpc(daemon_port,
+                        "sendrawtransaction", {
+                            "tx_as_hex": tx_hex, "do_not_relay": True,
+                            "do_sanity_checks": True,
+                        }, timeout=20)
+                    if (accepted.get("status") != "OK"
+                            or accepted.get("not_relayed") is not True):
+                        # Do not print tx data, addresses, seed, or wallet log.
+                        raise AssertionError("Native FAKECHAIN rejected the signed wallet transfer")
+                    snapshot = local_daemon_plain_rpc(
+                        daemon_port, "get_transaction_pool_hashes", {}, timeout=10
+                    )
+                    hashes = snapshot.get("tx_hashes")
+                    if (snapshot.get("status") != "OK"
+                            or not isinstance(hashes, list)
+                            or sum(isinstance(h, str) and h.lower() == tx_hash.lower()
+                                   for h in hashes) != 1):
+                        raise AssertionError("Accepted signed transaction not indexed exactly once")
+                    print("PASS: signed native wallet transaction validated by actual "
+                          "FAKECHAIN mempool; exact hash indexed once, "
+                          "do_not_relay=true, no public peers or wallet payout", flush=True)
+                # FAKECHAIN mempool validation does not prove full MAINNET
+                # genesis-spend exclusion, confirmation, or payee settlement.
         finally:
             for proc in reversed(processes):
                 if proc.poll() is None:
@@ -225,10 +278,12 @@ def main() -> None:
                         default=ROOT / "config/mainnet.identity.json")
     parser.add_argument("--max-seconds", type=int, default=120)
     parser.add_argument("--signed-transfer", action="store_true")
+    parser.add_argument("--validate-mempool", action="store_true")
     args = parser.parse_args()
     run(args.daemon, args.wallet,
         json.loads(args.manifest.read_text(encoding="utf-8")),
-        args.max_seconds, signed_transfer=args.signed_transfer)
+        args.max_seconds, signed_transfer=args.signed_transfer,
+        validate_mempool=args.validate_mempool)
 
 
 if __name__ == "__main__":

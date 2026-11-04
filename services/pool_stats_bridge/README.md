@@ -24,11 +24,16 @@ The upstream `/stats` response uses numeric keys `pool_hashrate`,
 `network_hashrate`, `network_difficulty`, `network_height`,
 `connected_miners`, `pool_blocks_found`, `round_hashes`,
 `last_block_found`, `last_template_fetched`, and `pool_fee`. The last is
-**a fraction** (0.01 means 1%). The bridge normalizes those fields for the
+**a fraction** (0.01 means 1%). The bridge normalizes those aggregate fields for the
 ForgeCoin dashboard, never substitutes simulated values, and refuses malformed,
-negative or missing required statistics. It strips all account/miner-specific
-keys and never processes cookies, wallet addresses, payment requests or mining
-credentials.
+negative or missing required statistics. Its new **explicit read-only public
+address** adapter sends a strictly syntax-filtered, public Base58 payout address
+as the native pool's `wa` cookie to the **localhost-only** /stats endpoint.
+It returns only observed account hashrate, six unlabelled hashrate sample windows,
+and worker count, marked unverified, with no balances, payout history, private
+keys or miner credentials. Anyone who knows a public address can see these
+published figures, so never enter any secret. The bridge does not accept
+payments, change accounts or publish miners' wallet addresses in responses.
 
 ## Local preview (no backend, no FRG mining)
 
@@ -56,7 +61,21 @@ interfaces. The bridge refuses public/DNS/HTTPS endpoints, credentials, path
 variation, redirects and proxies. It has a 2-second upstream timeout and
 64-KiB response maximum.
 
-The normalized API is `GET /api/pool-stats` on the preview origin. When no
+Public miner lookup: `GET /api/miner-stats?address=PUBLIC_FRG_BASE58_ADDRESS`
+on the **same loopback preview origin**, supported only after a trusted native
+FRG C-pool is separately running at the configured `FRG_POOL_STATS_UPSTREAM`.
+The `address` query must be exactly one syntactically valid 90–140-character
+Base58 public address. This is not full checksum/prefix verification. An
+unconnected upstream returns 503, malformed requests return 400, and successful
+data are labelled `backend_observed_unverified`, `launchApproved=false`.
+The browser UI never sends wallet keys, passwords or cookies, and never
+claims a known payout or confirmed shares from the returned observation.
+The public GitHub Pages site leaves its API URL **unconfigured**: address
+queries are not transmitted until a separately approved HTTPS same-origin
+proxy is deployed. The local pool-console preview does support the isolated
+endpoint for testing.
+
+The normalized aggregate API is `GET /api/pool-stats` on the preview origin. When no
 upstream is configured or the source is invalid, it responds **503** with
 `state: not_connected` or `unavailable` and **no figures**. With a valid
 source it responds `backend_observed_unverified` and `launchApproved: false`.
@@ -83,11 +102,12 @@ and reorg recovery, PPLNS, durable balances and native FRG payouts.
 
 **CRITICAL atomic-unit mismatch:** jtgrassie's `src/webui.c` divides the
 account balance by `1000000000000.0` (Monero's 12-decimal convention).
-ForgeCoin currently uses **8 decimals**. The bridge **deliberately strips
-`miner_balance` and does not offer miner-account lookups** to prevent falsely
-reported balances. Do not enable personal earnings, payout thresholds or worker
-lookup until the backend is patched, a native wallet is used, and end-to-end
-8-decimal reconciliation is proven.
+ForgeCoin currently uses **8 decimals**. The bridge deliberately strips `miner_balance` and any
+account-specific monetary keys: **only nonmonetary hashrate and worker counts
+may be queried by public address in the research adapter**. Do not enable
+personal earnings, payout thresholds, confirmed shares or payout history until
+the native pool and wallet payout journal are reconciled with the canonical
+FRG chain in atomic units and independently reviewed.
 
 For any public rollout, serve static UI through HTTPS/Nginx using audited
 read-only API caching and rate limits; bind pool backend statistics privately;

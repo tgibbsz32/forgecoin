@@ -23,7 +23,7 @@ namespace ForgeCoinDesktop
                         5000);
                     return result.Contains("\"result\"") && result.Contains("\"version\"") ? 200 : 500;
                 }
-                catch (InvalidOperationException error) { Console.Error.WriteLine("AUTH_RESULT_CATEGORY=" + (error.Message == "Native wallet RPC outcome is unverified." ? "rejected-after-challenge" : error.Message == "FRG wallet RPC authentication failed." ? "challenge-validation-failed" : error.Message == "Native wallet RPC unavailable." ? "no-server" : "invalid-response")); return 401; }
+                catch (InvalidOperationException error) { Console.Error.WriteLine("AUTH_RESULT_CATEGORY=" + (error.Message == "Native wallet RPC outcome is unverified: stale-challenge." ? "stale-challenge" : error.Message == "Native wallet RPC outcome is unverified: invalid-auth." ? "invalid-auth" : error.Message == "Native wallet RPC outcome is unverified." ? "rejected-after-challenge" : error.Message == "FRG wallet RPC authentication failed." ? "challenge-validation-failed" : error.Message == "Native wallet RPC unavailable." ? "no-server" : "invalid-response")); return 401; }
             }
             var request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = "POST";

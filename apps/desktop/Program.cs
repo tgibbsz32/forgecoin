@@ -37,6 +37,9 @@ namespace ForgeCoinDesktop
 #if FRG_PRIVATE_MINING_QA && !FRG_PRIVATE_UI_QA
 #error Isolated native mining QA must use the temporary private UI sandbox.
 #endif
+#if FRG_PRIVATE_POOL_QA && !FRG_PRIVATE_UI_QA
+#error Isolated native pool QA must use the temporary private UI sandbox.
+#endif
 #if FRG_PRIVATE_MINING_QA
         // Strict test-only build. Ordinary and private-prelaunch binaries do
         // not define this symbol; NativeMiningAuthorized remains false.
@@ -75,6 +78,34 @@ namespace ForgeCoinDesktop
             }
         }
 #endif
+#if FRG_PRIVATE_POOL_QA
+        // Test-only offline XMRig path; deliberately no Stratum service or
+        // CPU/GPU backend, no FRG credentials and no externally reachable peer.
+        // The ordinary Windows desktop never defines this symbol.
+        private const string QaXmrigSha256 =
+            "e5cd22ffe8725fbabf32ae2ba993d5b791e65e2ef159ad32ad260505f2e22480";
+
+        private bool IsolatedPoolQaReady()
+        {
+            return !IsRunning(daemon) && !IsRunning(poolMiner) &&
+                !stopMiningButton.Enabled &&
+                String.Equals(poolUrlBox.Text.Trim(), "127.0.0.1:49690",
+                              StringComparison.Ordinal);
+        }
+
+        private void RequirePinnedPrivateQaXmrig(string file)
+        {
+            using (FileStream stream = File.OpenRead(file))
+            using (SHA256 sha = SHA256.Create())
+            {
+                string digest = BitConverter.ToString(sha.ComputeHash(stream))
+                    .Replace("-", "").ToLowerInvariant();
+                if (digest != QaXmrigSha256)
+                    throw new InvalidOperationException(
+                        "Private pool GUI QA requires the locally pinned XMRig executable.");
+            }
+        }
+#endif
 #if FRG_PRIVATE_UI_QA
         // Compiled ONLY into the isolated WinForms test harness, never into the
         // desktop executable or the shipped prelaunch package. Refuse to touch
@@ -105,6 +136,9 @@ namespace ForgeCoinDesktop
         private Process walletRpc;
         private WalletRpcSession walletSession;
         private Process poolMiner;
+        // Per-run public monitor identity: prevent reading another process's
+        // localhost XMRig API as if it were our FRG pool miner.
+        private string poolApiId;
         private bool walletOpen;
 
         private Label nodeState;
@@ -855,6 +889,9 @@ namespace ForgeCoinDesktop
             controls.Controls.Add(poolThreads, 1, 0);
             startPoolButton = PrimaryButton("Start Pool", StartPoolMining);
             startPoolButton.Enabled = NativeMiningAuthorized;
+#if FRG_PRIVATE_POOL_QA
+            startPoolButton.Enabled = true; // isolated localhost / no CPU or GPU
+#endif
             startPoolButton.Text = NativeMiningAuthorized ? "Start Pool" : "Launch locked";
             startPoolButton.AccessibleDescription = "Native pool mining is disabled until launch and payout acceptance.";
             stopPoolButton = SecondaryButton("Stop", StopPoolMining);
@@ -1689,27 +1726,56 @@ namespace ForgeCoinDesktop
         {
             try
             {
+#if FRG_PRIVATE_POOL_QA
+                if (!IsolatedPoolQaReady())
+                    throw new InvalidOperationException(
+                        "Private GUI pool QA requires an unused disconnected loopback Stratum endpoint.");
+#else
                 if (!NativeMiningAuthorized)
                     throw new InvalidOperationException("Public pool mining remains disabled until approved launch and payout acceptance.");
+#endif
                 if (IsRunning(poolMiner)) return;
                 if (stopMiningButton.Enabled) throw new InvalidOperationException("Stop solo mining before starting pool mining.");
                 string exe = Path.Combine(binRoot, "xmrig", "xmrig.exe");
                 if (!File.Exists(exe)) throw new FileNotFoundException("The packaged XMRig pool backend is missing.", exe);
+#if FRG_PRIVATE_POOL_QA
+                RequirePinnedPrivateQaXmrig(exe);
+#endif
                 string url = poolUrlBox.Text.Trim();
                 string user = poolUserBox.Text.Trim();
                 string pass = poolPassBox.Text;
                 string worker = poolWorkerBox.Text.Trim();
                 if (url.Length < 4 || url.IndexOf(':') < 0) throw new InvalidOperationException("Enter the pool address and port, for example pool.example.org:3333.");
-                if (user.Length < 4) throw new InvalidOperationException("Enter the wallet address or username required by the pool.");
+                if (!FrgWalletInput.LooksLikePublicAddress(user))
+                    throw new InvalidOperationException("Enter a public native FRG wallet address for account-free pool mining.");
+                // XMRig 6.22 truncates --api-id at 31 bytes (observed
+                // against its genuine localhost /2/summary API).
+                // Twelve random bytes yield a 24-character ID with 96 bits
+                // of entropy; never expect the truncated 32-hex value.
+                byte[] monitorId = new byte[12];
+                using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+                    rng.GetBytes(monitorId);
+                poolApiId = BitConverter.ToString(monitorId)
+                    .Replace("-", "").ToLowerInvariant();
+                Array.Clear(monitorId, 0, monitorId.Length);
                 List<string> args = new List<string> {
+                    "--api-id=" + poolApiId,
                     "-a", "rx/0", "-o", Quote(url), "-u", Quote(user), "-p", Quote(pass.Length == 0 ? "x" : pass),
                     "-t", Decimal.ToInt32(poolThreads.Value).ToString(CultureInfo.InvariantCulture), "--keepalive",
                     "--http-host", "127.0.0.1", "--http-port", "39483", "--no-color", "--print-time", "5"
                 };
                 if (worker.Length > 0) { args.Add("--rig-id"); args.Add(Quote(worker)); }
+#if FRG_PRIVATE_POOL_QA
+                // The test GUI NEVER hashes or contacts any public pool.
+                args.Add("--no-cpu"); args.Add("--no-opencl"); args.Add("--no-cuda");
+#endif
                 poolLogBox.Clear();
                 poolMiner = StartPoolCaptured(exe, string.Join(" ", args.ToArray()));
-                if (poolMiner == null) return;
+                if (poolMiner == null)
+                {
+                    poolApiId = null;
+                    return;
+                }
                 poolState.Text = "Connecting"; poolState.BackColor = Color.FromArgb(205, 139, 36);
                 poolDetailLabel.Text = "Pool miner status: connecting to " + url + "…";
                 startPoolButton.Enabled = false; stopPoolButton.Enabled = true;
@@ -1721,9 +1787,13 @@ namespace ForgeCoinDesktop
         {
             if (IsRunning(poolMiner)) { try { poolMiner.Kill(); poolMiner.WaitForExit(2500); } catch { } }
             poolMiner = null;
+            poolApiId = null;
             poolState.Text = "Stopped"; poolState.BackColor = Color.FromArgb(110, 118, 130);
             poolDetailLabel.Text = "Pool miner status: stopped at " + DateTime.Now.ToString("HH:mm:ss");
             startPoolButton.Enabled = NativeMiningAuthorized; stopPoolButton.Enabled = false;
+#if FRG_PRIVATE_POOL_QA
+            startPoolButton.Enabled = true;
+#endif
         }
 
         private Process StartPoolCaptured(string exe, string args)
@@ -1749,37 +1819,73 @@ namespace ForgeCoinDesktop
                 return;
             }
             if (Interlocked.Exchange(ref poolRefreshInFlight, 1) != 0) return;
-            string fallbackPool = poolUrlBox.Text.Trim();
+            string requestedPool = poolUrlBox.Text.Trim();
+            string expectedMonitor = poolApiId;
             ThreadPool.QueueUserWorkItem(delegate
             {
                 try
                 {
                     IDictionary summary = HttpGetJson("http://127.0.0.1:39483/2/summary");
+                    XmrigPoolSnapshot result = XmrigPoolStatus.Parse(
+                        summary, requestedPool, expectedMonitor);
                     PostUi(delegate
                     {
-                        IDictionary hashrate = summary.Contains("hashrate") ? summary["hashrate"] as IDictionary : null;
-                        IDictionary results = summary.Contains("results") ? summary["results"] as IDictionary : null;
-                        IDictionary connection = summary.Contains("connection") ? summary["connection"] as IDictionary : null;
-                        double rate = hashrate == null ? 0 : ArrayNumber(hashrate["total"], 0);
-                        long good = results != null && results.Contains("shares_good") ? ToLong(results["shares_good"]) : 0;
-                        long total = results != null && results.Contains("shares_total") ? ToLong(results["shares_total"]) : 0;
-                        poolHashRateValue.Text = FormatRate(rate);
-                        poolAcceptedValue.Text = good.ToString("N0", CultureInfo.InvariantCulture);
-                        poolRejectedValue.Text = Math.Max(0, total - good).ToString("N0", CultureInfo.InvariantCulture);
-                        poolDifficultyValue.Text = results != null && results.Contains("diff_current") ? Convert.ToDouble(results["diff_current"], CultureInfo.InvariantCulture).ToString("N0", CultureInfo.InvariantCulture) : "—";
-                        string pool = connection != null && connection.Contains("pool") ? Convert.ToString(connection["pool"]) : fallbackPool;
-                        poolNameValue.Text = Shorten(pool, 20);
-                        poolPingValue.Text = connection != null && connection.Contains("ping") ? Convert.ToString(connection["ping"], CultureInfo.InvariantCulture) + " ms" : "—";
-                        poolUptimeValue.Text = connection != null && connection.Contains("uptime") ? FormatDuration(ToLong(connection["uptime"])) : "—";
-                        poolAlgorithmValue.Text = connection != null && connection.Contains("algo") ? Convert.ToString(connection["algo"]) : "rx/0";
-                        poolState.Text = "Mining"; poolState.BackColor = Color.FromArgb(53, 145, 92);
-                        poolDetailLabel.Text = "Pool miner status: LIVE • " + pool + " • " + FormatRate(rate) + " • " + good + " accepted / " + Math.Max(0, total - good) + " rejected • Updated " + DateTime.Now.ToString("HH:mm:ss");
+                        // XMRig is independent of ForgeCoin consensus. Do not
+                        // display a stale or unrelated API as our pool miner.
+                        if (!IsRunning(poolMiner) || poolApiId != result.ApiId)
+                            return;
+                        poolHashRateValue.Text = FormatRate(result.Hashrate);
+                        poolAcceptedValue.Text = result.AcceptedShares.ToString(
+                            "N0", CultureInfo.InvariantCulture);
+                        poolRejectedValue.Text = result.RejectedShares.ToString(
+                            "N0", CultureInfo.InvariantCulture);
+                        poolDifficultyValue.Text = result.Difficulty > 0
+                            ? result.Difficulty.ToString("N0", CultureInfo.InvariantCulture)
+                            : "—";
+                        poolNameValue.Text = Shorten(
+                            result.ReportedPool.Length > 0
+                                ? result.ReportedPool : requestedPool, 20);
+                        poolPingValue.Text = result.PingMs > 0
+                            ? result.PingMs.ToString(CultureInfo.InvariantCulture) + " ms"
+                            : "—";
+                        poolUptimeValue.Text = result.ConnectionSeconds > 0
+                            ? FormatDuration(result.ConnectionSeconds) : "—";
+                        poolAlgorithmValue.Text = result.Algorithm.Length > 0
+                            ? result.Algorithm : "—";
+                        poolState.Text = result.Phase;
+                        poolState.BackColor = result.Phase == "Hashing"
+                            ? Color.FromArgb(53, 145, 92)
+                            : result.Phase == "Connected"
+                                ? Color.FromArgb(29, 112, 217)
+                                : result.Phase == "Other pool"
+                                    ? Color.DarkRed
+                                    : Color.FromArgb(205, 139, 36);
+                        // Hashrate proves local CPU work. Only accepted-share
+                        // counters can support share claims; neither proves a
+                        // settled FRG pool payout.
+                        poolDetailLabel.Text = "Pool miner: " + result.Phase +
+                            " • " + FormatRate(result.Hashrate) +
+                            " • " + result.AcceptedShares + " accepted / " +
+                            result.RejectedShares + " rejected • " +
+                            "Updated " + DateTime.Now.ToString("HH:mm:ss");
                     });
                 }
                 catch (Exception ex)
                 {
-                    string message = ex.Message;
-                    PostUi(delegate { poolDetailLabel.Text = "Pool miner is starting or reconnecting • " + message + " • " + DateTime.Now.ToString("HH:mm:ss"); });
+                    bool identityMismatch = ex is ArgumentException;
+                    PostUi(delegate
+                    {
+                        // An older poll may finish after Stop + Start. Do not
+                        // let its failure overwrite the new process's state.
+                        if (IsDisposed || !IsRunning(poolMiner) ||
+                            poolApiId != expectedMonitor) return;
+                        poolState.Text = identityMismatch ? "Unverified" : "Connecting";
+                        poolState.BackColor = identityMismatch
+                            ? Color.DarkRed : Color.FromArgb(205, 139, 36);
+                        poolDetailLabel.Text = identityMismatch
+                            ? "Pool telemetry rejected: invalid or unrelated local XMRig API."
+                            : "Pool miner is waiting for a verified local API response.";
+                    });
                 }
                 finally { Interlocked.Exchange(ref poolRefreshInFlight, 0); }
             });
@@ -1896,12 +2002,40 @@ namespace ForgeCoinDesktop
 
         private IDictionary HttpGetJson(string url)
         {
-            HttpWebRequest http = (HttpWebRequest)WebRequest.Create(url);
-            http.Method = "GET"; http.Timeout = 900;
+            // The miner monitor is never allowed to traverse a proxy,
+            // follow redirects or read an arbitrarily large localhost reply.
+            Uri endpoint = new Uri(url);
+            if (endpoint.Scheme != "http" || endpoint.Host != "127.0.0.1" ||
+                endpoint.Port != 39483 || endpoint.AbsolutePath != "/2/summary" ||
+                endpoint.Query.Length != 0 || endpoint.Fragment.Length != 0)
+                throw new InvalidOperationException("Invalid local miner API endpoint.");
+            HttpWebRequest http = (HttpWebRequest)WebRequest.Create(endpoint);
+            http.Method = "GET";
+            http.Timeout = 1500;
+            http.ReadWriteTimeout = 1500;
+            http.Proxy = null;
+            http.AllowAutoRedirect = false;
+            http.KeepAlive = false;
             string body;
-            using (HttpWebResponse response = (HttpWebResponse)http.GetResponse()) using (StreamReader reader = new StreamReader(response.GetResponseStream())) body = reader.ReadToEnd();
+            using (HttpWebResponse response = (HttpWebResponse)http.GetResponse())
+            using (Stream source = response.GetResponseStream())
+            using (MemoryStream output = new MemoryStream())
+            {
+                if (response.StatusCode != HttpStatusCode.OK)
+                    throw new InvalidOperationException("Local miner API unavailable.");
+                byte[] chunk = new byte[8192];
+                int size;
+                while ((size = source.Read(chunk, 0, chunk.Length)) > 0)
+                {
+                    if (output.Length + size > 512 * 1024)
+                        throw new InvalidOperationException("Local miner API response too large.");
+                    output.Write(chunk, 0, size);
+                }
+                body = Encoding.UTF8.GetString(output.ToArray());
+            }
             IDictionary parsed = json.DeserializeObject(body) as IDictionary;
-            if (parsed == null) throw new InvalidOperationException("Invalid XMRig API response.");
+            if (parsed == null)
+                throw new InvalidOperationException("Invalid XMRig API response.");
             return parsed;
         }
 

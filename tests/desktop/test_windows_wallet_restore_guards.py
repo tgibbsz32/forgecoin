@@ -88,7 +88,7 @@ class WindowsWalletRestoreGuards(unittest.TestCase):
     def test_native_helper_is_present_in_both_compilation_paths(self):
         self.assertIn('"$ProjectRoot\\FrgWalletInput.cs"', self.builder)
         self.assertIn("$frgWallet = Join-Path $src 'FrgWalletInput.cs'", self.ci)
-        self.assertIn("$program $frgWallet $rpcSession $rpcDigest $wallet $vault", self.ci)
+        self.assertIn("$program $poolStatus $frgWallet $rpcSession $rpcDigest $wallet $vault", self.ci)
         self.assertIn("FrgWalletInputTests.cs", self.ci)
         self.assertIn("RestoreWallet(object sender", self.source)
 

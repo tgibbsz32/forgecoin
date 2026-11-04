@@ -157,6 +157,7 @@ def run(daemon_binary: Path, wallet_binary: Path, manifest: dict,
                 "--rpc-bind-ip", "127.0.0.1",
                 "--rpc-bind-port", str(wallet_port),
                 "--disable-rpc-login",  # localhost ephemeral CI exclusively
+                "--no-dns",  # no DNS checkpoint or external wallet lookups
                 "--no-initial-sync", "--log-level", "0",
                 "--log-file", str(home / "wallet-internal.log"),
             ]

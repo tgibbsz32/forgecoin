@@ -198,7 +198,7 @@ namespace ForgeCoinDesktop
                       "Creating disposable wallet improperly enabled mainnet payments/mining");
 
                 close.PerformClick();
-                Check(!Field<bool>(form, "walletOpen"),
+                Check(!(bool)Field<object>(form, "walletOpen"),
                       "GUI did not close disposable native wallet");
 
                 name.Text = "private_gui_qa_restored";
@@ -229,14 +229,14 @@ namespace ForgeCoinDesktop
                     timer.Stop();
                 }
                 Check(restoreDialogSeen, "GUI native 25-word restore dialog did not open");
-                Check(Field<bool>(form, "walletOpen"), "GUI failed to open restored wallet");
+                Check((bool)Field<object>(form, "walletOpen"), "GUI failed to open restored wallet");
                 string addressRestored = GetAddress(form);
                 Check(String.Equals(addressOriginal, addressRestored,
                                     StringComparison.Ordinal),
                       "GUI recovery did not reproduce the original native public address");
 
                 close.PerformClick();
-                Check(!Field<bool>(form, "walletOpen"), "Restored wallet remained open");
+                Check(!(bool)Field<object>(form, "walletOpen"), "Restored wallet remained open");
                 Check(!send.Enabled && !solo.Enabled && !pool.Enabled,
                       "GUI unexpectedly authorized native mining or transfers");
                 seed = null;

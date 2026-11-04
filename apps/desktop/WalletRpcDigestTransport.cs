@@ -118,7 +118,7 @@ namespace ForgeCoinDesktop
             Check(url != null && !String.IsNullOrEmpty(username) &&
                   !String.IsNullOrEmpty(password) && json != null);
             byte[] first = Encoding.UTF8.GetBytes(Probe);
-            string challenge;
+            string challenge = null;
             try
             {
                 using (HttpWebResponse response = Send(Make(url, first, timeout, null), first))

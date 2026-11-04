@@ -74,6 +74,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frg_credited_ledger_scan.h"
 #include "frg_reconcile_policy.h"
 #include "frg_accounting_quarantine.h"
+#include "frg_payout_intent_journal.h"
 #include "forkoff.h"
 #include "growbag.h"
 #include "uthash.h"
@@ -358,6 +359,7 @@ static MDB_dbi db_shares;
 static MDB_dbi db_blocks;
 static MDB_dbi db_balance;
 static MDB_dbi db_payments;
+static MDB_dbi db_payout_intents;
 static MDB_dbi db_properties;
 /* Runtime latch is immediate; durable lockout lives in LMDB properties. */
 static bool frg_accounting_held;
@@ -669,6 +671,16 @@ database_init(const char* data_dir)
         log_fatal("%s", err);
         exit(rc);
     }
+    /* A separate nonmonetary journal DB cannot reactivate payouts.
+     * Any future submitted payout intent must be committed before wallet RPC.
+     * Startup and send-path scanners below fail closed on pending records.
+     */
+    if ((rc = frg_payout_intent_open(txn, &db_payout_intents)))
+    {
+        log_fatal("Cannot open durable FRG payout intent journal: %s", mdb_strerror(rc));
+        mdb_txn_abort(txn);
+        return rc;
+    }
     MDB_val k, v;
     k.mv_data = "upstream_last_height";
     k.mv_size = strlen(k.mv_data);
@@ -706,6 +718,22 @@ database_init(const char* data_dir)
                   "refusing startup; manually audit matured rewards first");
         return rc ? rc : EACCES;
     }
+    /* An ambiguous native wallet send is never safe to retry on restart.
+     * This v1 journal has no settlement/removal API; it must be manually
+     * reconciled in a separately reviewed implementation (#210).
+     */
+    if ((rc = pdb_txn_begin(env, NULL, MDB_RDONLY, &audit)))
+        return rc;
+    bool payout_held = true;
+    rc = frg_payout_intent_held(audit, db_payout_intents, &payout_held);
+    mdb_txn_abort(audit);
+    if (rc || payout_held)
+    {
+        frg_accounting_held = true;
+        log_fatal("FRG payout journal contains unresolved or corrupt intent: "
+                  "refusing startup pending independent payout reconciliation");
+        return rc ? rc : EACCES;
+    }
     return 0;
 }
 
@@ -717,6 +745,7 @@ database_close(void)
     mdb_dbi_close(env, db_blocks);
     mdb_dbi_close(env, db_balance);
     mdb_dbi_close(env, db_payments);
+    mdb_dbi_close(env, db_payout_intents);
     mdb_dbi_close(env, db_properties);
     mdb_env_close(env);
 }
@@ -2697,6 +2726,16 @@ send_payments(void)
     {
         frg_accounting_held = true;
         log_error("FRG payouts blocked by durable reorganization quarantine");
+        return hold_rc ? hold_rc : EACCES;
+    }
+    if ((hold_rc = pdb_txn_begin(env, NULL, MDB_RDONLY, &hold_txn)))
+        return hold_rc;
+    bool intent_held = true;
+    hold_rc = frg_payout_intent_held(hold_txn, db_payout_intents, &intent_held);
+    mdb_txn_abort(hold_txn);
+    if (hold_rc || intent_held)
+    {
+        log_error("FRG payouts blocked by unresolved or invalid journal intent");
         return hold_rc ? hold_rc : EACCES;
     }
 #ifndef FRG_TESTED_WALLET_PAYOUTS

@@ -1944,12 +1944,40 @@ namespace ForgeCoinDesktop
 
         private IDictionary HttpGetJson(string url)
         {
-            HttpWebRequest http = (HttpWebRequest)WebRequest.Create(url);
-            http.Method = "GET"; http.Timeout = 900;
+            // The miner monitor is never allowed to traverse a proxy,
+            // follow redirects or read an arbitrarily large localhost reply.
+            Uri endpoint = new Uri(url);
+            if (endpoint.Scheme != "http" || endpoint.Host != "127.0.0.1" ||
+                endpoint.Port != 39483 || endpoint.AbsolutePath != "/2/summary" ||
+                endpoint.Query.Length != 0 || endpoint.Fragment.Length != 0)
+                throw new InvalidOperationException("Invalid local miner API endpoint.");
+            HttpWebRequest http = (HttpWebRequest)WebRequest.Create(endpoint);
+            http.Method = "GET";
+            http.Timeout = 1500;
+            http.ReadWriteTimeout = 1500;
+            http.Proxy = null;
+            http.AllowAutoRedirect = false;
+            http.KeepAlive = false;
             string body;
-            using (HttpWebResponse response = (HttpWebResponse)http.GetResponse()) using (StreamReader reader = new StreamReader(response.GetResponseStream())) body = reader.ReadToEnd();
+            using (HttpWebResponse response = (HttpWebResponse)http.GetResponse())
+            using (Stream source = response.GetResponseStream())
+            using (MemoryStream output = new MemoryStream())
+            {
+                if (response.StatusCode != HttpStatusCode.OK)
+                    throw new InvalidOperationException("Local miner API unavailable.");
+                byte[] chunk = new byte[8192];
+                int size;
+                while ((size = source.Read(chunk, 0, chunk.Length)) > 0)
+                {
+                    if (output.Length + size > 512 * 1024)
+                        throw new InvalidOperationException("Local miner API response too large.");
+                    output.Write(chunk, 0, size);
+                }
+                body = Encoding.UTF8.GetString(output.ToArray());
+            }
             IDictionary parsed = json.DeserializeObject(body) as IDictionary;
-            if (parsed == null) throw new InvalidOperationException("Invalid XMRig API response.");
+            if (parsed == null)
+                throw new InvalidOperationException("Invalid XMRig API response.");
             return parsed;
         }
 

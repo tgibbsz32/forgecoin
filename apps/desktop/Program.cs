@@ -1594,7 +1594,18 @@ namespace ForgeCoinDesktop
                     });
                 });
             }
-            catch (Exception ex) { ShowError(ex.Message); }
+            catch (Exception ex)
+            {
+#if FRG_PRIVATE_MINING_QA
+                // Disposable QA must not block on a modal error dialog when
+                // a required RPC precondition is unmet. Print only type.
+                Console.Error.WriteLine("QA_SOLO_GUI_START_REJECTED=" +
+                                        ex.GetType().Name);
+                miningDetailLabel.Text = "Isolated QA native start rejected.";
+#else
+                ShowError(ex.Message);
+#endif
+            }
         }
 
         private void StopMining(object sender, EventArgs e)

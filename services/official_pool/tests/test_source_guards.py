@@ -24,12 +24,36 @@ class NativeBackendPreflight(unittest.TestCase):
         cls.currency = (VENDOR / "src/frg_currency.h").read_text(encoding="utf-8")
         cls.chain = (ROOT / "src/cryptonote_config.h").read_text(encoding="utf-8")
 
+    def test_graceful_shutdown_is_in_libevent_thread_and_webui_is_not_detached(self):
+        self.assertIn("signal_sigint = evsignal_new(pool_base, SIGINT", self.pool)
+        self.assertIn("signal_sigterm = evsignal_new(pool_base, SIGTERM", self.pool)
+        self.assertIn("event_base_loopexit(pool_base, NULL);", self.pool)
+        self.assertNotIn("sigint_handler(int sig)", self.pool)
+        self.assertNotIn("signal(SIGTERM, sigint_handler)", self.pool)
+        self.assertIn("run(&uic);", self.pool)
+        self.assertIn("start_web_ui(web_context, pool_base)", self.pool)
+        self.assertIn("evhttp_new(base)", self.webui)
+        self.assertIn("evhttp_bind_socket_with_handle(webui_httpd", self.webui)
+        self.assertIn("evhttp_free(webui_httpd)", self.webui)
+        self.assertNotIn("pthread_detach", self.webui)
+        self.assertNotIn("event_base_dispatch(webui_base)", self.webui)
+        self.assertNotIn("event_base_free(webui_base)", self.webui)
+
     def test_frg_currency_matches_checkout_consensus(self):
         self.assertRegex(self.chain, r"#define COIN\s+\(\(uint64_t\)100000000\)")
         self.assertRegex(self.chain, r"#define CRYPTONOTE_DISPLAY_DECIMAL_POINT\s+8")
         self.assertIn("FRG_ATOMIC_UNITS UINT64_C(100000000)", self.currency)
         self.assertIn("FRG_COIN_DECIMALS 8", self.currency)
-        self.assertRegex(self.chain, r"CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX\s*=\s*90;")
+        # Public main still carries the retired native prefix 90. Its C pool
+        # must FAIL CLOSED until frozen consensus PR #185 (190) is reviewed;
+        # do not require unrelated consensus changes in a pool-only PR.
+        prefix = re.search(
+            r"CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX\s*=\s*(90|190);",
+            self.chain,
+        )
+        self.assertIsNotNone(prefix)
+        if prefix.group(1) == "90":
+            self.assertIn("!frg_matches_frozen_mainnet()", self.pool)
         self.assertIn("#define MAINNET_ADDRESS_PREFIX 190", self.pool)
         self.assertIn("#define BLOCK_TIME 120", self.pool)
 
@@ -257,7 +281,16 @@ class NativeBackendPreflight(unittest.TestCase):
         for value in ("== 190", "== 191", "== 192", "== 39480", "== 39481", "== 39482"):
             self.assertIn(value, xmr)
         # Old consensus is NOT secretly treated as the new chain.
-        self.assertRegex(self.chain, r"CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX\s*=\s*90;")
+        # Public main still carries the retired native prefix 90. Its C pool
+        # must FAIL CLOSED until frozen consensus PR #185 (190) is reviewed;
+        # do not require unrelated consensus changes in a pool-only PR.
+        prefix = re.search(
+            r"CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX\s*=\s*(90|190);",
+            self.chain,
+        )
+        self.assertIsNotNone(prefix)
+        if prefix.group(1) == "90":
+            self.assertIn("!frg_matches_frozen_mainnet()", self.pool)
 
     def test_fail_closed_share_block_and_wallet_paths(self):
         self.assertIn("nonce must be exactly 8 hex characters", self.pool)

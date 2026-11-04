@@ -137,6 +137,18 @@ namespace ForgeCoinDesktop
                     Check(!offline.Checked, "Offline node control default changed");
                     Check(offline.Text.Contains("mining is launch-locked"),
                           "Private offline node QA label missing");
+                    var nodeStart = Field<Button>(form, "startNodeButton");
+                    var peerBox = Field<TextBox>(form, "peerBox");
+                    Check(!nodeStart.Enabled && !peerBox.Enabled,
+                          "Preview boot unexpectedly allows public P2P node or peer");
+                    offline.Checked = true;
+                    Application.DoEvents();
+                    Check(nodeStart.Enabled, "Explicit offline QA opt-in must enable local node control");
+                    offline.Checked = false;
+                    Application.DoEvents();
+                    Check(!nodeStart.Enabled, "Unchecking offline QA must immediately disable node control");
+                    Check(Field<System.Diagnostics.Process>(form, "daemon") == null,
+                          "QA checkbox change must never start daemon");
 
                     form.Close();
                     Application.DoEvents();

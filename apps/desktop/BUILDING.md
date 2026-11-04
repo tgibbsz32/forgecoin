@@ -163,11 +163,78 @@ existing wallet, connect to peers or Oracle, mine, or send funds**.
   printed to the terminal.** There was no standalone native daemon,
   PoW work, wallet transfer, Oracle or public P2P connection.
 
-The Windows Forms source build and **35 desktop source/security tests**
-also pass. The private login integration has **not yet been visually
-accepted by clicking the GUI** or used with a funded transaction, and the
+The Windows Forms source build and desktop source/security tests passed at
+this checkpoint. The GUI's native Create/Backup/Restore/Close interactions
+were **subsequently tested end-to-end on disposable native wallets** (see
+the following updated acceptance section). No funded transaction or final
+independently reviewed mainnet binary has been tested. The
 pinned historical candidate is not a final independently verified
 mainnet release. Native solo/pool mining and sends stay hard-locked.
+
+## November 4 — Actual Windows Forms layout and offline-node acceptance
+
+The **real WinForms GUI** was instantiated on the authorized Windows QA PC
+with production-form source compiled under the **test-only**
+`FRG_PRIVATE_UI_QA` symbol. That symbol is **not defined in normal desktop
+builds or packages**. It redirects wallet/application storage to an empty
+temporary sandbox, and the harness includes **no daemon, wallet-RPC or miner
+executables**.
+
+The test opened all seven tabs, exercised wallet controls at
+**900×680** and **1040×760**, verified that Restore/Create/Send buttons
+remain scroll-reachable, and confirmed that native Send, Solo Mining
+and Pool Mining controls are disabled with short, readable captions.
+Node startup is **disabled by default** before launch, and the local
+offline test node option must be explicitly selected to enable it.
+The public peer input is disabled in prelaunch. Unchecking offline mode
+immediately disables node startup again. The test did not invoke node,
+wallet or mining actions, and it verified there were no native processes
+launched and no wallet files created.
+
+**Connected Windows test result:** **46 real Windows Forms layout and
+release-lock assertions passed** with zero failures, plus **38 Python
+desktop source/security tests passed**.
+The regression is compiled and run in GitHub Windows CI as
+`tests/desktop/windows/WinFormsGuiLayoutQa.cs`, including its strict
+temporary-directory isolation.
+
+In addition to layout checks, the real native GUI now has **end-to-end
+disposable wallet acceptance** (see below), but no physical clean-install
+or funded transaction acceptance. Neither check authorizes mainnet.
+
+### Native Create / Backup / Close / Restore — verified through real WinForms
+
+Using the pinned historical prelaunch candidate
+`forge-wallet-rpc.exe`, a second isolated GUI harness
+`tests/desktop/windows/WinFormsNativeWalletQa.cs` drove the **actual**
+Create Wallet, recovery backup confirmation, Close Wallet and Restore
+25 Words buttons on the Windows PC. Its isolated QA build copied only
+the native wallet-RPC executable and required runtime DLLs into a new
+temporary folder. **No native daemon binary was present, and both
+daemon port 39481 and wallet-RPC port 39484 were checked to be free
+before launch.** The GUI launched and authenticated its own wallet
+service using the per-session Digest and owner-only config flow.
+
+**Result: PASS — 49 native GUI integration checks**, including a newly
+created **25-word disposable native wallet**, GUI backup dialog, closing,
+restoring to another new wallet file, and comparing the exact same
+public address via authenticated RPC. The GUI closed the restored wallet
+and disposed the temporary service. The test did not print seed words,
+passwords, addresses, private keys or raw native RPC payloads. The
+temporary wallet files were deleted.
+
+This deeper test uncovered a real **timer-refresh regression**:
+`RefreshMining()` previously enabled Solo Mining when no daemon was
+running, overriding the prelaunch lock. This has been fixed and covered
+by both Python source checks and actual WinForms UI regression
+assertions, including during the native wallet test.
+
+Native wallet Create/Open/Seed retrieval RPC now have distinct
+cold-start timeouts rather than a two-second monitoring timeout.
+The wallet RPC remains loopback-only and authenticated, with no
+real network node, public peer, funds, transfer, solo miner, pool
+connection or Oracle launch involved. This is **not a complete mainnet
+release or a signed, clean-install Windows application**.
 
 ## Release gates (separate from build success)
 

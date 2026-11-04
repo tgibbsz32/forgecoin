@@ -33,8 +33,28 @@ namespace ForgeCoinDesktop
         private static readonly bool NativeSpendAuthorized = false;
         private static readonly bool NativeMiningAuthorized = false;
         private int transferInFlight;
+#if FRG_PRIVATE_UI_QA
+        // Compiled ONLY into the isolated WinForms test harness, never into the
+        // desktop executable or the shipped prelaunch package. Refuse to touch
+        // an existing user's %LOCALAPPDATA% wallet files.
+        private static string PrivateQaPath(string environmentVariable)
+        {
+            string path = Environment.GetEnvironmentVariable(environmentVariable);
+            if (String.IsNullOrWhiteSpace(path))
+                throw new InvalidOperationException("Private GUI QA sandbox path not supplied.");
+            string full = Path.GetFullPath(path);
+            string temp = Path.GetFullPath(Path.GetTempPath());
+            if (!full.StartsWith(temp, StringComparison.OrdinalIgnoreCase) ||
+                full.IndexOf("frg-windows-gui-qa-", StringComparison.OrdinalIgnoreCase) < 0)
+                throw new InvalidOperationException("Private GUI QA must remain in an isolated temporary folder.");
+            return full;
+        }
+        private readonly string appRoot = PrivateQaPath("FRG_PRIVATE_UI_QA_ROOT");
+        private readonly string binRoot = PrivateQaPath("FRG_PRIVATE_UI_QA_BIN");
+#else
         private readonly string appRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ForgeCoin");
         private readonly string binRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin");
+#endif
         private readonly JavaScriptSerializer json = new JavaScriptSerializer();
         private readonly System.Windows.Forms.Timer refreshTimer = new System.Windows.Forms.Timer();
         private readonly System.Windows.Forms.Timer miningTimer = new System.Windows.Forms.Timer();
@@ -204,7 +224,10 @@ namespace ForgeCoinDesktop
             root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             FlowLayoutPanel controls = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
-            startNodeButton = PrimaryButton("Start Node", StartNode);
+            startNodeButton = PrimaryButton(NativeMiningAuthorized ? "Start Node" : "Offline QA node", StartNode);
+            startNodeButton.Enabled = NativeMiningAuthorized;
+            startNodeButton.AccessibleDescription =
+                "Before launch, only an explicitly selected private offline test node may start.";
             stopNodeButton = SecondaryButton("Stop", StopNode);
             stopNodeButton.Enabled = false;
             nodeState = Badge("Stopped", Color.FromArgb(110, 118, 130));
@@ -223,10 +246,15 @@ namespace ForgeCoinDesktop
             peerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
             peerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             peerPanel.Controls.Add(new Label { Text = "Exclusive peer", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 0);
-            peerBox = new TextBox { Dock = DockStyle.Fill };
+            peerBox = new TextBox { Dock = DockStyle.Fill, Enabled = NativeMiningAuthorized };
             peerPanel.Controls.Add(peerBox, 1, 0);
             peerPanel.Controls.Add(new Label { Text = "Leave blank to reuse saved peers. A new installation needs a known ForgeCoin peer. Changes apply after restart.", ForeColor = Color.DimGray, AutoSize = true }, 1, 1);
-            bootstrapModeBox = new CheckBox { Text = "Offline bootstrap mining — mine on this PC without a second peer", AutoSize = true, ForeColor = Color.FromArgb(145, 68, 20), Font = new Font("Segoe UI Semibold", 9.5F), Padding = new Padding(0, 4, 0, 0) };
+            bootstrapModeBox = new CheckBox { Text = "Private offline node QA only — mining is launch-locked", AutoSize = true, ForeColor = Color.FromArgb(145, 68, 20), Font = new Font("Segoe UI Semibold", 9.5F), Padding = new Padding(0, 4, 0, 0) };
+            bootstrapModeBox.CheckedChanged += delegate
+            {
+                if (!IsRunning(daemon))
+                    startNodeButton.Enabled = NativeMiningAuthorized || bootstrapModeBox.Checked;
+            };
             peerPanel.Controls.Add(bootstrapModeBox, 1, 2);
 
             logBox = new RichTextBox { Dock = DockStyle.Fill, ReadOnly = true, BackColor = Color.FromArgb(18, 21, 28), ForeColor = Color.FromArgb(211, 216, 227), Font = new Font("Consolas", 9F), BorderStyle = BorderStyle.None };
@@ -241,7 +269,7 @@ namespace ForgeCoinDesktop
         private TabPage BuildWalletTab()
         {
             TabPage page = new TabPage("Wallet");
-            TableLayoutPanel root = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(20), ColumnCount = 1, RowCount = 5 };
+            TableLayoutPanel root = new TableLayoutPanel { Name = "WalletPageLayout", Dock = DockStyle.Fill, AutoScroll = true, AutoScrollMinSize = new Size(0, 635), Padding = new Padding(20), ColumnCount = 1, RowCount = 5 };
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 194));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 100));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 100));
@@ -700,7 +728,8 @@ namespace ForgeCoinDesktop
             controls.Controls.Add(miningThreads, 1, 0);
             startMiningButton = PrimaryButton("Start Mining", StartMining);
             startMiningButton.Enabled = NativeMiningAuthorized;
-            startMiningButton.Text = NativeMiningAuthorized ? "Start Mining" : "Solo mining — launch locked";
+            startMiningButton.Text = NativeMiningAuthorized ? "Start Mining" : "Launch locked";
+            startMiningButton.AccessibleDescription = "Solo mainnet mining requires an explicitly approved network launch.";
             stopMiningButton = SecondaryButton("Stop", StopMining);
             stopMiningButton.Enabled = false;
             miningState = Badge("Stopped", Color.FromArgb(110, 118, 130));
@@ -780,7 +809,8 @@ namespace ForgeCoinDesktop
             controls.Controls.Add(poolThreads, 1, 0);
             startPoolButton = PrimaryButton("Start Pool", StartPoolMining);
             startPoolButton.Enabled = NativeMiningAuthorized;
-            startPoolButton.Text = NativeMiningAuthorized ? "Start Pool" : "Pool mining — launch locked";
+            startPoolButton.Text = NativeMiningAuthorized ? "Start Pool" : "Launch locked";
+            startPoolButton.AccessibleDescription = "Native pool mining is disabled until launch and payout acceptance.";
             stopPoolButton = SecondaryButton("Stop", StopPoolMining);
             stopPoolButton.Enabled = false;
             poolState = Badge("Stopped", Color.FromArgb(110, 118, 130));
@@ -844,6 +874,14 @@ namespace ForgeCoinDesktop
         private void StartNode(object sender, EventArgs e)
         {
             if (IsRunning(daemon)) return;
+            // Prevent even an outbound public P2P bootstrap from the preview.
+            // The operator may run an isolated localhost-only offline node
+            // for private testing, but can NEVER begin mainnet mining here.
+            if (!NativeMiningAuthorized && !bootstrapModeBox.Checked)
+            {
+                ShowError("Public FRG node bootstrap is disabled until launch. Choose private offline node QA.");
+                return;
+            }
             string exe = Path.Combine(binRoot, "forged.exe");
             if (!File.Exists(exe)) { ShowError("The ForgeCoin daemon is missing from the bin folder."); return; }
             List<string> args = new List<string> {
@@ -884,8 +922,8 @@ namespace ForgeCoinDesktop
         private void SetNodeStopped()
         {
             nodeState.Text = "Stopped"; nodeState.BackColor = Color.FromArgb(110, 118, 130);
-            startNodeButton.Enabled = true; stopNodeButton.Enabled = false;
-            bootstrapModeBox.Enabled = true; peerBox.Enabled = true;
+            startNodeButton.Enabled = NativeMiningAuthorized || bootstrapModeBox.Checked; stopNodeButton.Enabled = false;
+            bootstrapModeBox.Enabled = true; peerBox.Enabled = NativeMiningAuthorized;
         }
 
         private void RefreshNode()
@@ -907,8 +945,8 @@ namespace ForgeCoinDesktop
                         peersValue.Text = (incoming + outgoing).ToString(CultureInfo.InvariantCulture);
                         bool synchronized = result.Contains("synchronized") && Convert.ToBoolean(result["synchronized"], CultureInfo.InvariantCulture);
                         bool offline = result.Contains("offline") && Convert.ToBoolean(result["offline"], CultureInfo.InvariantCulture);
-                        syncValue.Text = offline ? "Bootstrap / offline" : (synchronized ? "Synchronized" : (target > height ? height.ToString("N0") + " / " + target.ToString("N0") : "Waiting for peer"));
-                        nodeState.Text = offline ? "Offline mining" : "Running";
+                        syncValue.Text = offline ? "Private offline QA" : (synchronized ? "Synchronized" : (target > height ? height.ToString("N0") + " / " + target.ToString("N0") : "Waiting for peer"));
+                        nodeState.Text = offline ? "Offline QA node" : "Running";
                         nodeState.BackColor = offline ? Color.FromArgb(176, 112, 32) : Color.FromArgb(53, 145, 92);
                         IDictionary h = header.Contains("block_header") ? header["block_header"] as IDictionary : null;
                         if (h != null && h.Contains("hash")) hashValue.Text = Shorten(Convert.ToString(h["hash"]), 16);
@@ -947,10 +985,13 @@ namespace ForgeCoinDesktop
                 string args = "--wallet-dir " + Quote(Path.Combine(appRoot, "wallets")) +
                     " --rpc-bind-ip 127.0.0.1 --rpc-bind-port 39484" +
                     " --config-file " + Quote(walletSession.ConfigFile) +
-                    " --daemon-address 127.0.0.1:39481 --trusted-daemon --no-dns --no-initial-sync" +
+                    " --daemon-address 127.0.0.1:39481 --no-dns --no-initial-sync" +
                     " --shared-ringdb-dir " + Quote(Path.Combine(appRoot, "ringdb")) +
                     " --log-level 0 --log-file " + Quote(Path.Combine(appRoot, "logs", "wallet-rpc.log"));
                 walletRpc = StartCaptured(exe, args, "WALLET");
+#if FRG_PRIVATE_UI_QA
+                Console.WriteLine("QA_GUI: wallet process start attempted");
+#endif
                 if (walletRpc == null)
                     throw new InvalidOperationException("Native wallet RPC process could not be started.");
                 for (int i = 0; i < 35; i++)
@@ -967,6 +1008,9 @@ namespace ForgeCoinDesktop
                             // A successful authenticated Digest request is
                             // mandatory before the private config is removed.
                             walletSession.DeleteStartupConfig();
+#if FRG_PRIVATE_UI_QA
+                            Console.WriteLine("QA_GUI: authenticated native wallet RPC ready");
+#endif
                             return;
                         }
                     }
@@ -996,8 +1040,16 @@ namespace ForgeCoinDesktop
                     throw new InvalidOperationException("The wallet file already exists. Use Open instead of overwriting it.");
                 EnsureWalletService();
                 Dictionary<string, object> p = new Dictionary<string, object> { { "filename", name }, { "password", passwordBox.Text }, { "language", "English" } };
-                Rpc("http://127.0.0.1:39484/json_rpc", "create_wallet", p);
+                // Native encrypted wallet creation is disk-heavy and may
+                // exceed the 2-second status-poll timeout on a cold system.
+                Rpc("http://127.0.0.1:39484/json_rpc", "create_wallet", p, 15000);
+#if FRG_PRIVATE_UI_QA
+                Console.WriteLine("QA_GUI: native wallet creation RPC accepted");
+#endif
                 WalletOpened("Created " + name);
+#if FRG_PRIVATE_UI_QA
+                Console.WriteLine("QA_GUI: wallet open refresh completed");
+#endif
                 ShowRecoverySeed(null, EventArgs.Empty);
             }
             catch (Exception ex) { ShowError(ex.Message); }
@@ -1111,7 +1163,7 @@ namespace ForgeCoinDesktop
                 string name = ValidWalletName();
                 EnsureWalletService();
                 Dictionary<string, object> p = new Dictionary<string, object> { { "filename", name }, { "password", passwordBox.Text } };
-                Rpc("http://127.0.0.1:39484/json_rpc", "open_wallet", p);
+                Rpc("http://127.0.0.1:39484/json_rpc", "open_wallet", p, 15000);
                 WalletOpened("Opened " + name);
             }
             catch (Exception ex) { ShowError(ex.Message); }
@@ -1131,6 +1183,9 @@ namespace ForgeCoinDesktop
             passwordBox.Clear();
             RefreshWallet();
             RefreshAddressLists();
+#if FRG_PRIVATE_UI_QA
+            Console.WriteLine("QA_GUI: address book refresh returned");
+#endif
         }
 
         private void CloseWallet(object sender, EventArgs e)
@@ -1148,7 +1203,7 @@ namespace ForgeCoinDesktop
             try
             {
                 if (!walletOpen) throw new InvalidOperationException("Open a wallet first.");
-                IDictionary result = Rpc("http://127.0.0.1:39484/json_rpc", "query_key", new Dictionary<string, object> { { "key_type", "mnemonic" } });
+                IDictionary result = Rpc("http://127.0.0.1:39484/json_rpc", "query_key", new Dictionary<string, object> { { "key_type", "mnemonic" } }, 15000);
                 string seed = result.Contains("key") ? Convert.ToString(result["key"]) : "";
                 if (seed.Length == 0) throw new InvalidOperationException("The wallet service did not return a recovery seed.");
 
@@ -1162,6 +1217,9 @@ namespace ForgeCoinDesktop
                 buttons.Controls.Add(copy); buttons.Controls.Add(done);
                 dialog.AcceptButton = done;
                 dialog.Controls.Add(words); dialog.Controls.Add(warning); dialog.Controls.Add(buttons);
+#if FRG_PRIVATE_UI_QA
+                Console.WriteLine("QA_GUI: entering native seed backup dialog");
+#endif
                 dialog.ShowDialog(this);
             }
             catch (Exception ex) { ShowError(ex.Message); }
@@ -1426,9 +1484,11 @@ namespace ForgeCoinDesktop
                 hashRateValue.Text = "0"; miningThreadsValue.Text = "0";
                 miningDifficultyValue.Text = "—"; miningBlockHeightValue.Text = "—"; miningNetworkRateValue.Text = "—";
                 miningRewardValue.Text = "—"; miningTargetValue.Text = "—"; miningBlocksFoundValue.Text = minedBlocksSession.ToString(CultureInfo.InvariantCulture);
-                miningNodeDetailLabel.Text = "Node monitor: stopped • Start online for peers or use Offline Bootstrap Mining.";
+                miningNodeDetailLabel.Text = "Node monitor: stopped • Public bootstrap and native mining remain launch-locked.";
                 miningDetailLabel.Text = "Miner monitor: stopped";
-                startMiningButton.Enabled = true; stopMiningButton.Enabled = false;
+                // Timer-driven refresh must NEVER override the explicit
+                // prelaunch mining authorization, even with no daemon.
+                startMiningButton.Enabled = NativeMiningAuthorized; stopMiningButton.Enabled = false;
                 return;
             }
             if (Interlocked.Exchange(ref miningRefreshInFlight, 1) != 0) return;

@@ -14,10 +14,11 @@ public class MainActivity extends Activity {
     private static final int CYAN=Color.rgb(61,224,208), BLUE=Color.rgb(87,152,255);
     private static final int WHITE=Color.rgb(241,247,252), MUTED=Color.rgb(160,175,190);
     private final Handler handler=new Handler(Looper.getMainLooper());
-    private TextView status,logs;
+    private TextView status,logs,deviceSafetyStatus;
     private final Runnable refresh=new Runnable(){public void run(){
         if(status!=null)status.setText(NodeService.status);
         if(logs!=null)logs.setText(NodeService.logText());
+        if(deviceSafetyStatus!=null)deviceSafetyStatus.setText(MiningDeviceStatus.summary(MainActivity.this));
         handler.postDelayed(this,2500);
     }};
     private GradientDrawable panelBackground(){
@@ -69,6 +70,11 @@ public class MainActivity extends Activity {
         mine.addView(label("Solo and pool mining must use verified ARM64 RandomX executables and the frozen FRG chain identity.",13,WHITE));
         button("Start solo mining — unavailable",false,mine,null);
         button("Start pool mining — unavailable",false,mine,null);
+        mine.addView(label("DEVICE MINING SAFETY (READ ONLY)",15,CYAN));
+        mine.addView(label("Battery, thermal and power-saver information is for diagnostics. This preview never executes mining.",12,MUTED));
+        deviceSafetyStatus=label("Reading device status...",12,WHITE);
+        deviceSafetyStatus.setContentDescription("Read-only mining device diagnostics");
+        mine.addView(deviceSafetyStatus);
         LinearLayout explore=panel(root);explore.addView(label("BLOCK EXPLORER & POOL STATS",17,CYAN));
         explore.addView(label("Read-only web tools. Statistics must be treated as unavailable until the production network and pool are validated.",13,MUTED));
         link("Pool dashboard", "https://tgibbsz32.github.io/forgecoin/pool.html",explore);

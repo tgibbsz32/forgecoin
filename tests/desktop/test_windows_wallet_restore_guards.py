@@ -47,7 +47,7 @@ class WindowsWalletRestoreGuards(unittest.TestCase):
         self.assertIn("WalletFileAlreadyExists(name)", self.source)
         self.assertIn("seedInput.Clear();", self.source)
         self.assertIn('p["seed"] = String.Empty', self.source)
-        self.assertIn("private QA", self.source.lower())
+        self.assertIn("private qa", self.source.lower())
         self.assertNotIn("AppendLog(prefix, seed", self.source)
 
     def test_native_amount_parsing_never_rounds_payment(self):

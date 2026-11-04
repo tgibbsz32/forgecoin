@@ -37,7 +37,28 @@ class WalletFAKECHAINGuards(unittest.TestCase):
         self.assertNotIn('150.136.', s)
         self.assertNotIn('wallet_password, flush=True', s)
         self.assertNotIn('print(tx_hex', s)
-        self.assertNotIn('sendrawtransaction', s)
+        self.assertIn('f"http://127.0.0.1:{port}/{method}"', s)
+        self.assertIn('"sendrawtransaction", "get_transaction_pool_hashes"', s)
+        self.assertIn('"do_not_relay": True', s)
+        self.assertIn('"do_sanity_checks": True', s)
+        self.assertIn('state.get("nettype") not in ("fakechain", "regtest")', s)
+        self.assertIn('header(daemon_port, 0)["hash"] != FROZEN_GENESIS', s)
+        self.assertIn('accepted.get("not_relayed") is not True', s)
+        self.assertIn('snapshot.get("tx_hashes")', s)
+        self.assertIn('args.validate_mempool', s)
+
+    def test_native_mempool_rpc_rejects_unreviewed_methods(self):
+        for method in ("get_info", "stop_daemon", "start_mining",
+                       "submitblock", "send_raw_tx"):
+            with self.subTest(method=method), self.assertRaises(AssertionError):
+                sw.local_daemon_plain_rpc(12345, method, {})
+
+    def test_mempool_testing_cannot_start_without_signature_gate(self):
+        from unittest.mock import patch
+        with patch.object(sw.os, "name", "posix"):
+            with self.assertRaisesRegex(AssertionError, "requires signed"):
+                sw.run(Path("/tmp/nonexistent"), Path("/tmp/also-nonexistent"),
+                       {}, 120, validate_mempool=True, signed_transfer=False)
 
     def test_rpc_only_accepts_json_object_with_no_error(self):
         from unittest.mock import MagicMock

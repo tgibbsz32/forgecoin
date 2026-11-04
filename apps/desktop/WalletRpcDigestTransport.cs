@@ -132,7 +132,32 @@ namespace ForgeCoinDesktop
                 using (response)
                 {
                     Check(response.StatusCode == HttpStatusCode.Unauthorized);
-                    challenge = response.Headers[HttpResponseHeader.WwwAuthenticate];
+                    // Native epee advertises BOTH Digest MD5 and MD5-sess.
+                    // .NET's automatic handler and urllib can misparse the
+                    // two WWW-Authenticate challenges as one combined value.
+                    // Choose the complete MD5-sess challenge deterministically.
+                    string[] rawHeaders = response.Headers.GetValues("WWW-Authenticate");
+                    Check(rawHeaders != null && rawHeaders.Length > 0);
+                    string combined = String.Join("\n", rawHeaders);
+                    MatchCollection schemes = Regex.Matches(combined,
+                        @"Digest\s+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                    for (int i = 0; i < schemes.Count; i++)
+                    {
+                        int start = schemes[i].Index;
+                        int end = i + 1 < schemes.Count ? schemes[i + 1].Index : combined.Length;
+                        string candidate = combined.Substring(start, end - start)
+                                                   .Trim(' ', ',', '\r', '\n');
+                        if (candidate.IndexOf("algorithm=MD5-sess",
+                              StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            challenge = candidate;
+                            break;
+                        }
+                        if (challenge == null && candidate.IndexOf("algorithm=MD5",
+                              StringComparison.OrdinalIgnoreCase) >= 0)
+                            challenge = candidate;
+                    }
+                    Check(challenge != null);
                 }
             }
             string header = Digest(challenge, username, password, url.PathAndQuery);

@@ -92,6 +92,25 @@ namespace ForgeCoinDesktop
             Reject(Build("127.0.0.1:49690", 30, 50, 1, 1, false,
                          "rx/0", "other-process"),
                    "API identity must not be confused with another process");
+            bool longIdRejected = false;
+            string unsupportedId = new string('a', 32);
+            try {
+                XmrigPoolStatus.Parse(Build("127.0.0.1:49690", 10, 50,
+                    1, 1, false, "rx/0", unsupportedId),
+                    "127.0.0.1:49690", unsupportedId);
+            } catch (ArgumentException) { longIdRejected = true; }
+            Check(longIdRejected,
+                  "XMRig 6.22 truncates 32-character API IDs; fail closed");
+
+            string supportedId = new string('b', 24);
+            var compatible = XmrigPoolStatus.Parse(
+                Build("127.0.0.1:49690", 10, 50, 1, 1, false,
+                      "rx/0", supportedId),
+                "127.0.0.1:49690", supportedId);
+            Check(compatible.Phase == "Hashing" &&
+                  compatible.ApiId == supportedId,
+                  "24-char API identity must survive native XMRig 6.22");
+
             var empty = new Dictionary<string, object> { { "id", "private-qa-instance" } };
             Check(Read(empty).Phase == "Connecting",
                   "missing connection must not be labeled Mining");

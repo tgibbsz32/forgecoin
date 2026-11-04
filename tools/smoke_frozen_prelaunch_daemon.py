@@ -21,6 +21,8 @@ import time
 import urllib.error
 import urllib.request
 
+from extract_frozen_genesis_output_key import extract_genesis_pubkey
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -164,6 +166,34 @@ def run(binary: Path, manifest: dict, max_seconds: int) -> None:
                 if header.get("nonce") != 20261026:
                     raise AssertionError("Compiled genesis nonce differs from frozen identity")
                 print("PASS: isolated frozen 20261026 genesis at local chain height 1", flush=True)
+
+                # Verify the *actual native LMDB output metadata* seen by the
+                # daemon's public read-only RPC, not merely a synthetic
+                # creation-height label in the standalone signed-ring test.
+                # The input amount and public key derive from the byte-exact,
+                # frozen serialized genesis coinbase. No wallet or secret.
+                expected_key = extract_genesis_pubkey(manifest)
+                outputs = call_rpc(rpc_port, "get_outs", {
+                    "outputs": [{
+                        "amount": manifest["currency"]["genesis_output_atomic"],
+                        "index": 0,
+                    }],
+                    "get_txid": False,
+                }, plain=True)
+                indexed = outputs.get("outs")
+                if (outputs.get("status") != "OK" or
+                        not isinstance(indexed, list) or len(indexed) != 1):
+                    raise AssertionError("Native genesis LMDB output RPC did not return exactly one output")
+                indexed_key = indexed[0].get("key") if isinstance(indexed[0], dict) else None
+                indexed_height = indexed[0].get("height") if isinstance(indexed[0], dict) else None
+                if (not isinstance(indexed_key, str) or
+                        indexed_key.lower() != expected_key or
+                        type(indexed_height) is not int or indexed_height != 0):
+                    raise AssertionError(
+                        "Frozen serialized genesis public key is not indexed at native LMDB creation height zero"
+                    )
+                print("PASS: actual daemon LMDB genesis output key matches frozen serialized "
+                      "coinbase and creation height 0", flush=True)
 
                 # A valid public standard mainnet address; no private keys.
                 template = call_rpc(rpc_port, "getblocktemplate", {

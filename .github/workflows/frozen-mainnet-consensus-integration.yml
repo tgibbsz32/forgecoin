@@ -91,6 +91,10 @@ jobs:
           test -s build/consensus-gated/release/bin/forged
           file build/consensus-gated/release/bin/forged
           sha256sum build/consensus-gated/release/bin/forged
+      - name: Verify valid native ring signatures with actual frozen genesis public decoy
+        run: |
+          bash tools/test_native_genesis_signed_ring.sh "$PWD/build/consensus-gated/release"
+          echo 'PASS: native signed-ring crypto + mainnet genesis-height exclusion; not full transaction acceptance'
       - name: Boot disposable localhost-only prelaunch daemon and reject mining
         run: |
           python3 tools/smoke_frozen_prelaunch_daemon.py \

@@ -35,6 +35,16 @@ class PrelaunchWiring(unittest.TestCase):
         tx_checker = s[s.index("bool Blockchain::check_tx_input("):]
         self.assertIn("scan_outputkeys_for_indexes(tx_version, txin, vi, tx_prefix_hash", tx_checker)
 
+    def test_genesis_rpc_output_height_matches_serialized_actual_public_key(self):
+        script = source("tools/smoke_frozen_prelaunch_daemon.py")
+        self.assertIn("extract_genesis_pubkey(manifest)", script)
+        self.assertIn('call_rpc(rpc_port, "get_outs", {', script)
+        self.assertIn('"amount": manifest["currency"]["genesis_output_atomic"]', script)
+        self.assertIn('"index": 0', script)
+        self.assertIn('type(indexed_height) is not int or indexed_height != 0', script)
+        self.assertIn('indexed_key.lower() != expected_key', script)
+        self.assertIn("actual daemon LMDB genesis output key matches", script)
+
     def test_fixed_difficulty_override_is_rejected_on_mainnet(self):
         core = source("src/cryptonote_core/cryptonote_core.cpp")
         init = core[core.index("const difficulty_type fixed_difficulty = command_line::get_arg(vm, arg_fixed_difficulty);"):]

@@ -96,6 +96,10 @@ jobs:
           sha256sum "$bin"
           ldd "$bin" | tee /tmp/frg-arm64-daemon-deps.txt
           ! grep -F 'not found' /tmp/frg-arm64-daemon-deps.txt
+      - name: Verify real frozen genesis public key in native ARM64 signed rings
+        run: |
+          bash tools/test_native_genesis_signed_ring.sh "$PWD/build/arm64-consensus-gated/release"
+          echo 'PASS: ARM64 signed ring decoy exclusion; no wallet, mainnet mining or transaction relay'
       - name: Refuse mining, old chain and fixed-difficulty on ARM64 local daemon
         run: |
           python3 tools/smoke_frozen_prelaunch_daemon.py \

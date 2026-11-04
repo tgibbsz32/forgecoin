@@ -52,6 +52,25 @@ class AndroidPreviewTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Forbidden"):
                 verifier.verify(p)
 
+    def test_read_only_device_safety_display_never_enables_mining(self):
+        device = (ROOT / "apps/android/app/src/main/java/org/forgecoin/p2ptest/MiningDeviceStatus.java").read_text(encoding="utf-8")
+        ui = (ROOT / "apps/android/app/src/main/java/org/forgecoin/p2ptest/MainActivity.java").read_text(encoding="utf-8")
+        manifest = (ROOT / "apps/android/app/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
+        gradle = (ROOT / "apps/android/app/build.gradle").read_text(encoding="utf-8")
+        for expected in ("ACTION_BATTERY_CHANGED", "EXTRA_LEVEL", "EXTRA_SCALE",
+                         "BATTERY_STATUS_CHARGING", "getCurrentThermalStatus",
+                         "isPowerSaveMode", "availableProcessors"):
+            self.assertIn(expected, device)
+        self.assertIn("Mining OFF", device)
+        self.assertNotIn("start_mining", device)
+        self.assertNotIn("startMining", device)
+        self.assertIn("MiningDeviceStatus.summary(MainActivity.this)", ui)
+        self.assertIn('"Start solo mining — unavailable",false,mine,null', ui)
+        self.assertIn('"Start pool mining — unavailable",false,mine,null', ui)
+        self.assertIn('android:allowBackup="false"', manifest)
+        self.assertNotIn('android:extractNativeLibs=', manifest)
+        self.assertIn("JavaVersion.VERSION_17", gradle)
+
     def test_source_keeps_real_controls_disabled_and_correct_status_url(self):
         s = (ROOT / "apps/android/app/src/main/java/org/forgecoin/p2ptest/MainActivity.java").read_text(encoding="utf-8")
         for caption, panel in (("Start solo mining", "mine"), ("Start pool mining", "mine"),

@@ -136,6 +136,9 @@ jobs:
           & $compiler /nologo /target:exe /platform:anycpu /define:FRG_PRIVATE_MINING_QA /main:ForgeCoinDesktop.WinFormsSoloMiningQa "/out:$forbidden" /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll $files
           if ($LASTEXITCODE -eq 0 -or (Test-Path $forbidden)) { throw 'Critical: mining QA compiled without the required private sandbox' }
           Write-Output 'PASS: isolated GUI solo QA compiles, unsandboxed QA is rejected, public mining remains locked'
+          # GitHub pwsh propagates the EXPECTED compiler rejection via the
+          # automatic LASTEXITCODE variable even though the assertion passed.
+          $global:LASTEXITCODE = 0
       - name: Run native FRG offline wallet input and mnemonic validation cases
         shell: pwsh
         run: |

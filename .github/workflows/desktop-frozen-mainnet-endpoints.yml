@@ -83,3 +83,28 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Windows Forms source compilation failed' }
           if (!(Test-Path $dest)) { throw 'Compiled executable missing' }
           Write-Output 'PASS: Windows Forms source compiled with separated RPC/stat ports'
+      - name: Exercise fail-closed private packaging and source-only QA path
+        shell: pwsh
+        run: |
+          $src = Join-Path $PWD 'apps/desktop'
+          $out = Join-Path $env:RUNNER_TEMP 'FRG-SourceOnly-NoSidecars'
+          & (Join-Path $src 'build.ps1') -SourceOnly -OutputRoot $out
+          if (!(Test-Path (Join-Path $out 'ForgeCoin Desktop.exe'))) {
+            throw 'Source-only compilation did not create the QA executable'
+          }
+          if (Test-Path (Join-Path $out 'bin')) {
+            throw 'Source-only QA must not include daemon or wallet sidecars'
+          }
+          $unexpected = Join-Path $env:RUNNER_TEMP 'FRG-Unapproved-Package'
+          try {
+            & (Join-Path $src 'build.ps1') -ForgeBin $src -OutputRoot $unexpected
+            throw 'Public packaging unexpectedly succeeded'
+          } catch {
+            if ($_.Exception.Message -notmatch 'Public packaging NOT authorized') {
+              throw
+            }
+          }
+          if (Test-Path $unexpected) {
+            throw 'Denied public packaging created an artifact'
+          }
+          Write-Output 'PASS: source-only build and non-mutating public release refusal'

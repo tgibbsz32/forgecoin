@@ -224,7 +224,10 @@ namespace ForgeCoinDesktop
             root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             FlowLayoutPanel controls = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
-            startNodeButton = PrimaryButton("Start Node", StartNode);
+            startNodeButton = PrimaryButton(NativeMiningAuthorized ? "Start Node" : "Offline QA node", StartNode);
+            startNodeButton.Enabled = NativeMiningAuthorized;
+            startNodeButton.AccessibleDescription =
+                "Before launch, only an explicitly selected private offline test node may start.";
             stopNodeButton = SecondaryButton("Stop", StopNode);
             stopNodeButton.Enabled = false;
             nodeState = Badge("Stopped", Color.FromArgb(110, 118, 130));
@@ -243,10 +246,15 @@ namespace ForgeCoinDesktop
             peerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
             peerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             peerPanel.Controls.Add(new Label { Text = "Exclusive peer", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, 0);
-            peerBox = new TextBox { Dock = DockStyle.Fill };
+            peerBox = new TextBox { Dock = DockStyle.Fill, Enabled = NativeMiningAuthorized };
             peerPanel.Controls.Add(peerBox, 1, 0);
             peerPanel.Controls.Add(new Label { Text = "Leave blank to reuse saved peers. A new installation needs a known ForgeCoin peer. Changes apply after restart.", ForeColor = Color.DimGray, AutoSize = true }, 1, 1);
             bootstrapModeBox = new CheckBox { Text = "Private offline node QA only — mining is launch-locked", AutoSize = true, ForeColor = Color.FromArgb(145, 68, 20), Font = new Font("Segoe UI Semibold", 9.5F), Padding = new Padding(0, 4, 0, 0) };
+            bootstrapModeBox.CheckedChanged += delegate
+            {
+                if (!IsRunning(daemon))
+                    startNodeButton.Enabled = NativeMiningAuthorized || bootstrapModeBox.Checked;
+            };
             peerPanel.Controls.Add(bootstrapModeBox, 1, 2);
 
             logBox = new RichTextBox { Dock = DockStyle.Fill, ReadOnly = true, BackColor = Color.FromArgb(18, 21, 28), ForeColor = Color.FromArgb(211, 216, 227), Font = new Font("Consolas", 9F), BorderStyle = BorderStyle.None };
@@ -914,8 +922,8 @@ namespace ForgeCoinDesktop
         private void SetNodeStopped()
         {
             nodeState.Text = "Stopped"; nodeState.BackColor = Color.FromArgb(110, 118, 130);
-            startNodeButton.Enabled = true; stopNodeButton.Enabled = false;
-            bootstrapModeBox.Enabled = true; peerBox.Enabled = true;
+            startNodeButton.Enabled = NativeMiningAuthorized || bootstrapModeBox.Checked; stopNodeButton.Enabled = false;
+            bootstrapModeBox.Enabled = true; peerBox.Enabled = NativeMiningAuthorized;
         }
 
         private void RefreshNode()

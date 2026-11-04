@@ -68,6 +68,33 @@ JNI known-answer test. Connected ADB devices were x86_64 emulators only.
 Use disposable QA installations; do not import a funded wallet or expect
 network mining or pool earnings.
 
+## Native FRG public-address checksum validation (November 4)
+
+The restricted debug app now verifies the selected 20261026 mainnet's
+**standard (190), integrated (191), and subaddress (192)** prefixes using
+CryptoNote's 8-byte-block Base58 and a **Keccak-256** checksum (not SHA3-256).
+The Bouncy Castle Keccak implementation already included in the Android
+build is reused; no private-key derivation or wallet custody is added.
+An offline input box allows validation of *public addresses only*.
+This catches malformed Base58, wrong-prefix, bad-length and corrupt-checksum
+inputs, but deliberately **does not prove curve-point validity, wallet
+ownership or spendability**. The reviewed native wallet must still validate
+an actual transaction recipient.
+
+Unit tests use the public address from the repository's genuine isolated
+native Windows mining test, two independent Keccak-256 known-answer vectors,
+test-generated checksummed integrated/subaddress forms, checksum/overflow
+negative cases, and defensive public-key copying.
+
+Connected Windows QA: Gradle 8.11.1 **assembleDebug and testDebugUnitTest**
+passed, with **28 JVM tests, zero failures**, and eight existing Android
+safety/source tests passed. The resulting restricted debug APK was
+**3,638,316 bytes**, SHA-256
+`8261942742f97196efd3ed38bc945114d4ec87970bd1be6dd3a9fd043ff63ca5`.
+It contains only the two ARM64 support JNI libraries and no usable FRG
+wallet, daemon or mining worker. No public network was activated and no
+FRG keys, seeds or funds were handled.
+
 ## Remaining mandatory engineering gates
 1. Port, compile and verify ARM64-v8a native ForgeCoin daemon, wallet APIs and RandomX mining component for the frozen 20261026 mainnet, with consensus and genesis checks against independent x64/ARM64 nodes. No old P2P daemon.
 2. Implement native non-custodial wallet creation, wallet restoration from seed, encrypted seed storage using Android Keystore-backed keys, address display, synchronization, balance, safe send and restore tests. Avoid server custody and remote wallet RPC.

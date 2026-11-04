@@ -6,6 +6,8 @@
 
 > **Current mainnet specification:** [October 26 frozen identity, tokenomics and release status](docs/CURRENT_MAINNET.md). Public launch is not authorized.
 
+> **November 4 release readiness:** [Desktop wallet/miner, Android wallet/miner, native pool, explorer and public deployment acceptance matrix](docs/RELEASE_READINESS_2026-11-04.md). Native FAKECHAIN transaction signature, confirmed receipt and recipient-wallet restart tests **passed**; these do **not** mean public wallet payouts or mainnet mining are enabled. Official Windows/Android public downloads and a live mining pool remain **unavailable**. No seed phrase, private key, wallet password or miner credentials should be submitted to a website or third party.
+
 ![ForgeCoin mark](docs/images/forgecoin-logo.png)
 
 ForgeCoin is an experimental, privacy-preserving, proof-of-work cryptocurrency derived from Monero v0.18.5.1. It uses RandomX CPU mining, private transactions, a two-minute target block time, and a desktop wallet that can run a node, wallet, miner, and local blockchain explorer from one application.
@@ -43,7 +45,7 @@ See [current mainnet specification](docs/CURRENT_MAINNET.md) for source provenan
 
 ## Desktop and joining status
 
-Windows Forms private prelaunch create/restore tests passed as recorded in the feature-branch handoffs. Tauri compilation and a local debug installer build passed; clean-machine installation and runtime validation remain open. Mining remains locked. No official new-mainnet public peer or pool is approved. Do not use the retired peer or main-branch binaries as a new-mainnet release. Never expose wallet RPC or unrestricted daemon RPC publicly.
+Windows Forms private prelaunch create/restore tests passed as recorded in feature-branch handoffs. The desktop source compiles, but new-mainnet matching native sidecars and clean-machine installer acceptance remain unresolved. Tauri frontend and a local debug installer have been built, not certified for release. The Android **restricted UI preview** compiles, but deliberately contains no native FRG daemon, spending wallet or functional solo/pool miner. Native C-pool RandomX blocks, exact 1% ledger allocation and deep-reorg quarantine passed isolated FAKECHAIN tests; native **pool wallet payouts have not**. The read-only pool bridge can look up worker count/hashrate by public payout address without login, but public Pages stats stay unconnected until a reviewed backend is deployed. Public mining, network activation, payouts and official Windows/Android downloads remain prohibited. Never use retired peers or legacy binaries as a new-mainnet release; never expose wallet RPC or unrestricted daemon RPC publicly. See [release readiness](docs/RELEASE_READINESS_2026-11-04.md).
 
 ## Source layout
 

@@ -60,8 +60,9 @@ namespace ForgeCoinDesktop
         {
             try
             {
+                int port;
                 if (args.Length != 3 ||
-                    !Int32.TryParse(args[0], out var port) ||
+                    !Int32.TryParse(args[0], out port) ||
                     port < 1024 || port > 65535)
                     throw new InvalidOperationException("Expected private test port and credentials");
                 int noCredentials = GetVersionCode(port, null, null);

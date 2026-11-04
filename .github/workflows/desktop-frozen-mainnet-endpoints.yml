@@ -73,6 +73,7 @@ jobs:
           $dest = Join-Path $env:RUNNER_TEMP 'ForgeCoin-Desktop-Endpoint-Check.exe'
           $manifest = Join-Path $src 'app.manifest'
           $program = Join-Path $src 'Program.cs'
+          $poolStatus = Join-Path $src 'XmrigPoolStatus.cs'
           $frgWallet = Join-Path $src 'FrgWalletInput.cs'
           $rpcSession = Join-Path $src 'WalletRpcSession.cs'
           $rpcDigest = Join-Path $src 'WalletRpcDigestTransport.cs'
@@ -82,7 +83,7 @@ jobs:
             "/win32manifest:$manifest" "/out:$dest" `
             /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll `
             /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll `
-            $program $frgWallet $rpcSession $rpcDigest $wallet $vault
+            $program $poolStatus $frgWallet $rpcSession $rpcDigest $wallet $vault
           if ($LASTEXITCODE -ne 0) { throw 'Windows Forms source compilation failed' }
           if (!(Test-Path $dest)) { throw 'Compiled executable missing' }
           Write-Output 'PASS: Windows Forms source compiled with separated RPC/stat ports'
@@ -97,7 +98,7 @@ jobs:
             /main:ForgeCoinDesktop.GuiLayoutQa "/out:$exe" `
             /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll `
             /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll `
-            (Join-Path $src 'Program.cs') (Join-Path $src 'FrgWalletInput.cs') `
+            (Join-Path $src 'Program.cs') (Join-Path $src 'XmrigPoolStatus.cs') (Join-Path $src 'FrgWalletInput.cs') `
             (Join-Path $src 'WalletRpcSession.cs') (Join-Path $src 'WalletRpcDigestTransport.cs') `
             (Join-Path $src 'SolanaWallet.cs') (Join-Path $src 'SolanaVault.cs') $test
           if ($LASTEXITCODE -ne 0) { throw 'Private Windows GUI harness compilation failed' }
@@ -116,7 +117,7 @@ jobs:
             /main:ForgeCoinDesktop.NativeWalletGuiQa "/out:$exe" `
             /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll `
             /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll `
-            (Join-Path $src 'Program.cs') (Join-Path $src 'FrgWalletInput.cs') `
+            (Join-Path $src 'Program.cs') (Join-Path $src 'XmrigPoolStatus.cs') (Join-Path $src 'FrgWalletInput.cs') `
             (Join-Path $src 'WalletRpcSession.cs') (Join-Path $src 'WalletRpcDigestTransport.cs') `
             (Join-Path $src 'SolanaWallet.cs') (Join-Path $src 'SolanaVault.cs') $test
           if ($LASTEXITCODE -ne 0) { throw 'Native GUI wallet acceptance harness compile failed' }
@@ -128,7 +129,7 @@ jobs:
           $test = Join-Path $PWD 'tests/desktop/windows/WinFormsSoloMiningQa.cs'
           $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
           $exe = Join-Path $env:RUNNER_TEMP 'FRG-Private-Solo-RandomX-GUI-QA.exe'
-          $files = @((Join-Path $src 'Program.cs'), (Join-Path $src 'FrgWalletInput.cs'), (Join-Path $src 'WalletRpcSession.cs'), (Join-Path $src 'WalletRpcDigestTransport.cs'), (Join-Path $src 'SolanaWallet.cs'), (Join-Path $src 'SolanaVault.cs'), $test)
+          $files = @((Join-Path $src 'Program.cs'), (Join-Path $src 'XmrigPoolStatus.cs'), (Join-Path $src 'FrgWalletInput.cs'), (Join-Path $src 'WalletRpcSession.cs'), (Join-Path $src 'WalletRpcDigestTransport.cs'), (Join-Path $src 'SolanaWallet.cs'), (Join-Path $src 'SolanaVault.cs'), $test)
           & $compiler /nologo /target:exe /optimize+ /platform:anycpu /define:FRG_PRIVATE_UI_QA,FRG_PRIVATE_MINING_QA /main:ForgeCoinDesktop.WinFormsSoloMiningQa "/out:$exe" /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll $files
           if ($LASTEXITCODE -ne 0) { throw 'Private GUI RandomX acceptance harness compilation failed' }
           if (!(Test-Path $exe)) { throw 'Private GUI RandomX test executable absent' }
@@ -139,6 +140,17 @@ jobs:
           # GitHub pwsh propagates the EXPECTED compiler rejection via the
           # automatic LASTEXITCODE variable even though the assertion passed.
           $global:LASTEXITCODE = 0
+      - name: Verify XMRig localhost pool-status reporting and anti-spoofing
+        shell: pwsh
+        run: |
+          $src = Join-Path $PWD 'apps/desktop'
+          $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
+          $test = Join-Path $PWD 'tests/desktop/windows/XmrigPoolStatusTests.cs'
+          $exe = Join-Path $env:RUNNER_TEMP 'FRG-XMRig-Local-Telemetry-Tests.exe'
+          & $compiler /nologo /target:exe /optimize+ "/out:$exe" /reference:System.dll (Join-Path $src 'XmrigPoolStatus.cs') $test
+          if ($LASTEXITCODE -ne 0) { throw 'XMRig summary state test compilation failed' }
+          & $exe
+          if ($LASTEXITCODE -ne 0) { throw 'XMRig false-mining or API identity tests failed' }
       - name: Run native FRG offline wallet input and mnemonic validation cases
         shell: pwsh
         run: |

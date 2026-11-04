@@ -20,8 +20,9 @@ import time
 import urllib.error
 import urllib.request
 
+from smoke_frozen_prelaunch_daemon import call_rpc, require_result
 from smoke_native_pool_regtest import require_manifest
-from smoke_regtest_reorg import FROZEN_GENESIS, header, info, launch, mine_in_batches, take_free_port, wait_ready
+from smoke_regtest_reorg import FROZEN_GENESIS, header, info, launch, mine, mine_in_batches, take_free_port, wait_ready
 
 ROOT = Path(__file__).resolve().parents[1]
 RX_HEX = re.compile(r"^[0-9a-fA-F]+$")
@@ -108,13 +109,41 @@ def wait_wallet_height(wallet_port: int, wanted: int,
     raise AssertionError("Native wallet failed to synchronize FAKECHAIN block count")
 
 
+def assert_confirmed_receipt(block_json: object, incoming: dict,
+                             balance: dict, tx_hash: str) -> None:
+    """Reject transaction inclusion claims without an independent wallet credit."""
+    if not isinstance(block_json, str) or len(block_json) > 512_000:
+        raise AssertionError("Missing bounded canonical block JSON")
+    parsed = json.loads(block_json)
+    txs = parsed.get("tx_hashes") if isinstance(parsed, dict) else None
+    if (not isinstance(txs, list)
+            or sum(isinstance(x, str) and x.lower() == tx_hash.lower()
+                   for x in txs) != 1):
+        raise AssertionError("Signed transfer not included exactly once in canonical block")
+    entries = incoming.get("in") if isinstance(incoming, dict) else None
+    if (not isinstance(entries, list)
+            or sum(isinstance(t, dict)
+                   and str(t.get("txid", "")).lower() == tx_hash.lower()
+                   and type(t.get("amount")) is int
+                   and t["amount"] == 100_000_000
+                   for t in entries) != 1):
+        raise AssertionError("Recipient wallet did not index exactly one 1 FRG incoming transfer")
+    if (not isinstance(balance, dict)
+            or type(balance.get("balance")) is not int
+            or balance["balance"] != 100_000_000):
+        raise AssertionError("Separate payee wallet did not receive the exact 1 FRG amount")
+
+
 def run(daemon_binary: Path, wallet_binary: Path, manifest: dict,
         max_seconds: int, *, signed_transfer: bool = False,
-        validate_mempool: bool = False) -> None:
+        validate_mempool: bool = False,
+        confirm_transfer: bool = False) -> None:
     if os.name == "nt":
         raise AssertionError("Use disposable Linux runner only")
     if validate_mempool and not signed_transfer:
         raise AssertionError("Daemon validation requires signed local-only wallet transfer")
+    if confirm_transfer and not (validate_mempool and signed_transfer):
+        raise AssertionError("Confirmation requires signed transfer and local mempool validation")
     # A locked configuration is required even though the daemon is launched
     # FAKECHAIN only. No launch flag is accepted as a CLI argument.
     require_manifest(manifest)
@@ -127,19 +156,23 @@ def run(daemon_binary: Path, wallet_binary: Path, manifest: dict,
 
     used = {39481}
     chosen = []
-    while len(chosen) < 3:
+    while len(chosen) < 4:
         p = take_free_port()
         if p not in used:
             chosen.append(p)
             used.add(p)
-    p2p_port, daemon_port, wallet_port = chosen
+    p2p_port, daemon_port, wallet_port, receiver_port = chosen
     with tempfile.TemporaryDirectory(prefix="frg-native-wallet-FAKECHAIN-") as tmp:
         home = Path(tmp)
         node_dir, wallet_dir = home / "node", home / "wallets"
+        receiver_dir = home / "receiver-wallets"
         node_dir.mkdir(mode=0o700)
         wallet_dir.mkdir(mode=0o700)
+        if confirm_transfer:
+            receiver_dir.mkdir(mode=0o700)
         daemon_log = (home / "native-daemon.log").open("wb")
         wallet_log = (home / "native-wallet.log").open("wb")
+        receiver_log = None
         processes: list[subprocess.Popen] = []
         try:
             node = launch(daemon_binary, node_dir, p2p_port, daemon_port,
@@ -184,6 +217,38 @@ def run(daemon_binary: Path, wallet_binary: Path, manifest: dict,
                   "returned public address; zero balance, localhost-only, no keys logged",
                   flush=True)
 
+            receiver_address = None
+            if confirm_transfer:
+                # A genuinely distinct payee wallet avoids falsely treating
+                # the sender's own change output as a verified payment.
+                receiver_args = args.copy()
+                receiver_args[receiver_args.index("--wallet-dir") + 1] = str(receiver_dir)
+                receiver_args[receiver_args.index("--rpc-bind-port") + 1] = str(receiver_port)
+                receiver_log = (home / "native-receiver.log").open("wb")
+                receiver_proc = subprocess.Popen(
+                    receiver_args, cwd=str(home), stdin=subprocess.DEVNULL,
+                    stdout=receiver_log, stderr=subprocess.STDOUT, close_fds=True,
+                    env={**os.environ, "HOME": str(home)},
+                )
+                processes.append(receiver_proc)
+                wait_wallet(receiver_proc, receiver_port, deadline)
+                wallet_rpc(receiver_port, "create_wallet", {
+                    "filename": "disposable_regtest_recipient",
+                    "password": secrets.token_urlsafe(24), "language": "English",
+                })
+                receiver_address = must_public_address(
+                    wallet_rpc(receiver_port, "get_address",
+                               {"account_index": 0}).get("address"))
+                if receiver_address == address:
+                    raise AssertionError("Disposable sender and receiver are not independent")
+                receiver_initial = wallet_rpc(receiver_port, "get_balance",
+                                              {"account_index": 0})
+                if (receiver_initial.get("balance") != 0
+                        or receiver_initial.get("unlocked_balance") != 0):
+                    raise AssertionError("Test-only recipient wallet was not empty")
+                print("PASS: separate fresh native payee wallet created empty; "
+                      "no seed, key, address or password disclosed", flush=True)
+
             # Mine only into the ephemeral generated wallet on FAKECHAIN.
             # A newly created wallet output at block 1 becomes spendable at 61+.
             mine_in_batches(daemon_port, address, 80, 83000)
@@ -203,11 +268,14 @@ def run(daemon_binary: Path, wallet_binary: Path, manifest: dict,
 
             if signed_transfer:
                 # Recipient is a new subaddress of this same ephemeral wallet.
-                recipient = wallet_rpc(wallet_port, "create_address",
-                                       {"account_index": 0, "label": "test-only"})
-                destination = must_public_address(recipient.get("address"))
+                if confirm_transfer:
+                    destination = receiver_address
+                else:
+                    recipient = wallet_rpc(wallet_port, "create_address",
+                                           {"account_index": 0, "label": "test-only"})
+                    destination = must_public_address(recipient.get("address"))
                 if destination == address:
-                    raise AssertionError("Wallet returned identical primary and test subaddresses")
+                    raise AssertionError("Identical transaction sender and destination")
                 transfer = wallet_rpc(wallet_port, "transfer", {
                     "destinations": [{"address": destination, "amount": 100_000_000}],
                     "account_index": 0, "priority": 1, "ring_size": 16,
@@ -255,6 +323,29 @@ def run(daemon_binary: Path, wallet_binary: Path, manifest: dict,
                     print("PASS: signed native wallet transaction validated by actual "
                           "FAKECHAIN mempool; exact hash indexed once, "
                           "do_not_relay=true, no public peers or wallet payout", flush=True)
+                    if confirm_transfer:
+                        # The locally admitted unrelayed tx is mined by the
+                        # same isolated FAKECHAIN daemon, never broadcast.
+                        mined = mine(daemon_port, address, 1, 98117)
+                        if (len(mined) != 1
+                                or info(daemon_port).get("height") != wanted_height + 1
+                                or header(daemon_port, wanted_height)["hash"] != mined[0]):
+                            raise AssertionError("FAKECHAIN failed to mine confirmation block")
+                        block = require_result(
+                            call_rpc(daemon_port, "get_block", {"height": wanted_height}),
+                            "get_block")
+                        wait_wallet_height(receiver_port, wanted_height + 1,
+                                           time.monotonic() + max_seconds)
+                        received = wallet_rpc(receiver_port, "get_balance",
+                                              {"account_index": 0})
+                        incoming = wallet_rpc(receiver_port, "get_transfers",
+                                              {"in": True})
+                        assert_confirmed_receipt(block.get("json"), incoming,
+                                                 received, tx_hash)
+                        print("PASS: native FAKECHAIN included signed transfer in "
+                              "canonical block; independent recipient wallet "
+                              "refreshed and recorded exact 1 FRG inbound "
+                              "with matching tx hash; no production payout", flush=True)
                 # FAKECHAIN mempool validation does not prove full MAINNET
                 # genesis-spend exclusion, confirmation, or payee settlement.
         finally:
@@ -269,6 +360,8 @@ def run(daemon_binary: Path, wallet_binary: Path, manifest: dict,
                     proc.wait(timeout=5)
             wallet_log.close()
             daemon_log.close()
+            if receiver_log is not None:
+                receiver_log.close()
 
 
 def main() -> None:
@@ -280,11 +373,13 @@ def main() -> None:
     parser.add_argument("--max-seconds", type=int, default=120)
     parser.add_argument("--signed-transfer", action="store_true")
     parser.add_argument("--validate-mempool", action="store_true")
+    parser.add_argument("--confirm-transfer", action="store_true")
     args = parser.parse_args()
     run(args.daemon, args.wallet,
         json.loads(args.manifest.read_text(encoding="utf-8")),
         args.max_seconds, signed_transfer=args.signed_transfer,
-        validate_mempool=args.validate_mempool)
+        validate_mempool=args.validate_mempool,
+        confirm_transfer=args.confirm_transfer)
 
 
 if __name__ == "__main__":

@@ -47,6 +47,11 @@ class WalletFAKECHAINGuards(unittest.TestCase):
         self.assertIn('accepted.get("not_relayed") is not True', s)
         self.assertIn('snapshot.get("tx_hashes")', s)
         self.assertIn('args.validate_mempool', s)
+        self.assertIn('args.confirm_transfer', s)
+        self.assertIn('if confirm_transfer and not (validate_mempool and signed_transfer)', s)
+        self.assertIn('receiver_args[receiver_args.index("--rpc-bind-port") + 1]', s)
+        self.assertIn('wallet_rpc(receiver_port, "get_transfers"', s)
+        self.assertIn('call_rpc(daemon_port, "get_block", {"height": wanted_height})', s)
 
     def test_native_mempool_rpc_rejects_unreviewed_methods(self):
         for method in ("get_info", "stop_daemon", "start_mining",
@@ -60,6 +65,37 @@ class WalletFAKECHAINGuards(unittest.TestCase):
             with self.assertRaisesRegex(AssertionError, "requires signed"):
                 sw.run(Path("/tmp/nonexistent"), Path("/tmp/also-nonexistent"),
                        {}, 120, validate_mempool=True, signed_transfer=False)
+
+    def test_confirmed_transfer_requires_local_mempool_and_signer(self):
+        with patch.object(sw.os, "name", "posix"):
+            for signed, mempool in ((False, False), (True, False), (False, True)):
+                with self.subTest(signed=signed, mempool=mempool):
+                    with self.assertRaises(AssertionError):
+                        sw.run(Path("/tmp/nonexistent"), Path("/tmp/nonexistent"),
+                               {}, 120, signed_transfer=signed,
+                               validate_mempool=mempool,
+                               confirm_transfer=True)
+
+    def test_confirmed_receipt_requires_block_and_independent_credit(self):
+        txid = "ab" * 32
+        good_block = json.dumps({"tx_hashes": [txid]})
+        good_incoming = {"in": [{"txid": txid, "amount": 100_000_000}]}
+        good_balance = {"balance": 100_000_000, "unlocked_balance": 0}
+        sw.assert_confirmed_receipt(good_block, good_incoming, good_balance, txid)
+        bad_cases = (
+            (json.dumps({"tx_hashes": []}), good_incoming, good_balance),
+            (json.dumps({"tx_hashes": [txid, txid]}), good_incoming, good_balance),
+            (good_block, {"in": []}, good_balance),
+            (good_block, {"in": [{"txid": txid, "amount": 99_999_999}]}, good_balance),
+            (good_block, {"in": [{"txid": txid, "amount": 100_000_000},
+                                  {"txid": txid, "amount": 100_000_000}]}, good_balance),
+            (good_block, good_incoming, {"balance": 0}),
+            (good_block, good_incoming, {"balance": True}),
+        )
+        for block, incoming, balance in bad_cases:
+            with self.subTest(block=block[:50], incoming=incoming, balance=balance):
+                with self.assertRaises(AssertionError):
+                    sw.assert_confirmed_receipt(block, incoming, balance, txid)
 
     def test_rpc_only_accepts_json_object_with_no_error(self):
         from unittest.mock import MagicMock

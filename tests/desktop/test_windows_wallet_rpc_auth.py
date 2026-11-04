@@ -44,7 +44,7 @@ class WalletRpcAuthenticationGuards(unittest.TestCase):
 
     def test_wallet_digest_challenge_bound_to_keepalive(self):
         self.assertIn('private const string Probe =', self.transport)
-        self.assertIn('method\\":\\"get_version', self.transport.replace('"', '\\"'))
+        self.assertIn("get_version", self.transport)
         self.assertIn("req.KeepAlive = true", self.transport)
         self.assertIn("using (Stream denied = response.GetResponseStream())", self.transport)
         self.assertIn('response.StatusCode == HttpStatusCode.Unauthorized', self.transport)
@@ -80,7 +80,7 @@ class WalletRpcAuthenticationGuards(unittest.TestCase):
             self.assertIn(method, qa)
         self.assertIn("WalletRpcSession.Create(", qa)
         self.assertIn("session.DeleteStartupConfig()", qa)
-        self.assertIn("No peers, no daemon", qa.lower().replace("no peers", "No peers").replace("no daemon", "no daemon"))
+        self.assertIn("no peers, no daemon", qa)
         self.assertIn("windows_prelaunch_binaries_sha256", ps1)
         self.assertIn("release_authorized -ne $false", ps1)
         self.assertIn("--no-initial-sync", qa)

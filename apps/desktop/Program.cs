@@ -1704,7 +1704,11 @@ namespace ForgeCoinDesktop
                 if (url.Length < 4 || url.IndexOf(':') < 0) throw new InvalidOperationException("Enter the pool address and port, for example pool.example.org:3333.");
                 if (!FrgWalletInput.LooksLikePublicAddress(user))
                     throw new InvalidOperationException("Enter a public native FRG wallet address for account-free pool mining.");
-                byte[] monitorId = new byte[16];
+                // XMRig 6.22 truncates --api-id at 31 bytes (observed
+                // against its genuine localhost /2/summary API).
+                // Twelve random bytes yield a 24-character ID with 96 bits
+                // of entropy; never expect the truncated 32-hex value.
+                byte[] monitorId = new byte[12];
                 using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
                     rng.GetBytes(monitorId);
                 poolApiId = BitConverter.ToString(monitorId)

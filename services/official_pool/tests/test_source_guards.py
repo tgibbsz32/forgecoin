@@ -131,6 +131,28 @@ class NativeBackendPreflight(unittest.TestCase):
         self.assertIn("#ifndef FRG_TESTED_WALLET_PAYOUTS", self.pool)
         self.assertIn("config.disable_payouts = true", self.pool)
 
+    def test_lmdb_payout_intent_wired_fail_closed_to_pool_startup_and_sender(self):
+        self.assertIn('#include "frg_payout_intent_journal.h"', self.pool)
+        self.assertIn('frg_payout_intent_open(txn, &db_payout_intents)', self.pool)
+        self.assertIn('mdb_dbi_close(env, db_payout_intents)', self.pool)
+        startup = self.pool.split("static int\ndatabase_init(", 1)[1].split(
+            "static void\ndatabase_close(", 1)[0]
+        self.assertIn("frg_payout_intent_held(audit, db_payout_intents", startup)
+        self.assertIn("refusing startup pending independent payout reconciliation", startup)
+        sender = self.pool.split("static int\nsend_payments(void)", 1)[1].split(
+            "static void\nfetch_view_key(", 1)[0]
+        self.assertIn("frg_payout_intent_held(hold_txn, db_payout_intents", sender)
+        self.assertIn("payouts blocked by unresolved or invalid journal intent", sender)
+        self.assertLess(sender.index("frg_payout_intent_held("),
+                        sender.index("#ifndef FRG_TESTED_WALLET_PAYOUTS"))
+        self.assertIn("#ifdef FRG_TESTED_WALLET_PAYOUTS", self.pool)
+        journal = (VENDOR / "src/frg_payout_intent_journal.h").read_text(encoding="utf-8")
+        self.assertIn("MDB_NOOVERWRITE", journal)
+        self.assertIn("FRG_PAYOUT_INTENT_AMBIGUOUS", journal)
+        self.assertIn("FRG_PAYOUT_INTENT_CANDIDATE_UNVERIFIED", journal)
+        self.assertNotIn("frg_payout_intent_clear(", journal)
+        self.assertNotIn("frg_payout_intent_settle(", journal)
+
     def test_all_block_status_updates_are_atomic_with_balances(self):
         reconciliation = self.pool.split("static int\nprocess_blocks(", 1)[1].split(
             "static void\nupdate_pool_hr(", 1

@@ -38,6 +38,36 @@ The general MainActivity deprecated-API note still requires review. ADB found
 **no connected physical handset**. None of this is verified on a real ARM64
 device and no production APK or public download has been approved.
 
+## November 4, 2026 — offline RandomX ARM64 self-test
+
+The restricted DEBUG UI now offers **Verify one RandomX hash** on the Mining
+screen. It runs the existing vendored native ARM64 RandomX light VM on a
+background thread **exactly once** using the public RandomX test vector:
+`test key 000` and `This is a test`. It compares the 32-byte output to the
+upstream known-answer digest. This is NOT a miner: no nonce search, Stratum,
+wallet, daemon, network, block submission, repeating hash loop or public FRG.
+
+The one-hash button requires explicit confirmation and is blocked in release
+builds, on battery saver, moderate-or-higher temperature, less than 20% battery
+while unplugged, unreliable sensor state, or less than 512 MiB free RAM.
+The screen reports only PASS/FAIL and elapsed duration, not an invented
+continuous mining hashrate. Solo/pool mining and FRG wallet send/restore
+buttons remain disabled.
+
+The connected Windows QA machine passed Gradle
+`:app:assembleDebug :app:testDebugUnitTest`, **23 JVM tests** (including
+four new RandomX vector/negative tests), and eight Android release/security
+source checks. The restricted debug APK was **3,634,999 bytes**, SHA-256
+`f3fb70edf3c71ce887072d6059bb707ed74ea7bcb2185f3ec13e1c13f20bf224`,
+with `org.forgecoin.p2ptest.isolatedqa`. It contains only ARM64
+`libforge_randomx.so` and `libforge_runtime_probe.so`, with no native
+FRG daemon, wallet or mining executable.
+
+**A physical ARM64 Android device is still needed** to observe the actual
+JNI known-answer test. Connected ADB devices were x86_64 emulators only.
+Use disposable QA installations; do not import a funded wallet or expect
+network mining or pool earnings.
+
 ## Remaining mandatory engineering gates
 1. Port, compile and verify ARM64-v8a native ForgeCoin daemon, wallet APIs and RandomX mining component for the frozen 20261026 mainnet, with consensus and genesis checks against independent x64/ARM64 nodes. No old P2P daemon.
 2. Implement native non-custodial wallet creation, wallet restoration from seed, encrypted seed storage using Android Keystore-backed keys, address display, synchronization, balance, safe send and restore tests. Avoid server custody and remote wallet RPC.

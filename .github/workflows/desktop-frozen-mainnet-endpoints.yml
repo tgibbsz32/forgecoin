@@ -103,6 +103,24 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Private Windows GUI harness compilation failed' }
           & $exe
           if ($LASTEXITCODE -ne 0) { throw 'Actual Windows Forms layout or release-lock acceptance failed' }
+      - name: Compile isolated real WinForms native wallet Create/Restore acceptance harness
+        shell: pwsh
+        run: |
+          # We do NOT execute this without a verified private prelaunch wallet
+          # sidecar. Local QA covers real native Create/Restore/Close behavior.
+          $src = Join-Path $PWD 'apps/desktop'
+          $test = Join-Path $PWD 'tests/desktop/windows/WinFormsNativeWalletQa.cs'
+          $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
+          $exe = Join-Path $env:RUNNER_TEMP 'FRG-Native-Wallet-GUI-Private-QA.exe'
+          & $compiler /nologo /target:exe /optimize+ /platform:anycpu /define:FRG_PRIVATE_UI_QA `
+            /main:ForgeCoinDesktop.NativeWalletGuiQa "/out:$exe" `
+            /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll `
+            /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll `
+            (Join-Path $src 'Program.cs') (Join-Path $src 'FrgWalletInput.cs') `
+            (Join-Path $src 'WalletRpcSession.cs') (Join-Path $src 'WalletRpcDigestTransport.cs') `
+            (Join-Path $src 'SolanaWallet.cs') (Join-Path $src 'SolanaVault.cs') $test
+          if ($LASTEXITCODE -ne 0) { throw 'Native GUI wallet acceptance harness compile failed' }
+          Write-Output 'PASS: real native Create/Restore GUI harness compiled; on-machine private sidecar acceptance remains separate'
       - name: Run native FRG offline wallet input and mnemonic validation cases
         shell: pwsh
         run: |

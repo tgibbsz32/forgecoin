@@ -99,6 +99,14 @@ namespace ForgeCoinDesktop
                     var open = Field<Button>(form, "openWalletButton");
                     Check(!send.Enabled && !solo.Enabled && !pool.Enabled,
                           "Prelaunch spend/mining controls accidentally enabled");
+                    // The one-second monitor once re-enabled Start Mining when
+                    // its daemon was stopped, bypassing the UI launch gate.
+                    var refreshMining = typeof(MainForm).GetMethod("RefreshMining",
+                        BindingFlags.NonPublic | BindingFlags.Instance);
+                    Check(refreshMining != null, "Mining monitor missing");
+                    refreshMining.Invoke(form, new object[0]);
+                    Application.DoEvents();
+                    Check(!solo.Enabled, "Mining monitor bypassed frozen prelaunch lock");
                     Check(restore.Enabled && create.Enabled && open.Enabled,
                           "Private QA wallet create/restore/open controls missing");
                     Check(solo.Text == "Launch locked" &&

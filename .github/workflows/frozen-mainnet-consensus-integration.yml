@@ -105,6 +105,19 @@ jobs:
           python3 tools/smoke_frozen_prelaunch_peers.py \
             --daemon build/consensus-gated/release/bin/forged --max-seconds 90
           echo 'PASS: loopback-only prelaunch P2P handshake; no mining or reorg test'
+      - name: Build native wallet RPC from exactly the frozen consensus daemon source
+        run: |
+          cmake --build build/consensus-gated/release --parallel 2 --target wallet_rpc_server
+          test -s build/consensus-gated/release/bin/forge-wallet-rpc
+          file build/consensus-gated/release/bin/forge-wallet-rpc
+          echo 'PASS: native wallet RPC linked from same consensus revision'
+      - name: Native disposable wallet RPC creates and signs local FAKECHAIN transfer
+        run: |
+          python3 tools/smoke_native_wallet_regtest.py \
+            --daemon build/consensus-gated/release/bin/forged \
+            --wallet build/consensus-gated/release/bin/forge-wallet-rpc \
+            --signed-transfer --max-seconds 150
+          echo 'PASS: ephemeral native wallet creation, fakechain mining/refresh and local signed transfer construction; mainnet remains locked'
       - name: Build the C pool against these exact native consensus static archives
         env:
           FRG_BUILD_JOBS: '2'

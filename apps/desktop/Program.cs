@@ -33,8 +33,28 @@ namespace ForgeCoinDesktop
         private static readonly bool NativeSpendAuthorized = false;
         private static readonly bool NativeMiningAuthorized = false;
         private int transferInFlight;
+#if FRG_PRIVATE_UI_QA
+        // Compiled ONLY into the isolated WinForms test harness, never into the
+        // desktop executable or the shipped prelaunch package. Refuse to touch
+        // an existing user's %LOCALAPPDATA% wallet files.
+        private static string PrivateQaPath(string environmentVariable)
+        {
+            string path = Environment.GetEnvironmentVariable(environmentVariable);
+            if (String.IsNullOrWhiteSpace(path))
+                throw new InvalidOperationException("Private GUI QA sandbox path not supplied.");
+            string full = Path.GetFullPath(path);
+            string temp = Path.GetFullPath(Path.GetTempPath());
+            if (!full.StartsWith(temp, StringComparison.OrdinalIgnoreCase) ||
+                full.IndexOf("frg-windows-gui-qa-", StringComparison.OrdinalIgnoreCase) < 0)
+                throw new InvalidOperationException("Private GUI QA must remain in an isolated temporary folder.");
+            return full;
+        }
+        private readonly string appRoot = PrivateQaPath("FRG_PRIVATE_UI_QA_ROOT");
+        private readonly string binRoot = PrivateQaPath("FRG_PRIVATE_UI_QA_BIN");
+#else
         private readonly string appRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ForgeCoin");
         private readonly string binRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin");
+#endif
         private readonly JavaScriptSerializer json = new JavaScriptSerializer();
         private readonly System.Windows.Forms.Timer refreshTimer = new System.Windows.Forms.Timer();
         private readonly System.Windows.Forms.Timer miningTimer = new System.Windows.Forms.Timer();
@@ -226,7 +246,7 @@ namespace ForgeCoinDesktop
             peerBox = new TextBox { Dock = DockStyle.Fill };
             peerPanel.Controls.Add(peerBox, 1, 0);
             peerPanel.Controls.Add(new Label { Text = "Leave blank to reuse saved peers. A new installation needs a known ForgeCoin peer. Changes apply after restart.", ForeColor = Color.DimGray, AutoSize = true }, 1, 1);
-            bootstrapModeBox = new CheckBox { Text = "Offline bootstrap mining — mine on this PC without a second peer", AutoSize = true, ForeColor = Color.FromArgb(145, 68, 20), Font = new Font("Segoe UI Semibold", 9.5F), Padding = new Padding(0, 4, 0, 0) };
+            bootstrapModeBox = new CheckBox { Text = "Private offline node QA only — mining is launch-locked", AutoSize = true, ForeColor = Color.FromArgb(145, 68, 20), Font = new Font("Segoe UI Semibold", 9.5F), Padding = new Padding(0, 4, 0, 0) };
             peerPanel.Controls.Add(bootstrapModeBox, 1, 2);
 
             logBox = new RichTextBox { Dock = DockStyle.Fill, ReadOnly = true, BackColor = Color.FromArgb(18, 21, 28), ForeColor = Color.FromArgb(211, 216, 227), Font = new Font("Consolas", 9F), BorderStyle = BorderStyle.None };
@@ -241,7 +261,7 @@ namespace ForgeCoinDesktop
         private TabPage BuildWalletTab()
         {
             TabPage page = new TabPage("Wallet");
-            TableLayoutPanel root = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(20), ColumnCount = 1, RowCount = 5 };
+            TableLayoutPanel root = new TableLayoutPanel { Name = "WalletPageLayout", Dock = DockStyle.Fill, AutoScroll = true, AutoScrollMinSize = new Size(0, 635), Padding = new Padding(20), ColumnCount = 1, RowCount = 5 };
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 194));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 100));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 100));
@@ -700,7 +720,8 @@ namespace ForgeCoinDesktop
             controls.Controls.Add(miningThreads, 1, 0);
             startMiningButton = PrimaryButton("Start Mining", StartMining);
             startMiningButton.Enabled = NativeMiningAuthorized;
-            startMiningButton.Text = NativeMiningAuthorized ? "Start Mining" : "Solo mining — launch locked";
+            startMiningButton.Text = NativeMiningAuthorized ? "Start Mining" : "Launch locked";
+            startMiningButton.AccessibleDescription = "Solo mainnet mining requires an explicitly approved network launch.";
             stopMiningButton = SecondaryButton("Stop", StopMining);
             stopMiningButton.Enabled = false;
             miningState = Badge("Stopped", Color.FromArgb(110, 118, 130));
@@ -780,7 +801,8 @@ namespace ForgeCoinDesktop
             controls.Controls.Add(poolThreads, 1, 0);
             startPoolButton = PrimaryButton("Start Pool", StartPoolMining);
             startPoolButton.Enabled = NativeMiningAuthorized;
-            startPoolButton.Text = NativeMiningAuthorized ? "Start Pool" : "Pool mining — launch locked";
+            startPoolButton.Text = NativeMiningAuthorized ? "Start Pool" : "Launch locked";
+            startPoolButton.AccessibleDescription = "Native pool mining is disabled until launch and payout acceptance.";
             stopPoolButton = SecondaryButton("Stop", StopPoolMining);
             stopPoolButton.Enabled = false;
             poolState = Badge("Stopped", Color.FromArgb(110, 118, 130));
@@ -844,6 +866,14 @@ namespace ForgeCoinDesktop
         private void StartNode(object sender, EventArgs e)
         {
             if (IsRunning(daemon)) return;
+            // Prevent even an outbound public P2P bootstrap from the preview.
+            // The operator may run an isolated localhost-only offline node
+            // for private testing, but can NEVER begin mainnet mining here.
+            if (!NativeMiningAuthorized && !bootstrapModeBox.Checked)
+            {
+                ShowError("Public FRG node bootstrap is disabled until launch. Choose private offline node QA.");
+                return;
+            }
             string exe = Path.Combine(binRoot, "forged.exe");
             if (!File.Exists(exe)) { ShowError("The ForgeCoin daemon is missing from the bin folder."); return; }
             List<string> args = new List<string> {

@@ -268,16 +268,21 @@ namespace ForgeCoinDesktop
                                     StringComparison.Ordinal),
                       "GUI recovery did not reproduce the original native public address");
                 Console.WriteLine("QA_NATIVE_GUI: original and restored native public addresses match");
-
+                stage = "close_restored_wallet";
                 close.PerformClick();
+                Console.WriteLine("QA_NATIVE_GUI: restored wallet close button returned");
                 Check(!(bool)Field<object>(form, "walletOpen"), "Restored wallet remained open");
+                Console.WriteLine("QA_NATIVE_GUI: native wallet closed by GUI");
                 Check(!send.Enabled && !solo.Enabled && !pool.Enabled,
                       "GUI unexpectedly authorized native mining or transfers");
+                stage = "gui_disposal";
                 seed = null;
                 pass.Clear();
                 form.Close();
+                Console.WriteLine("QA_NATIVE_GUI: main form close returned");
                 form.Dispose();
                 form = null;
+                stage = "sandbox_cleanup";
                 // No daemon, public peers, chain or mining created.
                 Check(!Directory.Exists(Path.Combine(temporary, "blockchain")) ||
                       Directory.GetFiles(Path.Combine(temporary, "blockchain")).Length == 0,

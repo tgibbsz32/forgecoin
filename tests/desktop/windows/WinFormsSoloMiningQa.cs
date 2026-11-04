@@ -262,7 +262,7 @@ namespace ForgeCoinDesktop
                 Console.WriteLine("PASS: GUI started pinned native ForgeCoin daemon at frozen genesis, localhost offline, zero peers");
 
                 stage = "solo_start";
-                SelectTab(tabs, "Solo Mining");
+                SelectTab(tabs, "Mining");
                 reward.Text = DisposablePayout;
                 threads.Value = Math.Min(2, (int)threads.Maximum);
                 Console.WriteLine("QA_SOLO_UI_ENABLED=" + start.Enabled);

@@ -74,13 +74,15 @@ jobs:
           $manifest = Join-Path $src 'app.manifest'
           $program = Join-Path $src 'Program.cs'
           $frgWallet = Join-Path $src 'FrgWalletInput.cs'
+          $rpcSession = Join-Path $src 'WalletRpcSession.cs'
+          $rpcDigest = Join-Path $src 'WalletRpcDigestTransport.cs'
           $wallet = Join-Path $src 'SolanaWallet.cs'
           $vault = Join-Path $src 'SolanaVault.cs'
           & $compiler /nologo /target:winexe /optimize+ /platform:anycpu `
             "/win32manifest:$manifest" "/out:$dest" `
             /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll `
             /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll `
-            $program $frgWallet $wallet $vault
+            $program $frgWallet $rpcSession $rpcDigest $wallet $vault
           if ($LASTEXITCODE -ne 0) { throw 'Windows Forms source compilation failed' }
           if (!(Test-Path $dest)) { throw 'Compiled executable missing' }
           Write-Output 'PASS: Windows Forms source compiled with separated RPC/stat ports'
@@ -97,6 +99,19 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Native FRG wallet input test compile failed' }
           & $exe
           if ($LASTEXITCODE -ne 0) { throw 'Native FRG wallet input assertions failed' }
+      - name: Compile authenticated native wallet Digest QA harness
+        shell: pwsh
+        run: |
+          $src = Join-Path $PWD 'apps/desktop'
+          $testDir = Join-Path $PWD 'tests/desktop/windows'
+          $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
+          $exe = Join-Path $env:RUNNER_TEMP 'FRG-Wallet-RPC-Digest-QA.exe'
+          & $compiler /nologo /target:exe /optimize+ "/out:$exe" `
+            /reference:System.dll `
+            (Join-Path $src 'WalletRpcDigestTransport.cs') `
+            (Join-Path $testDir 'WalletRpcDigestProbe.cs')
+          if ($LASTEXITCODE -ne 0) { throw 'Digest harness compile failed' }
+          Write-Output 'PASS: authenticated native wallet Digest QA test harness compiles'
       - name: Exercise fail-closed private packaging and source-only QA path
         shell: pwsh
         run: |

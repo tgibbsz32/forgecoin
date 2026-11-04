@@ -70,6 +70,8 @@ namespace ForgeCoinDesktop
                 // process arguments, or identifiers.
                 Console.Error.WriteLine("FAIL: private XMRig API state check: " +
                                         failure.GetType().Name);
+                if (failure is ArgumentException)
+                    Console.Error.WriteLine("QA_FIXED_REASON=" + failure.Message);
                 return 1;
             }
         }

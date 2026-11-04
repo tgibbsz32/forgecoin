@@ -42,6 +42,23 @@ class IsolatedSoloAcceptance(unittest.TestCase):
         self.assertIn('args.Contains("--rpc-bind-ip 127.0.0.1")', self.gui)
         self.assertIn('args.Contains(Quote(Path.Combine(appRoot, "blockchain")))', self.gui)
 
+    def test_mining_status_poll_cannot_enable_start_during_pending_rpc(self):
+        self.assertEqual(
+            self.gui.count("startMiningButton.Enabled = !active && IsolatedSoloQaReady()"),
+            1,
+            "Private mining status must have exactly one start-button assignment",
+        )
+        self.assertIn(
+            "startMiningButton.Enabled = !active && IsolatedSoloQaReady() &&\n"
+            "                            Interlocked.CompareExchange(ref miningStartInFlight, 0, 0) == 0;",
+            self.gui,
+        )
+        self.assertNotIn(
+            "startMiningButton.Enabled = !active && IsolatedSoloQaReady();",
+            self.gui,
+            "A duplicate unguarded refresh can allow concurrent mining start requests",
+        )
+
     def test_actual_gui_qa_drives_native_miner_with_zero_peers(self):
         for snippet in [
             'Path.GetTempPath()', 'frg-windows-gui-qa-',

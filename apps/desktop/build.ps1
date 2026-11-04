@@ -14,7 +14,11 @@ $ProjectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepositoryRoot = (Resolve-Path (Join-Path $ProjectRoot '..\..')).Path
 
 if ([string]::IsNullOrWhiteSpace($OutputRoot)) {
-    $OutputRoot = Join-Path $ProjectRoot 'release\ForgeCoin-Desktop'
+    if ($SourceOnly) {
+        $OutputRoot = Join-Path $ProjectRoot 'qa-build\ForgeCoin-Desktop-SourceOnly'
+    } else {
+        $OutputRoot = Join-Path $ProjectRoot 'release\ForgeCoin-Desktop'
+    }
 }
 
 $OutputRoot = [IO.Path]::GetFullPath($OutputRoot)

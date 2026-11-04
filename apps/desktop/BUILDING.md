@@ -84,8 +84,33 @@ python -m unittest discover -s tests/desktop -p "test_*.py" -q
 
 The connected Windows QA checkout passed **29 desktop Python tests**, **49
 C# wallet input assertions**, and **Windows Forms source-only compilation**.
-This does *not* validate a real native RPC restore, clean installation or
-any spend; those require independently approved disposable test-sidecars.
+The same session also executed the native Windows wallet RPC
+candidate `forge-wallet-rpc.exe` with SHA-256
+`739eefe916f9a93017c870dde63b45c8db532d43226dc888395860122c3e851b`,
+matched against the checked-in frozen prelaunch candidate hash pin. The
+[isolated native test script](../../tools/smoke_windows_wallet_restore_offline.py)
+created a disposable native wallet, retrieved its 25-word recovery phrase
+**without displaying it**, successfully restored that phrase to another
+ephemeral wallet with the exact same public address, rejected the wrong
+password, and reopened it from disk and after a full RPC-process restart.
+**Exit 0, four PASS checkpoints** on the connected Windows computer.
+The daemon endpoint was deliberately nonexistent, RPC loopback-only,
+`--no-dns --no-initial-sync`; no block was mined and Oracle was not used.
+
+Run this native acceptance only on a trusted private Windows QA machine,
+using the pinned candidate binary and no original wallet data:
+
+```powershell
+python tools/smoke_windows_wallet_restore_offline.py `
+  --wallet-rpc "$env:USERPROFILE\Downloads\ForgeCoin-Mainnet-20261026-Prelaunch-Wallet-v0.4\bin\forge-wallet-rpc.exe" `
+  --max-seconds 65
+```
+
+This verifies the **native candidate Windows wallet RPC** independently
+from the GUI, not clicking the new Windows Forms restore dialog end-to-end
+and not final independently reviewed mainnet binaries. It does not validate
+funded transfers, solo/pool mining, seed portability to Android, public
+peers, clean installation or release signing.
 
 ## Release gates (separate from build success)
 

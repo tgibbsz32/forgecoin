@@ -101,6 +101,17 @@ namespace ForgeCoinDesktop
                   "Offline wallet GUI QA must not ship a daemon");
         }
 
+        private static TabControl FindTabs(Control root)
+        {
+            if (root is TabControl) return (TabControl)root;
+            foreach (Control child in root.Controls)
+            {
+                var result = FindTabs(child);
+                if (result != null) return result;
+            }
+            return null;
+        }
+
         private static TextBox SearchTextbox(Control root)
         {
             if (root is TextBox) return (TextBox)root;
@@ -149,6 +160,14 @@ namespace ForgeCoinDesktop
                 stage = "form";
                 form = new MainForm();
                 form.Show();
+                Application.DoEvents();
+                TabControl tabs = FindTabs(form);
+                Check(tabs != null, "Native QA main tabs not found");
+                TabPage walletPage = null;
+                foreach (TabPage page in tabs.TabPages)
+                    if (page.Text == "Wallet") walletPage = page;
+                Check(walletPage != null, "Native QA Wallet tab not found");
+                tabs.SelectedTab = walletPage;
                 Application.DoEvents();
                 var name = Field<TextBox>(form, "walletNameBox");
                 var pass = Field<TextBox>(form, "passwordBox");

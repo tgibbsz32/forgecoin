@@ -36,6 +36,21 @@ The test creates a *synthetic* 240-height chain and 120 already matured credited
 
 Security correction: a structurally valid response for the **wrong height** or a hash-identical header with inconsistent difficulty/reward now returns `FRG_HISTORY_UNVERIFIED`, preventing wallet release but **not** writing a permanent reorg marker from inadequate evidence. Correct-height canonical hash/parent/orphan conflicts still trigger the durable quarantine. The shared JSON-RPC evaluator is used by both the live callback and the isolated fixture; explicit JSON `error: null` is treated as success, genuine errors as unverified.
 
+## November 3 verified end-to-end historical credit quarantine — acceptance PASS
+
+[GitHub native x86_64 full-stack CI 41731489643](https://github.com/tgibbsz32/forgecoin/actions/runs/41731489643) **PASSED** on the isolated frozen-consensus + pool-security validation branch. This supersedes earlier entries below that described this particular test as pending.
+
+- Real C Stratum login, job and genuine native RandomX result submitted a difficulty-one block to the real localhost-only FAKECHAIN daemon; daemon accepted it at height 1 and the C pool durably recorded the block.
+- 61 subsequent native FAKECHAIN blocks matured the reward. A **separate read-only LMDB inspector** verified the credited record and precise 8-decimal allocation: **2,384,185,222** reward atoms, **2,360,343,370** miner atoms and **23,841,852** fee atoms. A clean pool restart preserved these amounts without double credit.
+- A second independently mined 70-block FAKECHAIN branch won a genuine native P2P reorganization, orphaning the previously credited block in a **62-deep rollback**.
+- The running native pool's historical credited-block RPC audit observed the changed canonical height-1 hash and wrote the durable LMDB quarantine itself; the inspector verified held state and unchanged balances. The pool was then stopped and a new pool process **refused startup** on that quarantined LMDB.
+- The CI run also passed the separate 66-vs-70 native fork convergence and prelaunch mainnet mining refusal. [Native ARM64 companion 41731489619](https://github.com/tgibbsz32/forgecoin/actions/runs/41731489619) passed.
+- All test processes were loopback-only, used public test addresses, had wallet RPC unbound and payouts compile-disabled, and used disposable LMDB. No spendable wallet, live FRG network or Oracle deployment was touched.
+
+**What this closes:** native Stratum block acceptance, actual mature credit, exact 99/1 split, restart invariance, genuine deep historical fork, persistent accounting quarantine and startup denial on the combined test branch.
+
+**What remains:** adversarial signed genesis-output transaction exclusion, independent multi-node canonical-chain/RPC trust, wallet transaction creation and payout signing, live operational testing, public miner release gates, and review/merge of draft frozen-consensus PR #185. The separate single-daemon trust limitation remains. Passing this regtest is not launch authorization.
+
 ## November 3 verified native daemon–pool integration (after test correction)
 
 [GitHub x86_64 full-stack CI 41676011529](https://github.com/tgibbsz32/forgecoin/actions/runs/41676011529) **PASSED** at combined test-only branch revision `8ccd3e4`. It compiled and linked both the *real* native C pool and `forged` daemon from a single frozen-consensus/pool-security source tree. It then started a genuine loopback-only FAKECHAIN daemon and a real localhost-restricted C pool with dummy public test destination, unavailable wallet-RPC endpoint, and payouts disabled. Pool HTTP statistics exposed the correct 1% fee and zero credited/pool-found blocks, and the pool consumed daemon block templates and reflected a newly mined FAKECHAIN block: pool zero-based `network_height 0→1` while daemon `get_info.height 1→2`. The same native job passed 66-vs-70-block deep fork convergence.

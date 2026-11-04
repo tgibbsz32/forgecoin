@@ -1,30 +1,70 @@
-> [Current mainnet specification, tokenomics and release status](../../docs/CURRENT_MAINNET.md) — October 26, 2026; prelaunch.
+> [Current mainnet specification, tokenomics and release status](../../docs/CURRENT_MAINNET.md) — prelaunch; public distribution NOT approved.
 
-# Building the ForgeCoin Desktop Application
+# Building ForgeCoin Windows Forms Desktop — November 4, 2026
 
-## Requirements
+The current `main` branch Windows Forms source can be compiled, but native
+ForgeCoin consensus **remains in draft integration PR #185**. A successful
+source compilation or presence of `forged.exe` is not acceptance of wallet
+recovery, private-key protection, funded transfers, solo/pool mining, compatible
+network identity or a clean Windows installer.
 
-- Windows with .NET Framework 4.x
-- A completed ForgeCoin Windows build containing `forged.exe` and `forge-wallet-rpc.exe`
-- The MinGW runtime DLLs used by that build
-- Optional XMRig 6.26.0 Windows x64 files for the Pool Mining tab
+## 1. Safe source-only compilation (no wallets or mining)
 
-The desktop source is a single Windows Forms application in `Program.cs`. The included build script compiles it with the .NET Framework C# compiler, copies the two ForgeCoin executables and required MinGW runtime libraries, and optionally packages XMRig.
-
-From PowerShell:
+Use Windows PowerShell and the .NET Framework 4.x C# compiler:
 
 ```powershell
-.\build.ps1 -ForgeBin C:\path\to\forgecoin\build\release\bin
+Set-Location apps/desktop
+.\build.ps1 -SourceOnly
 ```
 
-To include pool mining support, pass the extracted XMRig release directory:
+This checks the frozen documentation identity and creates only
+`qa-build/ForgeCoin-Desktop-SourceOnly/ForgeCoin Desktop.exe`.
+**No daemon, wallet RPC, XMRig binary or public release bundle is included.**
+The GUI is a source compilation artifact, not a functional wallet installer.
+Choose a fresh `-OutputRoot` for repeat compilations.
+
+## 2. Private prelaunch packaging only
+
+For a controlled, offline test of **exact existing prelaunch sidecars**:
 
 ```powershell
 .\build.ps1 `
-  -ForgeBin C:\path\to\forgecoin\build\release\bin `
-  -XmrigRoot C:\path\to\xmrig
+  -PrivatePrelaunch `
+  -ForgeBin C:\path\to\reviewed\native\bin `
+  -OutputRoot C:\path\to\unique-private-qa-output
 ```
 
-Do not restore the earlier binary-patching build process. This repository fixes the inherited checkpoint data and eight-decimal wallet formatting in source. Build the native binaries from this source tree before packaging the desktop application.
+The script verifies selected genesis nonce/hash, network UUID, ports
+39480/39481/39482, address prefixes 190/191/192, and release/payout locks
+against `docs/mainnet.identity.json`. It requires the native `forged.exe`
+and `forge-wallet-rpc.exe` SHA-256 files to exactly match the repository's
+**existing 20261026 private prelaunch candidate pins**. Unrecognized, legacy
+or modified executables are rejected before output creation. It never
+modifies existing private wallet data or repairs binaries in place. The
+output is marked `PRIVATE-PRELAUNCH-NOT-FOR-DISTRIBUTION.txt`.
 
-Place release binaries under an untracked `release` directory and publish them as tagged GitHub Release assets with SHA-256 checksums. If XMRig is included, also include its GPLv3 license and matching source archive.
+**These pinned hashes are NOT an independent proof** of clean source,
+reproducibility, final consensus, or a trustworthy signer. Public packaging
+without `-PrivatePrelaunch` is refused. Bundling XMRig is also blocked until
+a reviewed binary/source and GPL license/disclosure package is approved.
+Users can install an independent miner separately in future release testing.
+
+## Release gates (separate from build success)
+
+- Merge only independently reviewed frozen consensus and permanently reject
+  genesis-output spends, including a full signed native input-validation test.
+- Test native Windows wallet creation/recovery, wrong seed/password errors,
+  independent recipient confirmation, spend, rescan and restart behavior on
+  **disposable** wallets, never existing user wallets.
+- Validate real solo and Stratum pool mining, mature 99/1 pool accounting,
+  native wallet payout signing, and reorg-safe payout idempotency.
+- Verify signed native binary provenance, DLL dependencies, clean Windows
+  install/uninstall, security audit, and release manifest/checksums.
+- Audit public peer/bootstrap, Oracle listeners and retired ports, TLS,
+  explorer endpoints and pool website before user-facing distribution.
+- Only after explicit launch authorization may an audited public release
+  installer and tagged GitHub Release be published.
+
+Tauri has a separate [prelaunch README](../desktop-tauri/README.md) and
+requires manifest-pinned matching native sidecars, not old Windows Forms
+binaries substituted to satisfy a packaging build.

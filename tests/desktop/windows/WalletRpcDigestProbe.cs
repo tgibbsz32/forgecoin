@@ -21,6 +21,7 @@ namespace ForgeCoinDesktop
             request.Timeout = 5000;
             request.ReadWriteTimeout = 5000;
             request.KeepAlive = false;
+            request.ServicePoint.Expect100Continue = false; // Native epee HTTP server cannot handle 100-continue Digest handshake
             if (user != null)
             {
                 request.Credentials = new NetworkCredential(user, password);

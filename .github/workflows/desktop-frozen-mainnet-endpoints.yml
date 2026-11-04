@@ -121,6 +121,24 @@ jobs:
             (Join-Path $src 'SolanaWallet.cs') (Join-Path $src 'SolanaVault.cs') $test
           if ($LASTEXITCODE -ne 0) { throw 'Native GUI wallet acceptance harness compile failed' }
           Write-Output 'PASS: real native Create/Restore GUI harness compiled; on-machine private sidecar acceptance remains separate'
+      - name: Compile isolated native Windows GUI solo RandomX test harness
+        shell: pwsh
+        run: |
+          $src = Join-Path $PWD 'apps/desktop'
+          $test = Join-Path $PWD 'tests/desktop/windows/WinFormsSoloMiningQa.cs'
+          $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
+          $exe = Join-Path $env:RUNNER_TEMP 'FRG-Private-Solo-RandomX-GUI-QA.exe'
+          $files = @((Join-Path $src 'Program.cs'), (Join-Path $src 'FrgWalletInput.cs'), (Join-Path $src 'WalletRpcSession.cs'), (Join-Path $src 'WalletRpcDigestTransport.cs'), (Join-Path $src 'SolanaWallet.cs'), (Join-Path $src 'SolanaVault.cs'), $test)
+          & $compiler /nologo /target:exe /optimize+ /platform:anycpu /define:FRG_PRIVATE_UI_QA,FRG_PRIVATE_MINING_QA /main:ForgeCoinDesktop.WinFormsSoloMiningQa "/out:$exe" /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll $files
+          if ($LASTEXITCODE -ne 0) { throw 'Private GUI RandomX acceptance harness compilation failed' }
+          if (!(Test-Path $exe)) { throw 'Private GUI RandomX test executable absent' }
+          $forbidden = Join-Path $env:RUNNER_TEMP 'FRG-Forbidden-Mining-QA.exe'
+          & $compiler /nologo /target:exe /platform:anycpu /define:FRG_PRIVATE_MINING_QA /main:ForgeCoinDesktop.WinFormsSoloMiningQa "/out:$forbidden" /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll $files
+          if ($LASTEXITCODE -eq 0 -or (Test-Path $forbidden)) { throw 'Critical: mining QA compiled without the required private sandbox' }
+          Write-Output 'PASS: isolated GUI solo QA compiles, unsandboxed QA is rejected, public mining remains locked'
+          # GitHub pwsh propagates the EXPECTED compiler rejection via the
+          # automatic LASTEXITCODE variable even though the assertion passed.
+          $global:LASTEXITCODE = 0
       - name: Run native FRG offline wallet input and mnemonic validation cases
         shell: pwsh
         run: |

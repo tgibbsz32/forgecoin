@@ -236,6 +236,43 @@ real network node, public peer, funds, transfer, solo miner, pool
 connection or Oracle launch involved. This is **not a complete mainnet
 release or a signed, clean-install Windows application**.
 
+## November 4 — native Windows GUI RandomX SOLO mining acceptance
+
+[PR #225](https://github.com/tgibbsz32/forgecoin/pull/225) fixes the
+previous **three-second blocking native `start_mining` call**: the
+desktop GUI now initializes native RandomX in a background worker, with
+a bounded 60-second RPC timeout and visible start/stop/error state.
+The ordinary Windows desktop **still cannot start mainnet mining**.
+
+The separate **compile-time-only** private GUI QA entrypoint
+`tests/desktop/windows/WinFormsSoloMiningQa.cs` requires **both**
+`FRG_PRIVATE_UI_QA` and `FRG_PRIVATE_MINING_QA` defines. Compiling with
+the mining flag alone explicitly **fails**. Neither define is present in
+the normal `build.ps1` path. The harness creates a new temporary
+wallet-free data tree; runs only the hash-pinned historical
+`forged.exe` candidate on P2P/RPC **127.0.0.1**, `--offline`,
+`--out-peers 0 --in-peers 0`; and checks the frozen genesis hash before
+making any mining RPC call. No public or private peer may join.
+
+**Verified on connected Windows:** the actual Node → Mining tab →
+**Start Mining** → positive `mining_status.speed` →
+**Stop Mining** GUI flow passed **134 live native integration checks**;
+the native status reported **active**, then **inactive**, with
+zero network peers. The desktop security source tests passed
+**41/41**. Test process and chain files were cleaned up; FRG port
+listeners were absent afterwards. This is a real native RandomX
+operation, not a simulated GUI indicator. An independent local
+full-block propagation test existed previously, so this acceptance
+focuses on wiring **the GUI controls** to native RandomX, not
+repeating genesis mining.
+
+**Still missing:** GUI-to-native **pool/Stratum integration acceptance**,
+production consensus provenance/final review, clean install, and
+physical Android ARM64 wallet/miner functionality. The public wallet
+spend, public Stratum, native pool payout and Oracle launch gates remain
+off. **Do not package another public or private ZIP as a completion
+milestone until remaining application work has passed.**
+
 ## Release gates (separate from build success)
 
 - Merge only independently reviewed frozen consensus and permanently reject
@@ -243,8 +280,10 @@ release or a signed, clean-install Windows application**.
 - Test native Windows wallet creation/recovery, wrong seed/password errors,
   independent recipient confirmation, spend, rescan and restart behavior on
   **disposable** wallets, never existing user wallets.
-- Validate real solo and Stratum pool mining, mature 99/1 pool accounting,
-  native wallet payout signing, and reorg-safe payout idempotency.
+- Native Windows GUI solo RandomX start/hashrate/stop **passed isolated
+  offline integration QA**, but production consensus review remains.
+  Finish Stratum pool mining through the desktop GUI, then verify native
+  wallet payout signing and reorg-safe pool payout idempotency.
 - Verify signed native binary provenance, DLL dependencies, clean Windows
   install/uninstall, security audit, and release manifest/checksums.
 - Audit public peer/bootstrap, Oracle listeners and retired ports, TLS,

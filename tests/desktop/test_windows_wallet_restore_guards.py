@@ -66,6 +66,25 @@ class WindowsWalletRestoreGuards(unittest.TestCase):
         self.assertIn("retry automatically", self.source)
         self.assertIn("Interlocked.CompareExchange(ref transferInFlight, 1, 0)", self.source)
 
+    def test_windows_native_offline_restore_smoke_never_touches_public_chain(self):
+        script = (ROOT / "tools/smoke_windows_wallet_restore_offline.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("verify_candidate(candidate, manifest_path)", script)
+        self.assertIn("manifest.get(\"release_authorized\") is not False", script)
+        self.assertIn("windows_prelaunch_binaries_sha256", script)
+        self.assertIn('tempfile.TemporaryDirectory(prefix="frg-native-win-wallet-qa-")', script)
+        self.assertIn('"--rpc-bind-ip", "127.0.0.1"', script)
+        self.assertIn('"--daemon-address", f"127.0.0.1:{dead_daemon_port}"', script)
+        self.assertIn('"--no-dns"', script)
+        self.assertIn('"--no-initial-sync"', script)
+        self.assertIn('rpc(port, "restore_deterministic_wallet"', script)
+        self.assertIn('rpc(port, "close_wallet")', script)
+        self.assertNotIn('"start_mining"', script)
+        self.assertNotIn('"transfer"', script)
+        self.assertNotIn('print(seed)', script)
+        self.assertNotIn('print(original_address)', script)
+
     def test_native_helper_is_present_in_both_compilation_paths(self):
         self.assertIn('"$ProjectRoot\\FrgWalletInput.cs"', self.builder)
         self.assertIn("$frgWallet = Join-Path $src 'FrgWalletInput.cs'", self.ci)

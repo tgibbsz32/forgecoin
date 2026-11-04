@@ -112,6 +112,15 @@ jobs:
             (Join-Path $testDir 'WalletRpcDigestProbe.cs')
           if ($LASTEXITCODE -ne 0) { throw 'Digest harness compile failed' }
           Write-Output 'PASS: authenticated native wallet Digest QA test harness compiles'
+          $acceptance = Join-Path $env:RUNNER_TEMP 'FRG-Wallet-Native-Authenticated-Acceptance.exe'
+          & $compiler /nologo /target:exe /optimize+ "/out:$acceptance" `
+            /reference:System.dll /reference:System.Web.Extensions.dll `
+            (Join-Path $src 'WalletRpcSession.cs') `
+            (Join-Path $src 'WalletRpcDigestTransport.cs') `
+            (Join-Path $src 'FrgWalletInput.cs') `
+            (Join-Path $testDir 'WalletRpcSessionAcceptance.cs')
+          if ($LASTEXITCODE -ne 0) { throw 'Native wallet authenticated lifecycle test compile failed' }
+          Write-Output 'PASS: authenticated create/restore/restart acceptance harness compiles (native execution separately verified on pinned Windows machine)'
       - name: Exercise fail-closed private packaging and source-only QA path
         shell: pwsh
         run: |

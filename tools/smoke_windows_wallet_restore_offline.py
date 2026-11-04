@@ -110,15 +110,20 @@ def unauthenticated_request_is_denied(port: int) -> None:
 
 
 def wait_ready(process: subprocess.Popen, port: int, deadline: float) -> None:
+    last_type, last_code = "none", "none"
     while time.monotonic() < deadline:
         if process.poll() is not None:
             raise WalletRpcUnverified("Wallet RPC process exited before ready")
         try:
             rpc(port, "get_version", timeout=1.5)
             return
-        except Exception:
+        except Exception as exc:
+            last_type = type(exc).__name__
+            last_code = str(getattr(exc, "code", "none"))
             time.sleep(0.25)
-    raise WalletRpcUnverified("Loopback wallet RPC readiness timeout")
+    raise WalletRpcUnverified("Loopback wallet RPC readiness timeout; "
+                              "last exception class=" + last_type +
+                              ", HTTP status=" + last_code)
 
 
 def launch(binary: Path, home: Path, wallet_dir: Path,
@@ -276,9 +281,14 @@ def main() -> int:
     args = parser.parse_args()
     try:
         run(args.wallet_rpc.resolve(), args.manifest.resolve(), args.max_seconds)
-    except Exception:
-        # Never print service-provided error text, secret, password, tracebacks
-        # or private wallet paths. Diagnostics may contain a mnemonic.
+    except Exception as exc:
+        # Only our own deliberately sanitized error types can be displayed.
+        # Never print service-provided text, any seed, secret or traceback.
+        if type(exc) is WalletRpcUnverified:
+            print("QA SAFE DIAGNOSTIC: " + str(exc), file=sys.stderr)
+        else:
+            print("QA SAFE DIAGNOSTIC: exception class " +
+                  type(exc).__name__, file=sys.stderr)
         print("FAIL: native Windows offline wallet create/restore QA did not "
               "complete; no release acceptance claimed", file=sys.stderr)
         return 1

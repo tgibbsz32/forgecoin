@@ -19,6 +19,7 @@ import urllib.error
 import urllib.request
 
 from smoke_frozen_prelaunch_daemon import call_rpc, require_result, take_free_port
+from forgecoin_chain_risk import assess as assess_chain_risk, take_snapshot as risk_snapshot
 
 ROOT = Path(__file__).resolve().parents[1]
 FROZEN_GENESIS = "4bf18252cc83e0b0482b19b751e4409d415a4d8e281b13f32d0b153d77d2e02c"
@@ -187,6 +188,32 @@ def wait_for_reorg(a_rpc: int, b_rpc: int, winning_height: int,
     )
 
 
+def observe_real_nodes(a_rpc: int, b_rpc: int, deadline: float) -> dict:
+    """Use the exact read-only production observer against disposable native nodes.
+
+    RPC may briefly stall during LMDB reorganization. Retry only until the
+    finite test deadline, never silently accept incomplete/malformed samples.
+    """
+    snapshots = {}
+    for name, port in (("fork-a", a_rpc), ("fork-b", b_rpc)):
+        last_error = None
+        while time.monotonic() < deadline:
+            try:
+                snapshots[name] = risk_snapshot(
+                    f"http://127.0.0.1:{port}/json_rpc", window=96
+                )
+                break
+            except (OSError, TimeoutError, ConnectionError, ValueError, KeyError) as exc:
+                last_error = exc
+                time.sleep(0.5)
+        if name not in snapshots:
+            raise AssertionError(
+                f"Independent read-only observer could not verify {name}: "
+                f"{type(last_error).__name__}"
+            )
+    return snapshots
+
+
 def run(binary: Path, manifest: dict, max_seconds: int) -> None:
     if os.name == "nt":
         raise SystemExit("Run only in disposable Linux CI, not on desktop/Oracle")
@@ -255,6 +282,24 @@ def run(binary: Path, manifest: dict, max_seconds: int) -> None:
                 f"A={FORK_A_BLOCKS}, B={FORK_B_BLOCKS}, shared frozen genesis",
                 flush=True,
             )
+            # True native LMDB + read-only daemon RPC sampling; no made-up
+            # monitor snapshots. Local processes are NOT independent operators.
+            pre_observation = observe_real_nodes(
+                a_rpc, b_rpc, time.monotonic() + max_seconds
+            )
+            pre_events, _ = assess_chain_risk(
+                pre_observation, now=time.time(), alert_depth=3
+            )
+            pre_codes = {event.get("code") for event in pre_events}
+            if "node_divergence" not in pre_codes or "node_height_gap" not in pre_codes:
+                raise AssertionError(
+                    "Real read-only observer failed to flag native competing forks"
+                )
+            print(
+                "PASS: actual two-node read-only chain observer detected "
+                "FAKECHAIN divergence and height gap before P2P convergence",
+                flush=True,
+            )
             # Native RandomX initialization is separate from P2P convergence;
             # do not count time spent mining toward the reorganization timeout.
             deadline = time.monotonic() + max_seconds
@@ -298,6 +343,34 @@ def run(binary: Path, manifest: dict, max_seconds: int) -> None:
             print(
                 f"PASS: native FAKECHAIN P2P reorg displaced {FORK_A_BLOCKS} "
                 f"formerly canonical blocks; B reached height {FORK_B_BLOCKS}",
+                flush=True,
+            )
+            post_observation = observe_real_nodes(
+                a_rpc, b_rpc, time.monotonic() + max_seconds
+            )
+            post_events, _ = assess_chain_risk(
+                post_observation, previous=pre_observation,
+                now=time.time(), alert_depth=3
+            )
+            if any(event.get("code") in ("node_divergence", "node_height_gap")
+                   for event in post_events):
+                raise AssertionError(
+                    "Read-only observer still reports divergent canonical nodes after reorg"
+                )
+            reorg_alerts = [
+                event for event in post_events
+                if (event.get("node") == "fork-a"
+                    and event.get("code") == "observed_reorg"
+                    and event.get("minimum_depth", 0) >= FORK_A_BLOCKS
+                    and event.get("severity") == "critical")
+            ]
+            if not reorg_alerts:
+                raise AssertionError(
+                    "Read-only observer missed genuine 66-deep canonical hash replacement"
+                )
+            print(
+                "PASS: read-only chain observer flagged critical 66-block "
+                "history replacement and confirmed final node convergence",
                 flush=True,
             )
 

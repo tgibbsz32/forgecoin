@@ -1665,10 +1665,11 @@ namespace ForgeCoinDesktop
                         miningState.BackColor = active ? Color.FromArgb(53, 145, 92) : Color.FromArgb(110, 118, 130);
                         startMiningButton.Enabled = NativeMiningAuthorized && !active && Interlocked.CompareExchange(ref miningStartInFlight, 0, 0) == 0; stopMiningButton.Enabled = active;
 #if FRG_PRIVATE_MINING_QA
-                        startMiningButton.Enabled = !active && IsolatedSoloQaReady() && Interlocked.CompareExchange(ref miningStartInFlight, 0, 0) == 0;
-#endif
-#if FRG_PRIVATE_MINING_QA
-                        startMiningButton.Enabled = !active && IsolatedSoloQaReady();
+                        // Preserve the in-flight guard during every status refresh:
+                        // polling must not re-enable Start while native RPC startup
+                        // is still pending in the background.
+                        startMiningButton.Enabled = !active && IsolatedSoloQaReady() &&
+                            Interlocked.CompareExchange(ref miningStartInFlight, 0, 0) == 0;
 #endif
                         string payout = status.Contains("address") ? Shorten(Convert.ToString(status["address"]), 18) : Shorten(fallbackPayout, 18);
                         miningNodeDetailLabel.Text = "Node monitor: " + (offline ? "OFFLINE BOOTSTRAP" : (synchronized ? "ONLINE / synchronized" : "ONLINE / waiting for peer")) + " • Block " + Math.Max(0, chainHeight - 1) + " • Peers " + peers;

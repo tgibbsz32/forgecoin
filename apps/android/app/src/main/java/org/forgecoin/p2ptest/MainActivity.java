@@ -75,6 +75,29 @@ public class MainActivity extends Activity {
         deviceSafetyStatus=label("Reading device status...",12,WHITE);
         deviceSafetyStatus.setContentDescription("Read-only mining device diagnostics");
         mine.addView(deviceSafetyStatus);
+        // Non-secret intensity preference only. This debug screen does NOT
+        // pass it to a miner (no certified native miner exists).
+        mine.addView(label("FUTURE MINING INTENSITY (PREVIEW ONLY)",13,CYAN));
+        final TextView intensityHint=label("",12,WHITE);
+        final SeekBar intensity=new SeekBar(this);
+        intensity.setMax(100);
+        intensity.setMin(1);
+        int initial=getPreferences(MODE_PRIVATE).getInt("future-mining-intensity",50);
+        intensity.setProgress(Math.max(1,Math.min(100,initial)));
+        intensityHint.setText("Requested intensity: "+intensity.getProgress()+"% — mining disabled");
+        intensity.setContentDescription("Proposed future mining intensity; no CPU work starts");
+        intensity.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+            public void onProgressChanged(SeekBar bar,int value,boolean user){
+                intensityHint.setText("Requested intensity: "+value+"% — mining disabled");
+                if(user) getPreferences(MODE_PRIVATE).edit()
+                    .putInt("future-mining-intensity",value).apply();
+            }
+            public void onStartTrackingTouch(SeekBar bar){}
+            public void onStopTrackingTouch(SeekBar bar){}
+        });
+        mine.addView(intensity);
+        mine.addView(intensityHint);
+        mine.addView(label("Safety policy: severe heat, battery saver, low battery, unknown sensors or lack of a foreground service prohibit native mining. Current preview runtime is never approved.",12,MUTED));
         LinearLayout explore=panel(root);explore.addView(label("BLOCK EXPLORER & POOL STATS",17,CYAN));
         explore.addView(label("Read-only web tools. Statistics must be treated as unavailable until the production network and pool are validated.",13,MUTED));
         link("Pool dashboard", "https://tgibbsz32.github.io/forgecoin/pool.html",explore);

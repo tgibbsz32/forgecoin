@@ -25,7 +25,7 @@ class WalletFAKECHAINGuards(unittest.TestCase):
         self.assertIn("require_manifest(manifest)", s)
         self.assertIn('manifest.get("genesis_hash") != FROZEN_GENESIS', s)
         self.assertIn("offline=True", s)
-        self.assertIn("TemporaryDirectory(prefix=\"frg-native-wallet-FAKECHAIN-\"")", s)
+        self.assertIn('TemporaryDirectory(prefix="frg-native-wallet-FAKECHAIN-"', s)
         self.assertIn('"--rpc-bind-ip", "127.0.0.1"', s)
         self.assertIn('"--daemon-address", f"127.0.0.1:{daemon_port}"', s)
         self.assertIn('"--wallet-dir", str(wallet_dir)', s)

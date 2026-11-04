@@ -8,6 +8,8 @@
 
 > **November 4 release readiness:** [Desktop wallet/miner, Android wallet/miner, native pool, explorer and public deployment acceptance matrix](docs/RELEASE_READINESS_2026-11-04.md). Native FAKECHAIN transaction signature, confirmed receipt and recipient-wallet restart tests **passed**; these do **not** mean public wallet payouts or mainnet mining are enabled. Official Windows/Android public downloads and a live mining pool remain **unavailable**. No seed phrase, private key, wallet password or miner credentials should be submitted to a website or third party.
 
+> **Windows and Android test builds, not public releases:** [Windows native wallet recovery QA #218](https://github.com/tgibbsz32/forgecoin/pull/218) created and restored a 25-word disposable wallet using a genuine hash-pinned Windows wallet RPC, then reopened it after process restart without mining. A private Windows GUI ZIP was built locally, with native sends and mining still locked. [Android RandomX QA #219](https://github.com/tgibbsz32/forgecoin/pull/219) added a one-shot native ARM64 known-answer hash test; the restricted APK and 23 JVM tests passed, but the physical ARM64 hash has not been exercised and the app still has no native FRG wallet/miner. **These tests do not authorize public mainnet activation, Oracle cutover, wallet funding or downloads.**
+
 ![ForgeCoin mark](docs/images/forgecoin-logo.png)
 
 ForgeCoin is an experimental, privacy-preserving, proof-of-work cryptocurrency derived from Monero v0.18.5.1. It uses RandomX CPU mining, private transactions, a two-minute target block time, and a desktop wallet that can run a node, wallet, miner, and local blockchain explorer from one application.

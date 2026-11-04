@@ -110,7 +110,7 @@ def unauthenticated_request_is_denied(port: int) -> None:
 
 
 def wait_ready(process: subprocess.Popen, port: int, deadline: float) -> None:
-    last_type, last_code = "none", "none"
+    last_type, last_code, last_scheme = "none", "none", "none"
     while time.monotonic() < deadline:
         if process.poll() is not None:
             raise WalletRpcUnverified("Wallet RPC process exited before ready")
@@ -120,10 +120,14 @@ def wait_ready(process: subprocess.Popen, port: int, deadline: float) -> None:
         except Exception as exc:
             last_type = type(exc).__name__
             last_code = str(getattr(exc, "code", "none"))
+            if isinstance(exc, HTTPError):
+                challenge = exc.headers.get("WWW-Authenticate", "")
+                last_scheme = challenge.split(" ", 1)[0][:16] if challenge else "missing"
             time.sleep(0.25)
     raise WalletRpcUnverified("Loopback wallet RPC readiness timeout; "
                               "last exception class=" + last_type +
-                              ", HTTP status=" + last_code)
+                              ", HTTP status=" + last_code +
+                              ", WWW-Authenticate scheme=" + last_scheme)
 
 
 def launch(binary: Path, home: Path, wallet_dir: Path,

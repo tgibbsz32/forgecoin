@@ -87,6 +87,28 @@ class AndroidPreviewTest(unittest.TestCase):
         self.assertNotIn("startMining(", source)
         self.assertNotIn("start_mining", policy)
 
+    def test_one_hash_randomx_selftest_is_bounded_and_offline(self):
+        jroot = ROOT / "apps/android/app/src/main/java/org/forgecoin/p2ptest"
+        java = (jroot / "MainActivity.java").read_text(encoding="utf-8")
+        selftest = (jroot / "RandomXSelfTest.java").read_text(encoding="utf-8")
+        self.assertIn('BuildConfig.DEBUG,mine,()->askRandomXSelfTest()', java)
+        self.assertIn("RandomXSelfTest.runOnce()", java)
+        self.assertIn("compareAndSet(false,true)", java)
+        self.assertIn('worker.setDaemon(true)', java)
+        self.assertIn("PowerManager.THERMAL_STATUS_MODERATE", java)
+        self.assertIn("battery<20", java.replace("((long)level*100/scale)", "battery"))
+        self.assertIn("memory.availMem<512L*1024L*1024L", java)
+        self.assertIn("No wallet, mining, network or pool access", java)
+        self.assertIn('"test key 000"', selftest)
+        self.assertIn('"This is a test"', selftest)
+        self.assertIn("MessageDigest.isEqual(EXPECTED, hash)", selftest)
+        self.assertIn("NativeRandomX.hash(KEY.clone(), MESSAGE.clone())", selftest)
+        for forbidden in ("start_mining", "transfer_split", "get_block_template",
+                          "stratum+", "wallet-rpc", "Socket(", "HttpURLConnection"):
+            self.assertNotIn(forbidden, selftest)
+        self.assertIn('"Start solo mining — unavailable",false,mine,null', java)
+        self.assertIn('"Start pool mining — unavailable",false,mine,null', java)
+
     def test_source_keeps_real_controls_disabled_and_correct_status_url(self):
         s = (ROOT / "apps/android/app/src/main/java/org/forgecoin/p2ptest/MainActivity.java").read_text(encoding="utf-8")
         for caption, panel in (("Start solo mining", "mine"), ("Start pool mining", "mine"),

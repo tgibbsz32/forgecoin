@@ -39,7 +39,10 @@ namespace ForgeCoinDesktop
             req.ReadWriteTimeout = timeout;
             req.Proxy = null;
             req.AllowAutoRedirect = false;
-            req.KeepAlive = false;
+            // Native epee wallet HTTP Digest binds the challenge nonce to
+            // the underlying keep-alive connection. Closing it here causes
+            // correct signed requests to fail with stale=true.
+            req.KeepAlive = true;
             req.ServicePoint.Expect100Continue = false;
             if (auth != null) req.Headers[HttpRequestHeader.Authorization] = auth;
             return req;
@@ -132,6 +135,22 @@ namespace ForgeCoinDesktop
                 using (response)
                 {
                     Check(response.StatusCode == HttpStatusCode.Unauthorized);
+                    // Fully drain the harmless 401 body before the next
+                    // HttpWebRequest, so .NET returns this authenticated
+                    // challenge connection to its persistent connection pool.
+                    using (Stream denied = response.GetResponseStream())
+                    {
+                        if (denied != null)
+                        {
+                            byte[] buffer = new byte[2048];
+                            int total = 0, count;
+                            while ((count = denied.Read(buffer, 0, buffer.Length)) > 0)
+                            {
+                                total += count;
+                                Check(total <= 8192);
+                            }
+                        }
+                    }
                     // Native epee advertises BOTH Digest MD5 and MD5-sess.
                     // .NET's automatic handler and urllib can misparse the
                     // two WWW-Authenticate challenges as one combined value.

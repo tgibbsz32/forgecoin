@@ -90,19 +90,17 @@ namespace ForgeCoinDesktop
             }
         }
 
-        public void Authenticate(HttpWebRequest request)
+        public string PostJson(string url, string json, int timeoutMs)
         {
             if (disposed || password == null)
                 throw new InvalidOperationException("Wallet RPC authentication has ended.");
-            if (request == null || request.RequestUri == null ||
-                !String.Equals(request.RequestUri.Host, "127.0.0.1", StringComparison.Ordinal) ||
-                request.RequestUri.Port != 39484 ||
-                !String.Equals(request.RequestUri.Scheme, "http", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("Wallet authentication may only reach the local wallet RPC endpoint.");
-            request.Credentials = new NetworkCredential(user, password);
-            request.PreAuthenticate = true;
-            request.AllowAutoRedirect = false;
-            request.Proxy = null;
+            Uri target = new Uri(url);
+            if (target.Scheme != "http" || target.Host != "127.0.0.1" ||
+                target.Port != 39484 || target.AbsolutePath != "/json_rpc")
+                throw new InvalidOperationException(
+                    "Wallet RPC is restricted to its dedicated localhost endpoint.");
+            return WalletRpcDigestTransport.PostJson(target, user, password,
+                                                     json, timeoutMs);
         }
 
         public void DeleteStartupConfig()

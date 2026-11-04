@@ -49,6 +49,44 @@ without `-PrivatePrelaunch` is refused. Bundling XMRig is also blocked until
 a reviewed binary/source and GPL license/disclosure package is approved.
 Users can install an independent miner separately in future release testing.
 
+## November 4 native wallet GUI integration (private QA only)
+
+The Windows Forms UI now includes **Restore 25 words** for disposable,
+English-language, Monero-derived native FRG test wallets. It supplies the
+restoration RPC with `restore_height=0` to rescan from genesis, checks a
+plausible returned public address, enforces a distinct non-existing wallet
+filename and 12-character minimum password, and does not print a mnemonic,
+wallet password or RPC error payload. Recovery entry is never sent to
+websites or cloud services; it reaches the local wallet-RPC process only.
+The backend must be a separately reviewed native FRG wallet, **not an
+old-chain or funded owner wallet**.
+
+Send input now uses a separately testable exact **8-decimal atomic-unit**
+parser: it refuses rounding, commas, scientific notation, overflow and
+nonpositive values. It prepares a native `validate_address` RPC call
+before any later transfer, requests no transaction secret key and treats
+wallet-RPC timeouts as *ambiguous*: the UI must not automatically retry.
+Native solo/pool mining and native spending are still **hard-locked in
+the desktop code** until explicit launch acceptance. This is preparatory
+GUI integration, not a wallet transfer or accepted mining demonstration.
+
+### Repeatable offline Windows QA checks
+
+Run in a fresh clean checkout on Windows with the .NET Framework 4.x
+compiler:
+
+```powershell
+python -m unittest discover -s tests/desktop -p "test_*.py" -q
+& "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /target:exe /reference:System.dll /out:"$env:TEMP\FrgWalletInputTests.exe" apps/desktop/FrgWalletInput.cs tests/desktop/windows/FrgWalletInputTests.cs
+& "$env:TEMP\FrgWalletInputTests.exe"
+.\apps\desktop\build.ps1 -SourceOnly -OutputRoot "$env:TEMP\FRG-Desktop-QA-New"
+```
+
+The connected Windows QA checkout passed **29 desktop Python tests**, **49
+C# wallet input assertions**, and **Windows Forms source-only compilation**.
+This does *not* validate a real native RPC restore, clean installation or
+any spend; those require independently approved disposable test-sidecars.
+
 ## Release gates (separate from build success)
 
 - Merge only independently reviewed frozen consensus and permanently reject

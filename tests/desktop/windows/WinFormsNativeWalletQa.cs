@@ -130,12 +130,15 @@ namespace ForgeCoinDesktop
                 "frg-windows-gui-qa-" + Guid.NewGuid().ToString("N"));
             string qaBin = Path.Combine(temporary, "bin");
             MainForm form = null;
+            string stage = "initial";
             try
             {
                 Check(args.Length == 1, "Require the private candidate binary folder");
+                stage = "ports";
                 EnsureLoopbackPortUnused(39481);
                 EnsureLoopbackPortUnused(39484);
                 Directory.CreateDirectory(qaBin);
+                stage = "candidate";
                 CopyPinnedWallet(args[0], qaBin);
                 Environment.SetEnvironmentVariable("FRG_PRIVATE_UI_QA_ROOT", temporary);
                 Environment.SetEnvironmentVariable("FRG_PRIVATE_UI_QA_BIN", qaBin);
@@ -143,6 +146,7 @@ namespace ForgeCoinDesktop
                 Application.SetCompatibleTextRenderingDefault(false);
                 string password = Guid.NewGuid().ToString("N") + "Qa";
                 string seed = null;
+                stage = "form";
                 form = new MainForm();
                 form.Show();
                 Application.DoEvents();
@@ -179,6 +183,7 @@ namespace ForgeCoinDesktop
                         }
                     };
                     timer.Start();
+                    stage = "create_button";
                     create.PerformClick(); // actual GUI Create button; native RPC
                     timer.Stop();
                 }
@@ -193,6 +198,7 @@ namespace ForgeCoinDesktop
                 Check(Directory.Exists(configFolder) &&
                       Directory.GetFiles(configFolder, "*.conf").Length == 0,
                       "Sensitive startup RPC config was not deleted after authentication");
+                stage = "get_original_address";
                 string addressOriginal = GetAddress(form);
                 Check(!send.Enabled && !solo.Enabled && !pool.Enabled,
                       "Creating disposable wallet improperly enabled mainnet payments/mining");
@@ -225,11 +231,13 @@ namespace ForgeCoinDesktop
                         }
                     };
                     timer.Start();
+                    stage = "restore_button";
                     restore.PerformClick(); // actual GUI Restore button; native RPC
                     timer.Stop();
                 }
                 Check(restoreDialogSeen, "GUI native 25-word restore dialog did not open");
                 Check((bool)Field<object>(form, "walletOpen"), "GUI failed to open restored wallet");
+                stage = "get_restored_address";
                 string addressRestored = GetAddress(form);
                 Check(String.Equals(addressOriginal, addressRestored,
                                     StringComparison.Ordinal),
@@ -259,7 +267,7 @@ namespace ForgeCoinDesktop
                 // Native RPC errors, passwords, addresses and mnemonic text
                 // must never be written to logs.
                 Console.Error.WriteLine("FAIL: private native GUI wallet acceptance: " +
-                                        failure.GetType().Name);
+                                        failure.GetType().Name + " at stage " + stage);
                 return 1;
             }
             finally

@@ -32,3 +32,7 @@ jobs:
         run: |
           gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 -o /tmp/frg-payout-manifest-test services/official_pool/tests/test_payout_manifest.c -lcrypto
           /tmp/frg-payout-manifest-test
+      - name: Reserve a canonical source-bound batch in real full-sync LMDB (NO wallet)
+        run: |
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 -o /tmp/frg-payout-reservation-test services/official_pool/tests/test_payout_batch_reservation_lmdb.c -llmdb -lcrypto
+          /tmp/frg-payout-reservation-test

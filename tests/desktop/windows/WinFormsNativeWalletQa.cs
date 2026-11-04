@@ -263,9 +263,11 @@ namespace ForgeCoinDesktop
                 Check((bool)Field<object>(form, "walletOpen"), "GUI failed to open restored wallet");
                 stage = "get_restored_address";
                 string addressRestored = GetAddress(form);
+                Console.WriteLine("QA_NATIVE_GUI: restored address read through authenticated RPC");
                 Check(String.Equals(addressOriginal, addressRestored,
                                     StringComparison.Ordinal),
                       "GUI recovery did not reproduce the original native public address");
+                Console.WriteLine("QA_NATIVE_GUI: original and restored native public addresses match");
 
                 close.PerformClick();
                 Check(!(bool)Field<object>(form, "walletOpen"), "Restored wallet remained open");

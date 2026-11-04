@@ -15,6 +15,29 @@ The source contains a fail-closed APK verifier at `tools/verify_android_preview_
 
 This preview intentionally does **not** create/restore an FRG wallet, transfer coins, mine, start an approved daemon, or connect to a public pool. P2P port `39480` is selected for future verified peers, while local RPC uses a private ephemeral loopback port. Public launch approval is unchanged.
 
+## November 4, 2026: read-only mining safety diagnostics and build validation
+
+A restricted Android GUI now displays **battery percentage and charging state,
+Android thermal status (when API 29+ exposes it), power-saver state and logical
+CPU count** as read-only diagnostics. This is groundwork for a future
+temperature/battery-aware native RandomX worker, **not** the worker itself.
+The solo and pool mining buttons, native FRG wallet creation/recovery, FRG
+send/receive and payout functions remain disabled.
+
+The connected Windows development computer compiled this branch using
+JDK 21, Gradle 8.11.1, Android Gradle Plugin 8.9.2 and SDK 35.
+`assembleDebug`, `testDebugUnitTest` and six offline Android preview
+source/negative security checks passed. After removing the deprecated
+`android:extractNativeLibs` manifest override and targeting Java 17, the
+restricted preview verifier passed against a **3,629,747-byte** debug APK,
+SHA-256 `24ae102b12a003671f8345d2f68fa7fe4481ec943ca4e246333a2ddad7ae97e3`,
+application ID `org.forgecoin.p2ptest.isolatedqa` (debug signed, not a release).
+Only `libforge_randomx.so` and `libforge_runtime_probe.so` are bundled;
+**no native FRG daemon, wallet RPC, funded wallet or usable mining executable**.
+The general MainActivity deprecated-API note still requires review. ADB found
+**no connected physical handset**. None of this is verified on a real ARM64
+device and no production APK or public download has been approved.
+
 ## Remaining mandatory engineering gates
 1. Port, compile and verify ARM64-v8a native ForgeCoin daemon, wallet APIs and RandomX mining component for the frozen 20261026 mainnet, with consensus and genesis checks against independent x64/ARM64 nodes. No old P2P daemon.
 2. Implement native non-custodial wallet creation, wallet restoration from seed, encrypted seed storage using Android Keystore-backed keys, address display, synchronization, balance, safe send and restore tests. Avoid server custody and remote wallet RPC.

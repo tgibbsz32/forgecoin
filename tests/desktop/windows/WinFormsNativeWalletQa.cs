@@ -161,6 +161,7 @@ namespace ForgeCoinDesktop
                 form = new MainForm();
                 form.Show();
                 Application.DoEvents();
+                Console.WriteLine("QA_NATIVE_GUI: visible main form");
                 TabControl tabs = FindTabs(form);
                 Check(tabs != null, "Native QA main tabs not found");
                 TabPage walletPage = null;
@@ -196,6 +197,7 @@ namespace ForgeCoinDesktop
                             var done = SearchButton(modal, "I saved it");
                             Check(done != null, "Seed backup dialog has no completion button");
                             seedDialogSeen = true;
+                            Console.WriteLine("QA_NATIVE_GUI: seed backup dialog observed");
                             timer.Stop();
                             done.PerformClick();
                             break;
@@ -203,9 +205,11 @@ namespace ForgeCoinDesktop
                     };
                     timer.Start();
                     stage = "create_button";
+                    Console.WriteLine("QA_NATIVE_GUI: create button clicked");
                     create.PerformClick(); // actual GUI Create button; native RPC
                     timer.Stop();
                 }
+                Console.WriteLine("QA_NATIVE_GUI: create button returned");
                 Check(seedDialogSeen && seed != null && seed.Split(' ').Length == 25,
                       "GUI never displayed native 25-word wallet backup");
                 Check(Field<Process>(form, "walletRpc") != null,
@@ -251,6 +255,7 @@ namespace ForgeCoinDesktop
                     };
                     timer.Start();
                     stage = "restore_button";
+                    Console.WriteLine("QA_NATIVE_GUI: restore button clicked");
                     restore.PerformClick(); // actual GUI Restore button; native RPC
                     timer.Stop();
                 }

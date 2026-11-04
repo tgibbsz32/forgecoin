@@ -309,3 +309,40 @@ or wallet signing has been proven by this change.** Canonical daemon
 identity and frozen genesis must be reviewed independently before
 private loopback end-to-end Stratum/RandomX acceptance, and Oracle/public
 activation remains a separate final owner-controlled step.
+
+
+## November 4, 2026 — source-credit payout batch reservation (test-only)
+
+The native pool now includes `frg_payout_batch_reservation.h`, a dormant
+full-sync LMDB safety coordinator that **joins the existing deterministic
+source-credit manifest to the durable payout-intent journal** without any
+wallet RPC. It accepts only the approved frozen chain UUID; canonicalizes
+the caller-supplied source-credit digest and ordered recipient amounts into
+a stable source-bound batch ID and a separate manifest hash; then performs a
+**serial, single-transaction check that no prior payout intent exists and
+inserts the new immutable PREPARED record**. After commit, it forces an LMDB
+sync and verifies the stored record before returning the batch ID, commitment
+and atomic amount to the caller. Any previous intent, corruption, disabled
+durability mode, conflicting batch or restart refuses a new reservation.
+The journal has **no settlement, removal or retry API**.
+
+This is a **necessary pre-send invariant, not an authorized payout path**.
+The input source-credit digest, chain anchor, maturity, recipient address
+checksum and fee budget must still be validated independently against the
+canonical native chain and LMDB accounting; the manifest itself only
+commits to caller-supplied bytes. No wallet keys, transfer signatures, miners,
+explorers, payments, debit from `db_balance` or live network are involved.
+The native legacy `transfer_split` sender still has an unconditional
+`#error` if `FRG_TESTED_WALLET_PAYOUTS` is defined, and public pool
+payouts remain disabled. Never promote a journaled candidate transaction ID
+to a settled payout without separate canonical confirmation and idempotent
+LMDB debit/payment commit under a reviewed crash/reorg protocol.
+
+**Executed QA on authorized Windows/WSL checkout:** 42 Python native pool
+source/safety tests; 87 C assertions against real temporary full-sync LMDB,
+including flush, restart, duplicate sources, mutated sources, timeout ambiguity,
+unverified tx candidate, corruption and `MDB_NOSYNC` refusal; and the prior
+native manifest and intent-journal tests. The GitHub payout-intent workflow
+also compiles and executes this integration fixture. No ZIP/APK was created,
+no production host or wallet was accessed, and the frozen consensus prelaunch
+lock remains in place.

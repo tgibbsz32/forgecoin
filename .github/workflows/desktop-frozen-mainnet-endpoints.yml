@@ -107,4 +107,20 @@ jobs:
           if (Test-Path $unexpected) {
             throw 'Denied public packaging created an artifact'
           }
-          Write-Output 'PASS: source-only build and non-mutating public release refusal'
+          $fake = Join-Path $env:RUNNER_TEMP 'FRG-Tampered-Native-Sidecars'
+          New-Item -ItemType Directory -Path $fake -Force | Out-Null
+          Set-Content -LiteralPath (Join-Path $fake 'forged.exe') -Value 'not native'
+          Set-Content -LiteralPath (Join-Path $fake 'forge-wallet-rpc.exe') -Value 'not native'
+          $rejected = Join-Path $env:RUNNER_TEMP 'FRG-Tampered-Package'
+          try {
+            & (Join-Path $src 'build.ps1') -PrivatePrelaunch -ForgeBin $fake -OutputRoot $rejected
+            throw 'Tampered sidecar packaging unexpectedly succeeded'
+          } catch {
+            if ($_.Exception.Message -notmatch 'sidecar hash mismatch') {
+              throw
+            }
+          }
+          if (Test-Path $rejected) {
+            throw 'Mismatched sidecars created a package'
+          }
+          Write-Output 'PASS: source-only build, public-release denial and tampered sidecar rejection'

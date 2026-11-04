@@ -71,6 +71,22 @@ class AndroidPreviewTest(unittest.TestCase):
         self.assertNotIn('android:extractNativeLibs=', manifest)
         self.assertIn("JavaVersion.VERSION_17", gradle)
 
+    def test_intensity_preferences_never_enable_native_mining(self):
+        java = (ROOT / "apps/android/app/src/main/java/org/forgecoin/p2ptest")
+        source = (java / "MainActivity.java").read_text(encoding="utf-8")
+        policy = (java / "MiningSafetyPolicy.java").read_text(encoding="utf-8")
+        self.assertIn("future-mining-intensity", source)
+        self.assertIn("PREVIEW ONLY", source)
+        self.assertIn("mining disabled", source)
+        self.assertIn("if (!runtimeApproved)", policy)
+        self.assertIn("if (!foregroundActive)", policy)
+        self.assertIn("if (batterySaver)", policy)
+        self.assertIn("thermalStatus >= THERMAL_SEVERE", policy)
+        self.assertIn("frg", policy.lower())
+        self.assertNotIn("ProcessBuilder", policy)
+        self.assertNotIn("startMining(", source)
+        self.assertNotIn("start_mining", policy)
+
     def test_source_keeps_real_controls_disabled_and_correct_status_url(self):
         s = (ROOT / "apps/android/app/src/main/java/org/forgecoin/p2ptest/MainActivity.java").read_text(encoding="utf-8")
         for caption, panel in (("Start solo mining", "mine"), ("Start pool mining", "mine"),

@@ -1,98 +1,128 @@
-// Isolated native ring-signature regression for ForgeCoin's genesis exclusion.
-// A cryptographically valid signed ring is still not eligible for MAINNET
-// if any one of its on-chain output creation heights equals zero.
-// This deliberately does NOT create a wallet transaction, bypass prelaunch,
-// or claim a real genesis private key / signed spending witness.
+// Native cryptographic regression using the REAL frozen genesis public output.
+//
+// The public key is parsed from config/mainnet.identity.json's serialized
+// genesis coinbase by tools/extract_frozen_genesis_output_key.py.
+// It participates as a decoy in otherwise VALID genuine ring signatures.
+// The validator's per-member genesis-height rule must still deny the ring.
+//
+// This is NOT a signed transaction submitted to a native daemon, nor proof
+// of a real genesis spend. The real genesis secret is never available.
 #include "crypto/crypto.h"
 #include "cryptonote_basic/forgecoin_prelaunch.h"
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace {
+
 void require(bool condition, const char *message) {
   if (!condition) throw std::runtime_error(message);
 }
 
-bool consensus_ring_eligible(bool mainnet,
-                             const std::vector<std::uint64_t> &heights) {
-  // Exactly the per-output policy invoked by
-  // Blockchain::scan_outputkeys_for_indexes after native LMDB height lookup.
-  for (const auto creation_height : heights)
-    if (!cryptonote::forgecoin_prelaunch::output_allowed(
-            mainnet, creation_height))
+int decode_nibble(char c) {
+  if (c >= '0' && c <= '9') return c - '0';
+  if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+  return -1;
+}
+
+crypto::public_key parse_public_genesis_key(const std::string &hex) {
+  require(hex.size() == 64, "frozen genesis output key must be 32 bytes");
+  unsigned char bytes[32] = {0};
+  for (std::size_t i = 0; i < 32; ++i) {
+    const int hi = decode_nibble(hex[2 * i]);
+    const int lo = decode_nibble(hex[2 * i + 1]);
+    require(hi >= 0 && lo >= 0, "frozen genesis output key is not hex");
+    bytes[i] = static_cast<unsigned char>((hi << 4) | lo);
+  }
+  crypto::public_key result;
+  std::memcpy(&result, bytes, sizeof(bytes));
+  require(crypto::check_key(result), "real frozen genesis output key is not curve-valid");
+  return result;
+}
+
+bool ring_eligible(bool mainnet,
+                   const std::vector<std::uint64_t> &member_creation_heights) {
+  // Same production predicate evaluated for EVERY resolved output, before
+  // Blockchain::scan_outputkeys_for_indexes calls the signature visitor.
+  for (const auto height : member_creation_heights)
+    if (!cryptonote::forgecoin_prelaunch::output_allowed(mainnet, height))
       return false;
   return true;
 }
 
-void test_signed_ring(std::size_t ring_size) {
-  require(ring_size >= 2, "invalid crypto test ring");
-  // All keys and the signing secret are disposable, generated in this process.
-  // None is the key for the real genesis coinbase.
+void test_real_genesis_decoy(std::size_t ring_size,
+                            const crypto::public_key &genesis_output) {
+  require(ring_size >= 2, "ring must contain non-genesis signer");
   std::vector<crypto::public_key> keys(ring_size);
-  std::vector<crypto::secret_key> secrets(ring_size);
-  std::vector<const crypto::public_key *> ptrs;
-  ptrs.reserve(ring_size);
+  std::vector<crypto::secret_key> disposable_secrets(ring_size);
   for (std::size_t i = 0; i < ring_size; ++i) {
-    crypto::generate_keys(keys[i], secrets[i]);
-    require(crypto::check_key(keys[i]), "invalid generated native public key");
-    ptrs.push_back(&keys[i]);
+    crypto::generate_keys(keys[i], disposable_secrets[i]);
+    require(crypto::check_key(keys[i]), "generated native key is invalid");
   }
-  const std::size_t real = ring_size / 2;
-  const crypto::hash message = crypto::rand<crypto::hash>();
-  crypto::key_image image;
-  crypto::generate_key_image(keys[real], secrets[real], image);
+  const crypto::hash prefix = crypto::rand<crypto::hash>();
+  std::vector<crypto::public_key const *> members;
+  members.reserve(ring_size);
+  for (const auto &pub : keys) members.push_back(&pub);
   std::vector<crypto::signature> signatures(ring_size);
-  crypto::generate_ring_signature(message, image, ptrs,
-                                  secrets[real], real, signatures.data());
-  require(crypto::check_ring_signature(message, image, ptrs, signatures.data()),
-          "native cryptographic signed-ring control is invalid");
+  std::vector<std::uint64_t> member_heights(ring_size, 130);
+  require(ring_eligible(true, member_heights), "mature all-mined control was denied");
 
-  std::vector<std::uint64_t> heights(ring_size, 130);
-  require(consensus_ring_eligible(true, heights),
-          "valid mature mined-height ring unexpectedly prohibited");
-  require(consensus_ring_eligible(false, heights),
-          "unmodified fakechain must permit the control ring");
-
-  for (std::size_t genesis_position = 0; genesis_position < ring_size;
-       ++genesis_position) {
-    // Tag ONE otherwise validly signed member as creation height zero,
-    // independently of where the genuine signer sits. This models a decoy
-    // reference to the REAL genesis output and checks member-level policy.
-    heights[genesis_position] = 0;
-    require(crypto::check_ring_signature(message, image, ptrs,
+  for (std::size_t index = 0; index < ring_size; ++index) {
+    // The actual network genesis output is inserted as a *decoy*. The real
+    // signing key is always a DIFFERENT disposable output; no genesis secret
+    // is asserted, assumed, recovered or generated.
+    const auto original_key = keys[index];
+    keys[index] = genesis_output;
+    const std::size_t real_signer = (index + 1) % ring_size;
+    crypto::key_image image;
+    crypto::generate_key_image(keys[real_signer],
+                               disposable_secrets[real_signer], image);
+    crypto::generate_ring_signature(prefix, image, members,
+                                    disposable_secrets[real_signer],
+                                    real_signer, signatures.data());
+    require(crypto::check_ring_signature(prefix, image, members,
                                           signatures.data()),
-            "cryptographic ring validity changed with metadata only");
-    require(!consensus_ring_eligible(true, heights),
-            "mainnet ring accepted a height-zero (genesis) member");
-    require(consensus_ring_eligible(false, heights),
-            "test-only fakechain consensus should be unaffected");
-    heights[genesis_position] = 130;
-  }
+            "VALID ring including real genesis public decoy failed crypto verification");
 
-  crypto::hash wrong_message = message;
-  wrong_message.data[0] ^= 1;
-  require(!crypto::check_ring_signature(wrong_message, image, ptrs,
-                                        signatures.data()),
-          "negative signature control accepted wrong message");
+    member_heights[index] = 0;
+    require(!ring_eligible(true, member_heights),
+            "mainnet allowed a cryptographically valid ring with genesis output");
+    require(ring_eligible(false, member_heights),
+            "test FAKECHAIN unnecessarily forbids the genesis ring decoy");
+
+    crypto::hash wrong_prefix = prefix;
+    wrong_prefix.data[0] ^= 1;
+    require(!crypto::check_ring_signature(wrong_prefix, image, members,
+                                           signatures.data()),
+            "invalid signed-ring message was cryptographically accepted");
+    member_heights[index] = 130;
+    keys[index] = original_key;
+  }
+  require(ring_eligible(true, member_heights),
+          "all-mature mined ring did not recover after removing genesis decoy");
 }
 
 } // namespace
 
-int main() {
+int main(int argc, char **argv) {
   try {
+    require(argc == 2, "expected only PUBLIC genesis output key argument");
+    const auto genesis_output = parse_public_genesis_key(argv[1]);
     for (const auto ring_size : {2U, 11U, 16U, 64U})
-      test_signed_ring(ring_size);
-    std::cout << "PASS: genuine native cryptographically valid rings, "
-                 "all height-zero member positions denied by "
-                 "mainnet output eligibility; negative signature control"
+      test_real_genesis_decoy(ring_size, genesis_output);
+    std::cout << "PASS: real frozen-genesis public key as decoy in "
+                 "cryptographically VALID native signed rings, all decoy "
+                 "positions rejected by MAINNET member eligibility, "
+                 "invalid signature control denied"
               << std::endl;
     return 0;
   } catch (const std::exception &e) {
-    std::cerr << "FAIL: native genesis signed-ring regression: "
+    std::cerr << "FAIL: native signed genesis-decoy regression: "
               << e.what() << std::endl;
     return 1;
   }

@@ -89,9 +89,10 @@ namespace ForgeCoinDesktop
                     throw new InvalidOperationException("Missing disposable QA credentials");
                 int noCredentials = GetVersionCode(port, null, null);
                 Console.WriteLine("SAFE_STAGE_NOAUTH_HTTP=" + noCredentials);
+                int correctCredentials = GetVersionCode(port, username, password);
+                Console.WriteLine("SAFE_STAGE_GOOD_HTTP=" + correctCredentials);
                 int wrongCredentials = GetVersionCode(port, username, password + "incorrect");
                 Console.WriteLine("SAFE_STAGE_WRONG_HTTP=" + wrongCredentials);
-                int correctCredentials = GetVersionCode(port, username, password);
                 Console.WriteLine("NATIVE_NO_AUTH_HTTP=" + noCredentials);
                 Console.WriteLine("NATIVE_WRONG_AUTH_HTTP=" + wrongCredentials);
                 Console.WriteLine("NATIVE_DOTNET_DIGEST_HTTP=" + correctCredentials);

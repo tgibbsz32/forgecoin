@@ -41,6 +41,7 @@ namespace ForgeCoinDesktop
 
         private Process daemon;
         private Process walletRpc;
+        private WalletRpcSession walletSession;
         private Process poolMiner;
         private bool walletOpen;
 
@@ -923,22 +924,66 @@ namespace ForgeCoinDesktop
 
         private void EnsureWalletService()
         {
-            if (IsRunning(walletRpc)) return;
-            string exe = Path.Combine(binRoot, "forge-wallet-rpc.exe");
-            if (!File.Exists(exe)) throw new FileNotFoundException("The ForgeCoin wallet service is missing.", exe);
-            string args = "--wallet-dir " + Quote(Path.Combine(appRoot, "wallets")) +
-                " --rpc-bind-ip 127.0.0.1 --rpc-bind-port 39484 --disable-rpc-login" +
-                " --daemon-address 127.0.0.1:39481 --trusted-daemon" +
-                " --shared-ringdb-dir " + Quote(Path.Combine(appRoot, "ringdb")) +
-                " --log-file " + Quote(Path.Combine(appRoot, "logs", "wallet-rpc.log"));
-            walletRpc = StartCaptured(exe, args, "WALLET");
-            if (walletRpc == null) throw new InvalidOperationException("Could not start the wallet service.");
-            for (int i = 0; i < 30; i++)
+            if (IsRunning(walletRpc))
             {
-                Thread.Sleep(200);
-                try { Rpc("http://127.0.0.1:39484/json_rpc", "get_version", new Dictionary<string, object>()); return; } catch { }
+                if (walletSession == null)
+                    throw new InvalidOperationException("Wallet service has no authenticated session.");
+                return;
             }
-            throw new InvalidOperationException("The wallet service did not become ready.");
+            // Never attach to an existing unauthenticated/foreign wallet RPC.
+            // A fresh random local Digest identity belongs exclusively to the
+            // newly launched native wallet service.
+            if (walletSession != null)
+            {
+                walletSession.Dispose();
+                walletSession = null;
+            }
+            string exe = Path.Combine(binRoot, "forge-wallet-rpc.exe");
+            if (!File.Exists(exe))
+                throw new FileNotFoundException("The ForgeCoin wallet service is missing.", exe);
+            walletSession = WalletRpcSession.Create(Path.Combine(appRoot, "rpc-private"));
+            try
+            {
+                string args = "--wallet-dir " + Quote(Path.Combine(appRoot, "wallets")) +
+                    " --rpc-bind-ip 127.0.0.1 --rpc-bind-port 39484" +
+                    " --config-file " + Quote(walletSession.ConfigFile) +
+                    " --daemon-address 127.0.0.1:39481 --trusted-daemon --no-dns --no-initial-sync" +
+                    " --shared-ringdb-dir " + Quote(Path.Combine(appRoot, "ringdb")) +
+                    " --log-level 0 --log-file " + Quote(Path.Combine(appRoot, "logs", "wallet-rpc.log"));
+                walletRpc = StartCaptured(exe, args, "WALLET");
+                if (walletRpc == null)
+                    throw new InvalidOperationException("Native wallet RPC process could not be started.");
+                for (int i = 0; i < 35; i++)
+                {
+                    if (!IsRunning(walletRpc))
+                        throw new InvalidOperationException("Native wallet RPC process exited.");
+                    Thread.Sleep(175);
+                    try
+                    {
+                        IDictionary version = Rpc("http://127.0.0.1:39484/json_rpc",
+                            "get_version", new Dictionary<string, object>(), 2000);
+                        if (version != null)
+                        {
+                            // A successful authenticated Digest request is
+                            // mandatory before the private config is removed.
+                            walletSession.DeleteStartupConfig();
+                            return;
+                        }
+                    }
+                    catch { /* readiness only; never display wallet RPC payload */ }
+                }
+                throw new InvalidOperationException("Authenticated native wallet RPC did not become ready.");
+            }
+            catch
+            {
+                if (IsRunning(walletRpc))
+                    try { walletRpc.Kill(); walletRpc.WaitForExit(3000); } catch { }
+                walletRpc = null;
+                walletSession.Dispose();
+                walletSession = null;
+                throw new InvalidOperationException(
+                    "Could not start a private authenticated native FRG wallet service.");
+            }
         }
 
         private void CreateWallet(object sender, EventArgs e)
@@ -1557,6 +1602,7 @@ namespace ForgeCoinDesktop
 
         private void AppendLog(string prefix, string line)
         {
+            if (prefix == "WALLET") line = "Native wallet diagnostic redacted.";
             if (IsDisposed) return;
             if (prefix == "NODE" && line.IndexOf("Found block ", StringComparison.OrdinalIgnoreCase) >= 0 && line.IndexOf(" at height ", StringComparison.OrdinalIgnoreCase) >= 0) Interlocked.Increment(ref minedBlocksSession);
             BeginInvoke((MethodInvoker)delegate
@@ -1569,19 +1615,48 @@ namespace ForgeCoinDesktop
 
         private IDictionary Rpc(string url, string method, IDictionary<string, object> parameters, int timeoutMs = 2000)
         {
-            Dictionary<string, object> request = new Dictionary<string, object> { { "jsonrpc", "2.0" }, { "id", "0" }, { "method", method }, { "params", parameters } };
-            byte[] body = Encoding.UTF8.GetBytes(json.Serialize(request));
-            HttpWebRequest http = (HttpWebRequest)WebRequest.Create(url);
-            http.Method = "POST"; http.ContentType = "application/json"; http.ContentLength = body.Length; http.Timeout = timeoutMs; http.ReadWriteTimeout = timeoutMs;
-            using (Stream s = http.GetRequestStream()) s.Write(body, 0, body.Length);
+            Dictionary<string, object> request = new Dictionary<string, object> {
+                { "jsonrpc", "2.0" }, { "id", "0" },
+                { "method", method }, { "params", parameters }
+            };
+            string payload = json.Serialize(request);
             string text;
-            using (HttpWebResponse response = (HttpWebResponse)http.GetResponse()) using (StreamReader reader = new StreamReader(response.GetResponseStream())) text = reader.ReadToEnd();
+            if (url == "http://127.0.0.1:39484/json_rpc")
+            {
+                // No unauthenticated fallback for ANY native wallet RPC.
+                if (walletSession == null)
+                    throw new InvalidOperationException("Native wallet authorization unavailable.");
+                text = walletSession.PostJson(url, payload, timeoutMs);
+            }
+            else
+            {
+                // Daemon only: keep wallet secrets completely out of the
+                // generic HTTP client and never follow redirects/proxies.
+                byte[] body = Encoding.UTF8.GetBytes(payload);
+                HttpWebRequest http = (HttpWebRequest)WebRequest.Create(url);
+                http.Method = "POST";
+                http.ContentType = "application/json";
+                http.ContentLength = body.Length;
+                http.Timeout = timeoutMs;
+                http.ReadWriteTimeout = timeoutMs;
+                http.Proxy = null;
+                http.AllowAutoRedirect = false;
+                using (Stream stream = http.GetRequestStream())
+                    stream.Write(body, 0, body.Length);
+                using (HttpWebResponse response = (HttpWebResponse)http.GetResponse())
+                using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+                    text = reader.ReadToEnd();
+            }
             IDictionary parsed = json.DeserializeObject(text) as IDictionary;
-            if (parsed == null) throw new InvalidOperationException("Invalid response from ForgeCoin.");
+            if (parsed == null)
+                throw new InvalidOperationException("Invalid response from ForgeCoin.");
             if (parsed.Contains("error"))
             {
+                if (url == "http://127.0.0.1:39484/json_rpc")
+                    throw new InvalidOperationException("Native wallet RPC rejected the requested operation.");
                 IDictionary error = parsed["error"] as IDictionary;
-                throw new InvalidOperationException(error != null && error.Contains("message") ? Convert.ToString(error["message"]) : "ForgeCoin RPC error");
+                throw new InvalidOperationException(error != null && error.Contains("message")
+                    ? Convert.ToString(error["message"]) : "ForgeCoin RPC error");
             }
             return parsed.Contains("result") ? (IDictionary)parsed["result"] : parsed;
         }
@@ -1725,6 +1800,12 @@ namespace ForgeCoinDesktop
             if (IsRunning(poolMiner)) { try { poolMiner.Kill(); } catch { } }
             if (walletOpen) { try { Rpc("http://127.0.0.1:39484/json_rpc", "close_wallet", new Dictionary<string, object>()); } catch { } }
             if (IsRunning(walletRpc)) { try { walletRpc.Kill(); } catch { } }
+            walletRpc = null;
+            if (walletSession != null)
+            {
+                walletSession.Dispose();
+                walletSession = null;
+            }
             if (IsRunning(daemon))
             {
                 DialogResult choice = MessageBox.Show("Stop the ForgeCoin node before closing?", "ForgeCoin", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);

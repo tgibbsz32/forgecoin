@@ -1,4 +1,4 @@
-> **Current specification — 2026-10-26:** [Frozen mainnet parameters, tokenomics and release status](../../docs/CURRENT_MAINNET.md). Public launch is not authorized. Main-branch executables still implement legacy rules; these instructions are not proof of new-mainnet compatibility.
+> **Current specification — identity selected 2026-10-26; consensus integrated 2026-11-04:** [Frozen mainnet parameters, tokenomics and release status](../../docs/CURRENT_MAINNET.md). Consensus PR #185 is merged into source `main`, **but mainnet mining/block acceptance remains locked** and public launch is not authorized. This research pool has not been approved for production Stratum or payout signing; matching consensus source alone does not prove production readiness.
 
 # ForgeCoin native mining-pool backend — isolated C fork (RESEARCH ONLY)
 
@@ -268,7 +268,7 @@ commit before advancing the Oracle private-staging gate.
 
 ## November 1, 2026 — runtime identity and callback guards (POOL-BACKEND-005)
 
-The frozen mainnet requires address prefixes **190/191/192** and ports **39480/39481/39482**, while the present native consensus header on main still uses legacy **90/91/92** and **19480/19481/19482**. The pool's startup now refuses to serve an incompatible native build, even if operator release macros are set. The configured RPC port is 39481, and the native source must be rebuilt and retested for the frozen chain before this gate can pass. No port change alone makes the node mainnet-ready.
+At this historical November 1 checkpoint, the frozen mainnet required address prefixes **190/191/192** and ports **39480/39481/39482**, while the then-current native consensus header on `main` still used legacy **90/91/92** and **19480/19481/19482**. **Superseded November 4:** PR #185 integrated the frozen identity into `main` without releasing the mining/block lock. The pool's fail-closed startup identity check remains mandatory; this code merge does **not** authorize a public Stratum listener, pool wallet or production payout signer. No port change alone makes the node mainnet-ready.
 
 Source-level defenses were added for strict eight-digit nonce parsing, rejection of unconfirmed block callbacks, avoiding low-difficulty hashrate credit, and avoiding balance debit after a malformed, unsuccessful or ambiguous wallet response. A wallet success response must include a nonempty transaction-hash list. These safeguards are not complete settlement safety: the inherited payout code still has separate LMDB balance and payment transactions, without a durable idempotent payout-attempt state machine or verified replay recovery. Therefore the compile-time payout barrier, localhost research bind and public-release block remain fully in effect.
 

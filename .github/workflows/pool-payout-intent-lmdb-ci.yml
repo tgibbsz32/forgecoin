@@ -17,7 +17,7 @@ jobs:
       - name: Install build-only LMDB headers/library
         run: |
           sudo apt-get update -qq
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends build-essential liblmdb-dev
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends build-essential liblmdb-dev libssl-dev
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
@@ -28,3 +28,7 @@ jobs:
           gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 -o /tmp/frg-payout-intent-test services/official_pool/tests/test_payout_intent_journal_lmdb.c -llmdb
       - name: Exercise on-disk LMDB restart, duplicate prevention and fail-closed recovery
         run: /tmp/frg-payout-intent-test
+      - name: Build and verify source-bound canonical payout-manifest SHA256
+        run: |
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 -o /tmp/frg-payout-manifest-test services/official_pool/tests/test_payout_manifest.c -lcrypto
+          /tmp/frg-payout-manifest-test

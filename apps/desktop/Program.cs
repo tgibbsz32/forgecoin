@@ -1770,7 +1770,11 @@ namespace ForgeCoinDesktop
 #endif
                 poolLogBox.Clear();
                 poolMiner = StartPoolCaptured(exe, string.Join(" ", args.ToArray()));
-                if (poolMiner == null) return;
+                if (poolMiner == null)
+                {
+                    poolApiId = null;
+                    return;
+                }
                 poolState.Text = "Connecting"; poolState.BackColor = Color.FromArgb(205, 139, 36);
                 poolDetailLabel.Text = "Pool miner status: connecting to " + url + "…";
                 startPoolButton.Enabled = false; stopPoolButton.Enabled = true;
@@ -1870,7 +1874,10 @@ namespace ForgeCoinDesktop
                     bool identityMismatch = ex is ArgumentException;
                     PostUi(delegate
                     {
-                        if (IsDisposed || !IsRunning(poolMiner)) return;
+                        // An older poll may finish after Stop + Start. Do not
+                        // let its failure overwrite the new process's state.
+                        if (IsDisposed || !IsRunning(poolMiner) ||
+                            poolApiId != expectedMonitor) return;
                         poolState.Text = identityMismatch ? "Unverified" : "Connecting";
                         poolState.BackColor = identityMismatch
                             ? Color.DarkRed : Color.FromArgb(205, 139, 36);

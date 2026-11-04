@@ -1795,22 +1795,31 @@ namespace ForgeCoinDesktop
 
         private void OnClosing(object sender, FormClosingEventArgs e)
         {
+            // Ask before destroying native wallet session or stopping timers,
+            // otherwise Cancel leaves an open UI with a dead wallet process.
+            if (IsRunning(daemon))
+            {
+                DialogResult choice = MessageBox.Show(
+                    "Stop the ForgeCoin node before closing?", "ForgeCoin",
+                    MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                if (choice == DialogResult.Cancel) { e.Cancel = true; return; }
+                if (choice == DialogResult.Yes) StopNode(null, EventArgs.Empty);
+            }
             refreshTimer.Stop();
             miningTimer.Stop();
-            if (IsRunning(poolMiner)) { try { poolMiner.Kill(); } catch { } }
-            if (walletOpen) { try { Rpc("http://127.0.0.1:39484/json_rpc", "close_wallet", new Dictionary<string, object>()); } catch { } }
-            if (IsRunning(walletRpc)) { try { walletRpc.Kill(); } catch { } }
+            if (IsRunning(poolMiner))
+                try { poolMiner.Kill(); } catch { }
+            if (walletOpen && walletSession != null)
+                try { Rpc("http://127.0.0.1:39484/json_rpc", "close_wallet",
+                          new Dictionary<string, object>(), 2500); } catch { }
+            if (IsRunning(walletRpc))
+                try { walletRpc.Kill(); walletRpc.WaitForExit(3000); } catch { }
             walletRpc = null;
+            walletOpen = false;
             if (walletSession != null)
             {
                 walletSession.Dispose();
                 walletSession = null;
-            }
-            if (IsRunning(daemon))
-            {
-                DialogResult choice = MessageBox.Show("Stop the ForgeCoin node before closing?", "ForgeCoin", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
-                if (choice == DialogResult.Cancel) { e.Cancel = true; return; }
-                if (choice == DialogResult.Yes) StopNode(null, EventArgs.Empty);
             }
         }
     }

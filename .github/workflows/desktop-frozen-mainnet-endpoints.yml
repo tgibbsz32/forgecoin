@@ -140,6 +140,24 @@ jobs:
           # GitHub pwsh propagates the EXPECTED compiler rejection via the
           # automatic LASTEXITCODE variable even though the assertion passed.
           $global:LASTEXITCODE = 0
+      - name: Compile isolated real WinForms native pool XMRig start-stop QA
+        shell: pwsh
+        run: |
+          # A signed/native XMRig binary is not supplied in CI; we compile the
+          # real GUI harness but only run the no-CPU local API test on the
+          # authorized Windows QA PC using a SHA256-pinned historical binary.
+          $src = Join-Path $PWD 'apps/desktop'
+          $test = Join-Path $PWD 'tests/desktop/windows/WinFormsPoolMiningQa.cs'
+          $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
+          $exe = Join-Path $env:RUNNER_TEMP 'FRG-Private-WinForms-XMRig-Pool-QA.exe'
+          $files = @((Join-Path $src 'Program.cs'), (Join-Path $src 'XmrigPoolStatus.cs'), (Join-Path $src 'FrgWalletInput.cs'), (Join-Path $src 'WalletRpcSession.cs'), (Join-Path $src 'WalletRpcDigestTransport.cs'), (Join-Path $src 'SolanaWallet.cs'), (Join-Path $src 'SolanaVault.cs'), $test)
+          & $compiler /nologo /target:exe /optimize+ /platform:anycpu /define:FRG_PRIVATE_UI_QA,FRG_PRIVATE_POOL_QA /main:ForgeCoinDesktop.WinFormsPoolMiningQa "/out:$exe" /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll $files
+          if ($LASTEXITCODE -ne 0 -or !(Test-Path $exe)) { throw 'Private pool GUI QA compile failed' }
+          $forbidden = Join-Path $env:RUNNER_TEMP 'FRG-Forbidden-Pool-NoSandbox.exe'
+          & $compiler /nologo /target:exe /platform:anycpu /define:FRG_PRIVATE_POOL_QA /main:ForgeCoinDesktop.WinFormsPoolMiningQa "/out:$forbidden" /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll $files
+          if ($LASTEXITCODE -eq 0 -or (Test-Path $forbidden)) { throw 'Critical: pool QA compiled without private sandbox' }
+          Write-Output 'PASS: real GUI pool QA compiles and unsandboxed/private production bypass is blocked'
+          $global:LASTEXITCODE = 0
       - name: Verify XMRig localhost pool-status reporting and anti-spoofing
         shell: pwsh
         run: |

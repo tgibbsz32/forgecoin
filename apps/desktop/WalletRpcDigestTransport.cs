@@ -181,8 +181,23 @@ namespace ForgeCoinDesktop
                     return Encoding.UTF8.GetString(output.ToArray());
                 }
             }
-            catch (WebException)
+            catch (WebException ex)
             {
+                var rejected = ex.Response as HttpWebResponse;
+                if (rejected != null)
+                {
+                    using (rejected)
+                    {
+                        if (rejected.StatusCode == HttpStatusCode.Unauthorized)
+                        {
+                            string fields = String.Join(",", rejected.Headers.GetValues(
+                                "WWW-Authenticate") ?? new string[0]);
+                            if (fields.IndexOf("stale=true", StringComparison.OrdinalIgnoreCase) >= 0)
+                                throw new InvalidOperationException("Native wallet RPC outcome is unverified: stale-challenge.");
+                            throw new InvalidOperationException("Native wallet RPC outcome is unverified: invalid-auth.");
+                        }
+                    }
+                }
                 throw new InvalidOperationException("Native wallet RPC outcome is unverified.");
             }
         }

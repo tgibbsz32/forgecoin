@@ -273,3 +273,39 @@ The frozen mainnet requires address prefixes **190/191/192** and ports **39480/3
 Source-level defenses were added for strict eight-digit nonce parsing, rejection of unconfirmed block callbacks, avoiding low-difficulty hashrate credit, and avoiding balance debit after a malformed, unsuccessful or ambiguous wallet response. A wallet success response must include a nonempty transaction-hash list. These safeguards are not complete settlement safety: the inherited payout code still has separate LMDB balance and payment transactions, without a durable idempotent payout-attempt state machine or verified replay recovery. Therefore the compile-time payout barrier, localhost research bind and public-release block remain fully in effect.
 
 These are reviewable source changes only. Neither a running Oracle pool nor canonical native FRG accepted block, maturation/reorg reversal, payout to two test wallets, nor load/stress testing is established by this handoff. Run source guards, currency conversion tests, native ARM64/x86 link workflows, disposable daemon integration, payout recovery and independent security review before any public mining authorization.
+
+
+## November 4, 2026 — Stratum job ingress hardening (POOL-BACKEND-006)
+
+The source-only native pool acceptance review identified independent
+Stratum ingress defects in the inherited C implementation. The pool
+previously permitted multiple `login` requests on one client connection,
+which could increment worker/account counts repeatedly without matching
+disconnect accounting; `client_id` also had **32 characters of storage
+for a 32-hex-character UUID without a C string terminator**, despite
+being consumed as a string by job formatting.
+
+The private research backend now rejects repeat login requests after
+client authentication, rejects unauthenticated job/template/share requests,
+rejects non-hexadecimal job IDs, stores the client ID in 33 bytes with an
+explicit trailing NUL, and validates both the block nonce span
+(offset 39, four bytes) and the daemon's reserved nonce span (eight
+bytes normally; sixteen for proxy mode) **before writing to or hashing a
+native block buffer**. Native job generation now verifies its template
+before adding a job to the client's stack, and drops failed hashing-blob
+jobs rather than advertising invalid work.
+
+**Actual tests on connected Windows/WSL:** all **39 Python pool source
+guards**, **20 compiled native C nonce/reserved-offset boundary assertions**
+(including `SIZE_MAX` overflow cases), and **the full nine-object C/C++
+native pool compile-only target** passed in the disposable checkout.
+No Linux pool executable was linked or started in this step.
+
+**Unchanged release blocker:** current `main` still contains native
+consensus parameters not matching the frozen 20261026 identity. The
+pool's existing `frg_matches_frozen_mainnet()` fail-closed gate is
+preserved. **No live Stratum login, accepted share, pool block, payout,
+or wallet signing has been proven by this change.** Canonical daemon
+identity and frozen genesis must be reviewed independently before
+private loopback end-to-end Stratum/RandomX acceptance, and Oracle/public
+activation remains a separate final owner-controlled step.

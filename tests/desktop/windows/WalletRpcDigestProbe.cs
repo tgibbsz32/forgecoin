@@ -7,7 +7,7 @@ namespace ForgeCoinDesktop
 {
     // Executable acceptance probe: launch separately against an isolated
     // Windows native wallet RPC with disposable credentials. No wallet keys.
-    // Arguments: <loopback port> <ephemeral username> <ephemeral password>
+    // Arguments: <loopback port> ; disposable credentials via env only
     internal static class WalletRpcDigestProbe
     {
         static int GetVersionCode(int port, string user, string password)
@@ -79,15 +79,19 @@ namespace ForgeCoinDesktop
             try
             {
                 int port;
-                if (args.Length != 3 ||
+                if (args.Length != 1 ||
                     !Int32.TryParse(args[0], out port) ||
                     port < 1024 || port > 65535)
                     throw new InvalidOperationException("Expected private test port and credentials");
+                string username = Environment.GetEnvironmentVariable("FRG_QA_RPC_USER");
+                string password = Environment.GetEnvironmentVariable("FRG_QA_RPC_SECRET");
+                if (String.IsNullOrEmpty(username) || String.IsNullOrEmpty(password))
+                    throw new InvalidOperationException("Missing disposable QA credentials");
                 int noCredentials = GetVersionCode(port, null, null);
                 Console.WriteLine("SAFE_STAGE_NOAUTH_HTTP=" + noCredentials);
-                int wrongCredentials = GetVersionCode(port, args[1], args[2] + "incorrect");
+                int wrongCredentials = GetVersionCode(port, username, password + "incorrect");
                 Console.WriteLine("SAFE_STAGE_WRONG_HTTP=" + wrongCredentials);
-                int correctCredentials = GetVersionCode(port, args[1], args[2]);
+                int correctCredentials = GetVersionCode(port, username, password);
                 Console.WriteLine("NATIVE_NO_AUTH_HTTP=" + noCredentials);
                 Console.WriteLine("NATIVE_WRONG_AUTH_HTTP=" + wrongCredentials);
                 Console.WriteLine("NATIVE_DOTNET_DIGEST_HTTP=" + correctCredentials);

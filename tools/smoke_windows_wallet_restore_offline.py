@@ -21,7 +21,9 @@ import subprocess
 import sys
 import tempfile
 import time
-from urllib.request import Request, ProxyHandler, build_opener
+from urllib.error import HTTPError
+from urllib.request import (Request, ProxyHandler, HTTPPasswordMgrWithDefaultRealm,
+                            HTTPDigestAuthHandler, build_opener)
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -31,6 +33,7 @@ PIN_RE = re.compile(r"^[0-9a-f]{64}$")
 ADDRESS_RE = re.compile(r"^[1-9A-HJ-NP-Za-km-z]{90,140}$")
 MAX_REPLY = 200_000
 REQUEST_TIMEOUT = 3
+RPC_AUTH: tuple[str, str] | None = None  # ephemeral, process-local QA only
 
 
 class WalletRpcUnverified(Exception):
@@ -73,7 +76,13 @@ def rpc(port: int, method: str, params: dict | None = None, *,
     }, separators=(",", ":")).encode("utf-8")
     req = Request(f"http://127.0.0.1:{port}/json_rpc", data=data,
                   headers={"Content-Type": "application/json"}, method="POST")
-    with build_opener(ProxyHandler({})).open(req, timeout=timeout) as response:
+    if RPC_AUTH is None:
+        raise WalletRpcUnverified("Authenticated wallet RPC has no credentials")
+    login, secret = RPC_AUTH
+    manager = HTTPPasswordMgrWithDefaultRealm()
+    manager.add_password(None, f"http://127.0.0.1:{port}/", login, secret)
+    opener = build_opener(ProxyHandler({}), HTTPDigestAuthHandler(manager))
+    with opener.open(req, timeout=timeout) as response:
         bounded = response.read(MAX_REPLY + 1)
     if len(bounded) > MAX_REPLY:
         raise WalletRpcUnverified("Wallet RPC response too large")
@@ -86,20 +95,54 @@ def rpc(port: int, method: str, params: dict | None = None, *,
     return result
 
 
+def unauthenticated_request_is_denied(port: int) -> None:
+    req = Request(f"http://127.0.0.1:{port}/json_rpc",
+                  data=b'{"jsonrpc":"2.0","id":"unauth","method":"get_version","params":{}}',
+                  headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with build_opener(ProxyHandler({})).open(req, timeout=3) as response:
+            if response.status == 200:
+                raise WalletRpcUnverified("Unauthenticated wallet RPC unexpectedly accessible")
+            raise WalletRpcUnverified("Wallet RPC returned unexpected unauthenticated status")
+    except HTTPError as error:
+        if error.code != 401:
+            raise WalletRpcUnverified("Wallet RPC did not require digest authentication")
+
+
 def wait_ready(process: subprocess.Popen, port: int, deadline: float) -> None:
+    last_type, last_code, last_scheme = "none", "none", "none"
     while time.monotonic() < deadline:
         if process.poll() is not None:
             raise WalletRpcUnverified("Wallet RPC process exited before ready")
         try:
             rpc(port, "get_version", timeout=1.5)
             return
-        except Exception:
+        except Exception as exc:
+            last_type = type(exc).__name__
+            last_code = str(getattr(exc, "code", "none"))
+            if isinstance(exc, HTTPError):
+                challenge = exc.headers.get("WWW-Authenticate", "")
+                last_scheme = challenge.split(" ", 1)[0][:16] if challenge else "missing"
             time.sleep(0.25)
-    raise WalletRpcUnverified("Loopback wallet RPC readiness timeout")
+    raise WalletRpcUnverified("Loopback wallet RPC readiness timeout; "
+                              "last exception class=" + last_type +
+                              ", HTTP status=" + last_code +
+                              ", WWW-Authenticate scheme=" + last_scheme)
 
 
 def launch(binary: Path, home: Path, wallet_dir: Path,
            rpc_port: int, dead_daemon_port: int) -> subprocess.Popen:
+    global RPC_AUTH
+    login = "frgqa" + secrets.token_hex(6)
+    secret = secrets.token_urlsafe(32)
+    RPC_AUTH = (login, secret)
+    # Only this disposable temp directory stores the RPC authentication
+    # line; process arguments contain a private path, not the password.
+    cfg = home / "private-wallet-auth.conf"
+    if cfg.exists():
+        raise WalletRpcUnverified("Stale wallet credentials file")
+    with cfg.open("x", encoding="utf-8") as fh:
+        fh.write("rpc-login=" + login + ":" + secret + "\n")
     # Explicit, never-public endpoints. The daemon intentionally does not
     # exist: no genesis block or outgoing peer can be mined in this test.
     args = [
@@ -108,7 +151,7 @@ def launch(binary: Path, home: Path, wallet_dir: Path,
         "--daemon-address", f"127.0.0.1:{dead_daemon_port}",
         "--rpc-bind-ip", "127.0.0.1",
         "--rpc-bind-port", str(rpc_port),
-        "--disable-rpc-login",  # only in disposable loopback-only QA
+        "--rpc-login", login + ":" + secret,  # isolated QA only: test native CLI credential parsing
         "--no-dns",
         "--no-initial-sync",
         "--log-level", "0",
@@ -159,6 +202,9 @@ def run(candidate: Path, manifest_path: Path, max_seconds: int) -> None:
         try:
             process = launch(candidate, home, wallet_dir, port, dead_port)
             wait_ready(process, port, deadline)
+            unauthenticated_request_is_denied(port)
+            (home / "private-wallet-auth.conf").unlink()
+            print("PASS: private Windows wallet RPC rejected unauthenticated requests and accepted HTTP Digest only")
             rpc(port, "create_wallet", {
                 "filename": "disposable_qa_original",
                 "password": password, "language": "English",
@@ -212,6 +258,8 @@ def run(candidate: Path, manifest_path: Path, max_seconds: int) -> None:
             process = None
             process = launch(candidate, home, wallet_dir, port, dead_port)
             wait_ready(process, port, deadline)
+            unauthenticated_request_is_denied(port)
+            (home / "private-wallet-auth.conf").unlink()
             rpc(port, "open_wallet", {
                 "filename": "disposable_qa_restored", "password": password,
             }, timeout=10)
@@ -237,9 +285,14 @@ def main() -> int:
     args = parser.parse_args()
     try:
         run(args.wallet_rpc.resolve(), args.manifest.resolve(), args.max_seconds)
-    except Exception:
-        # Never print service-provided error text, secret, password, tracebacks
-        # or private wallet paths. Diagnostics may contain a mnemonic.
+    except Exception as exc:
+        # Only our own deliberately sanitized error types can be displayed.
+        # Never print service-provided text, any seed, secret or traceback.
+        if type(exc) is WalletRpcUnverified:
+            print("QA SAFE DIAGNOSTIC: " + str(exc), file=sys.stderr)
+        else:
+            print("QA SAFE DIAGNOSTIC: exception class " +
+                  type(exc).__name__, file=sys.stderr)
         print("FAIL: native Windows offline wallet create/restore QA did not "
               "complete; no release acceptance claimed", file=sys.stderr)
         return 1

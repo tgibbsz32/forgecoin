@@ -112,6 +112,63 @@ and not final independently reviewed mainnet binaries. It does not validate
 funded transfers, solo/pool mining, seed portability to Android, public
 peers, clean installation or release signing.
 
+## November 4 — Native Windows wallet RPC is authenticated
+
+The native Windows GUI **no longer starts the FRG wallet with
+`--disable-rpc-login`**. Every wallet RPC call now requires a randomly
+generated, per-process HTTP Digest credential. The credential is initially
+written to a **new, owner-only Windows ACL-protected temporary config file**
+so it cannot appear on the command line. The app authenticates a harmless
+`get_version` request before removing that startup file; native wallet
+requests (including wallet creation, 25-word restoration and balance
+queries) never silently fall back to an unauthenticated request.
+
+The native Monero-derived HTTP server advertises two RFC 2617 Digest
+schemes, **MD5** and **MD5-sess**, and binds its nonce to the persistent
+TCP session. A short-lived, explicitly authenticated loopback HTTP client
+now reads only a harmless version challenge, drains the 401 response so
+the connection can be reused, and sends sensitive wallet RPC data only
+with a correctly computed Digest proof on the authenticated connection.
+It disallows proxies/redirects, serializes wallet requests, bounds
+responses, redacts native wallet stdout from the GUI, treats ambiguous
+transfers as unverified, and disposes the secret session on exit. All
+private wallet calls remain restricted to `127.0.0.1:39484`.
+
+### Actual native Windows tests (connected PC)
+
+Both tests require a trusted Windows QA machine and the **SHA-256 pinned
+private candidate** executable in a local Downloads folder. They create
+only temporary disposable native wallets and **never open the user's
+existing wallet, connect to peers or Oracle, mine, or send funds**.
+
+```powershell
+.\tests\desktop\windows\Invoke-WalletDigestQA.ps1
+.\tests\desktop\windows\Invoke-WalletSessionAcceptance.ps1
+```
+
+**Verified PASS on the connected Windows machine:**
+
+- HTTP 401 with no authentication, HTTP 401 with incorrect credentials,
+  HTTP 200 with correct native Digest authentication.
+- The actual production `WalletRpcSession` created a disposable native
+  wallet over authenticated RPC; its private auth config was deleted
+  after successful handshake.
+- A native **25-word recovery phrase** from that disposable wallet
+  restored the exact same public FRG address via the actual wallet RPC.
+- Incorrect wallet password was rejected; native wallet files reopened
+  correctly, including after killing and restarting the wallet-RPC
+  process with newly generated credentials.
+- All test wallet data was temporary and removed after testing. **No
+  password, mnemonic, wallet private key, address or RPC payload was
+  printed to the terminal.** There was no standalone native daemon,
+  PoW work, wallet transfer, Oracle or public P2P connection.
+
+The Windows Forms source build and **35 desktop source/security tests**
+also pass. The private login integration has **not yet been visually
+accepted by clicking the GUI** or used with a funded transaction, and the
+pinned historical candidate is not a final independently verified
+mainnet release. Native solo/pool mining and sends stay hard-locked.
+
 ## Release gates (separate from build success)
 
 - Merge only independently reviewed frozen consensus and permanently reject

@@ -21,6 +21,7 @@ namespace ForgeCoinDesktop
     /// </summary>
     internal sealed class WalletRpcSession : IDisposable
     {
+        private readonly object requestGate = new object();
         private readonly string user;
         private string password;
         private string configPath;
@@ -99,8 +100,15 @@ namespace ForgeCoinDesktop
                 target.Port != 39484 || target.AbsolutePath != "/json_rpc")
                 throw new InvalidOperationException(
                     "Wallet RPC is restricted to its dedicated localhost endpoint.");
-            return WalletRpcDigestTransport.PostJson(target, user, password,
-                                                     json, timeoutMs);
+            // Avoid racing the connection-bound native Digest nonce when
+            // background balance polling overlaps a wallet UI operation.
+            lock (requestGate)
+            {
+                if (disposed || password == null)
+                    throw new InvalidOperationException("Wallet RPC authentication has ended.");
+                return WalletRpcDigestTransport.PostJson(target, user, password,
+                                                         json, timeoutMs);
+            }
         }
 
         public void DeleteStartupConfig()

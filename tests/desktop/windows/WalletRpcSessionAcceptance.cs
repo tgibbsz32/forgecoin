@@ -44,7 +44,7 @@ namespace ForgeCoinDesktop
             return decoded.Contains("result") ? decoded["result"] as IDictionary : decoded;
         }
 
-        static IDictionary Params(params object[] values)
+        static IDictionary<string, object> Params(params object[] values)
         {
             var answer = new Dictionary<string, object>();
             for (int i = 0; i < values.Length; i += 2)
@@ -130,10 +130,10 @@ namespace ForgeCoinDesktop
             try
             {
                 Check(args.Length == 1 && File.Exists(args[0]), "missing candidate binary");
-                using (var listener = new TcpListener(IPAddress.Loopback, 39484)) {
+                var listener = new TcpListener(IPAddress.Loopback, 39484);
+                try {
                     listener.Start(); // Never kill or attach to an existing user's wallet RPC
-                    listener.Stop();
-                }
+                } finally { listener.Stop(); }
                 directory = Path.Combine(Path.GetTempPath(),
                     "frg-disposable-authenticated-qa-" + Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(directory);

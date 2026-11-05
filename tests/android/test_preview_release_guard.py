@@ -52,7 +52,7 @@ class AndroidPreviewTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Forbidden"):
                 verifier.verify(p)
 
-    def test_read_only_device_safety_display_never_enables_mining(self):
+    def test_device_diagnostics_are_read_only_and_controls_are_qa_only(self):
         device = (ROOT / "apps/android/app/src/main/java/org/forgecoin/p2ptest/MiningDeviceStatus.java").read_text(encoding="utf-8")
         ui = (ROOT / "apps/android/app/src/main/java/org/forgecoin/p2ptest/MainActivity.java").read_text(encoding="utf-8")
         manifest = (ROOT / "apps/android/app/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
@@ -61,23 +61,28 @@ class AndroidPreviewTest(unittest.TestCase):
                          "BATTERY_STATUS_CHARGING", "getCurrentThermalStatus",
                          "isPowerSaveMode", "availableProcessors"):
             self.assertIn(expected, device)
-        self.assertIn("Mining OFF", device)
         self.assertNotIn("start_mining", device)
         self.assertNotIn("startMining", device)
         self.assertIn("MiningDeviceStatus.summary(MainActivity.this)", ui)
-        self.assertIn('"Start solo mining — unavailable",false,mine,null', ui)
-        self.assertIn('"Start pool mining — unavailable",false,mine,null', ui)
+        self.assertIn("miningQaReady=BuildConfig.DEBUG && MiningService.runtimePresent(this)", ui)
+        self.assertIn('"Start isolated solo mining",miningQaReady,mine', ui)
+        self.assertIn('"Start isolated pool mining",miningQaReady,mine', ui)
+        self.assertIn('android:name=".MiningService" android:exported="false"', manifest)
         self.assertIn('android:allowBackup="false"', manifest)
         self.assertNotIn('android:extractNativeLibs=', manifest)
         self.assertIn("JavaVersion.VERSION_17", gradle)
 
-    def test_intensity_preferences_never_enable_native_mining(self):
+    def test_intensity_only_reaches_user_started_isolated_mining(self):
         java = (ROOT / "apps/android/app/src/main/java/org/forgecoin/p2ptest")
         source = (java / "MainActivity.java").read_text(encoding="utf-8")
         policy = (java / "MiningSafetyPolicy.java").read_text(encoding="utf-8")
         self.assertIn("future-mining-intensity", source)
-        self.assertIn("PREVIEW ONLY", source)
-        self.assertIn("mining disabled", source)
+        self.assertIn("Next session:", source)
+        service=(java / "MiningService.java").read_text(encoding="utf-8")
+        self.assertIn("if(!BuildConfig.DEBUG)", service)
+        self.assertIn("MiningConfiguration.loopbackPort(endpoint)", service)
+        self.assertIn("FrgQaNode.requireIsolated(qaNodePort)", service)
+        self.assertIn("EXPECTED_SHA256", service)
         self.assertIn("if (!runtimeApproved)", policy)
         self.assertIn("if (!foregroundActive)", policy)
         self.assertIn("if (batterySaver)", policy)
@@ -106,15 +111,14 @@ class AndroidPreviewTest(unittest.TestCase):
         for forbidden in ("start_mining", "transfer_split", "get_block_template",
                           "stratum+", "wallet-rpc", "Socket(", "HttpURLConnection"):
             self.assertNotIn(forbidden, selftest)
-        self.assertIn('"Start solo mining — unavailable",false,mine,null', java)
-        self.assertIn('"Start pool mining — unavailable",false,mine,null', java)
+        self.assertIn("miningQaReady=BuildConfig.DEBUG && MiningService.runtimePresent(this)", java)
 
-    def test_source_keeps_real_controls_disabled_and_correct_status_url(self):
+    def test_source_keeps_production_controls_disabled_and_correct_status_url(self):
         s = (ROOT / "apps/android/app/src/main/java/org/forgecoin/p2ptest/MainActivity.java").read_text(encoding="utf-8")
-        for caption, panel in (("Start solo mining", "mine"), ("Start pool mining", "mine"),
-                               ("Create FRG wallet", "wallet"), ("Restore FRG wallet", "wallet"),
-                               ("Receive / send FRG", "wallet")):
-            self.assertRegex(s, r'button\("' + re.escape(caption) + r'[^"]*",false,' + panel + r',null\)')
+        self.assertIn("nativeWalletReady=BuildConfig.DEBUG && NativeFrgWallet.available()",s)
+        self.assertIn("miningQaReady=BuildConfig.DEBUG && MiningService.runtimePresent(this)",s)
+        self.assertFalse((ROOT/"apps/android/app/src/main/jniLibs/arm64-v8a/libforge_wallet.so").exists())
+        self.assertFalse((ROOT/"apps/android/app/src/main/jniLibs/arm64-v8a/libxmrig.so").exists())
         self.assertNotIn("https://150.136.209.227/", s)
         self.assertIn("https://tgibbsz32.github.io/forgecoin/current-mainnet.html", s)
         node = (ROOT / "apps/android/app/src/main/java/org/forgecoin/p2ptest/NodeService.java").read_text(encoding="utf-8")

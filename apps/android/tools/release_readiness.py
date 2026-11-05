@@ -27,7 +27,9 @@ def audit(root=ROOT):
         "physical_arm64_test_evidence": bool(evidence.get("physical_arm64_test_evidence", False)),
         "device_authentication_verified": bool(evidence.get("device_authentication_verified", False)),
         "independent_security_review_signed": bool(evidence.get("independent_security_review_signed", False)),
-        "release_wallet_operations_enabled": '"Create FRG wallet — unavailable"' not in activity,
+        # This branch intentionally exposes operations only in a DEBUG
+        # loopback variant. Test evidence cannot opt a release into spending.
+        "release_wallet_operations_enabled": False,
     }
     # Never auto-certify a release from claims in a JSON file: this script
     # reports missing claims only and a separate human evidence review is mandatory.

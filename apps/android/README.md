@@ -1,4 +1,12 @@
-# ForgeCoin Android — candidate UI, NOT a public miner or wallet
+# ForgeCoin Android
+
+The current development branch includes the website's blue theme and official
+logo, native ARM64 wallet lifecycle and isolated solo/Stratum mining work.
+See [native integration and test evidence](handoffs/ANDROID_NATIVE_WALLET_MINER_20261105.md)
+for the exact verification boundary and Windows build instructions.
+Public mining and spending are gated.
+
+## Historical restricted preview
 
 The project includes the updated dark navy/cyan Android UI matching the ForgeCoin website with branding, read-only browser links to the pool dashboard, pool observer and verified ForgeCoin mainnet-status page (rather than an unapproved raw-IP explorer), and disabled controls for native wallet creation/restoration, transfers, RandomX solo/pool mining, and Solana/mFRG.
 

@@ -21,3 +21,10 @@ This is a verification record, not authorization to publish a public miner/walle
 ## Public release gating
 
 The source-only Windows CI build does not contain `forged.exe`, `forge-wallet-rpc.exe`, or `xmrig.exe`. Its success does not establish a functioning full miner/wallet installer. Do not remove the compiled mainnet lock or publish a public binary until native signed genesis-spend rejection, complete package provenance, clean-machine installation, and required release security checks have passed. Owner authorization alone is not evidence that these checks passed.
+
+## CI verification — 2026-11-05
+
+- [Windows source QA run 41961848263](https://github.com/tgibbsz32/forgecoin/actions/runs/41961848263) completed successfully after the workflow began downloading and checking the official XMRig archive and both native component hashes on the Windows runner.
+- [Frozen endpoint safety run 41961848325](https://github.com/tgibbsz32/forgecoin/actions/runs/41961848325) also completed successfully.
+- The existing native genesis policy is enforced in `Blockchain::scan_outputkeys_for_indexes` before `vis.handle_output`, and `Blockchain::check_tx_input` returns false if the scanner fails. Both cached and direct database-output resolution paths converge on this check. This is a source-path audit, **not** an executed signed spend attack.
+- Public binary packaging remains blocked until a signed native adversarial transaction exercises the rejection after height 60 on a disposable test chain, with no consensus identity changes.

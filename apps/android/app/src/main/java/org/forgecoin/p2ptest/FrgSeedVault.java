@@ -47,6 +47,8 @@ public final class FrgSeedVault {
     public static synchronized void save(Context context, char[] seed) throws Exception {
         if (seed == null || seed.length == 0) throw new IllegalArgumentException("Empty seed");
         validateRecoveryPhrase(seed);
+        if (exists(context))
+            throw new IllegalStateException("A wallet backup already exists; refusing to overwrite it");
         byte[] plaintext = new String(seed).getBytes(StandardCharsets.UTF_8);
         try {
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");

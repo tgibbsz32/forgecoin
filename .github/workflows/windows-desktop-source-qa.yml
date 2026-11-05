@@ -1,0 +1,96 @@
+name: Windows desktop source QA
+
+on:
+  push:
+    branches:
+      - ci/windows-desktop-private-source-qa-20261105
+  pull_request:
+    paths:
+      - 'apps/desktop/**'
+      - 'tests/desktop/**'
+      - 'docs/mainnet.identity.json'
+      - '.github/workflows/windows-desktop-source-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop-source-qa:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Desktop regression suite
+        shell: pwsh
+        run: python -m unittest discover -s tests/desktop -p 'test_*.py' -q
+      - name: Verify official XMRig archive and extracted executable hashes
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $asset = 'xmrig-6.26.0-windows-x64.zip'
+          $url = "https://github.com/xmrig/xmrig/releases/download/v6.26.0/$asset"
+          $archive = Join-Path $env:RUNNER_TEMP $asset
+          Invoke-WebRequest -Uri $url -OutFile $archive
+          python tools/verify_xmrig_release.py $archive
+          $extract = Join-Path $env:RUNNER_TEMP 'xmrig-upstream-verify'
+          Expand-Archive -LiteralPath $archive -DestinationPath $extract
+          $root = Join-Path $extract 'xmrig-6.26.0'
+          $expected = @{
+            'xmrig.exe' = '6fa80698d7268f6e88aa88c06fb27ee99e1bcee747c2e76911e6206a5b1aeeb3'
+            'WinRing0x64.sys' = '11bd2c9f9e2397c9a16e0990e4ed2cf0679498fe0fd418a3dfdac60b5c160ee5'
+          }
+          foreach ($name in $expected.Keys) {
+            $file = Join-Path $root $name
+            if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "Missing upstream component: $name" }
+            $actual = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($actual -cne $expected[$name]) { throw "Upstream component hash mismatch: $name" }
+            Write-Host "PASS: $name SHA256 $actual"
+          }
+          Write-Host 'Verified upstream miner files only; no execution or distribution authorized.'
+      - name: Build desktop from source only
+        shell: pwsh
+        run: |
+          ./apps/desktop/build.ps1 -SourceOnly -OutputRoot "$env:RUNNER_TEMP/ForgeCoin-Desktop-SourceQA"
+      - name: Verify source-only package does not contain native sidecars
+        shell: pwsh
+        run: |
+          $root = Join-Path $env:RUNNER_TEMP 'ForgeCoin-Desktop-SourceQA'
+          if (-not (Test-Path (Join-Path $root 'ForgeCoin Desktop.exe'))) { throw 'Desktop EXE missing' }
+          foreach ($name in @('forged.exe', 'forge-wallet-rpc.exe', 'xmrig.exe')) {
+            if (Get-ChildItem -Path $root -Recurse -File -Filter $name) { throw "Unexpected native sidecar: $name" }
+          }
+          Write-Host 'PASS: source-only executable, no daemon, wallet RPC or miner sidecars'
+      - name: Verify private package rejects missing reviewed native binaries
+        shell: pwsh
+        run: |
+          $missing = Join-Path $env:RUNNER_TEMP 'missing-native-binaries'
+          $output = Join-Path $env:RUNNER_TEMP 'should-not-build'
+          try {
+            ./apps/desktop/build.ps1 -PrivatePrelaunch -ForgeBin $missing -OutputRoot $output
+            throw 'SECURITY FAILURE: missing native binaries were accepted'
+          } catch {
+            if ($_.Exception.Message -match 'SECURITY FAILURE') { throw }
+            Write-Host "PASS: private packaging rejected missing native binaries"
+          }
+          if (Test-Path $output) { throw 'Unexpected private package created' }
+      - name: Record source-only executable checksum
+        shell: pwsh
+        run: |
+          $root = Join-Path $env:RUNNER_TEMP 'ForgeCoin-Desktop-SourceQA'
+          $exe = Join-Path $root 'ForgeCoin Desktop.exe'
+          $hash = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "ForgeCoin Desktop.exe SHA256 $hash" | Set-Content -LiteralPath (Join-Path $root 'SHA256SUMS.txt') -Encoding ascii
+          Write-Host "Source-only executable SHA256: $hash"
+      - name: Upload private source-only QA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ForgeCoin-Windows-SourceQA
+          path: ${{ runner.temp }}/ForgeCoin-Desktop-SourceQA/
+          if-no-files-found: error
+          retention-days: 7

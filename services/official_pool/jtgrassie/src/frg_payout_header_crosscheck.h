@@ -179,4 +179,103 @@ frg_payout_credited_headers_crosscheck(
     return 0;
 }
 
+/* Reserve an immutable batch ONLY when two supplied snapshots match every
+ * locally credited block inside the same serial LMDB transaction. This
+ * prevents local TOCTOU against the pool writer, but snapshots are UNTRUSTED
+ * until collected and authenticated outside this module.
+ *
+ * A successful reservation is an offline held intent, NEVER permission to
+ * broadcast a wallet transfer. Earlier research reservation APIs remain
+ * for test fixtures, not for the eventual reviewed production sender.
+ */
+static inline int
+frg_payout_batch_reserve_crosschecked(
+    MDB_env *env, MDB_dbi blocks_db, MDB_dbi intent_db,
+    const uint8_t chain_uuid[16], uint64_t anchor_height,
+    const uint8_t anchor_hash[32],
+    const struct json_object *observer_a,
+    const struct json_object *observer_b,
+    const frg_payout_recipient_t *recipients, size_t recipient_count,
+    uint64_t max_fee_atomic,
+    uint8_t out_batch_id[32], uint8_t out_manifest_sha256[32],
+    uint64_t *out_total_atomic)
+{
+    if (!env || !chain_uuid || !anchor_hash || !observer_a ||
+        !observer_b || !recipients || !out_batch_id ||
+        !out_manifest_sha256 || !out_total_atomic ||
+        out_batch_id == out_manifest_sha256 ||
+        memcmp(chain_uuid, FRG_PAYOUT_FROZEN_CHAIN_ID, 16) != 0)
+        return EINVAL;
+    unsigned flags = 0;
+    int rc = mdb_env_get_flags(env, &flags);
+    if (rc) return rc;
+    if (flags & (MDB_NOSYNC | MDB_NOMETASYNC | MDB_WRITEMAP |
+                 MDB_MAPASYNC))
+        return EACCES;
+
+    MDB_txn *txn = NULL;
+    rc = mdb_txn_begin(env, NULL, 0, &txn);
+    if (rc) return rc;
+    bool held = true;
+    rc = frg_payout_intent_held(txn, intent_db, &held);
+    if (rc || held) {
+        mdb_txn_abort(txn);
+        return rc ? rc : EBUSY;
+    }
+
+    uint8_t sources[32] = {0};
+    uint64_t count = 0, rewards = 0;
+    rc = frg_payout_credited_headers_crosscheck(
+        txn, blocks_db, chain_uuid, anchor_height, anchor_hash,
+        observer_a, observer_b, sources, &count, &rewards);
+    if (rc) {
+        mdb_txn_abort(txn);
+        return rc;
+    }
+    /* Count and full coinbase rewards are NOT spendable miner balances. */
+    (void)count;
+    (void)rewards;
+
+    uint8_t batch[32] = {0}, manifest[32] = {0};
+    uint64_t amount = 0;
+    rc = frg_payout_manifest_hash(
+        chain_uuid, sources, anchor_hash, anchor_height, recipients,
+        recipient_count, max_fee_atomic, batch, manifest, &amount);
+    if (rc) {
+        mdb_txn_abort(txn);
+        return rc;
+    }
+    rc = frg_payout_intent_prepare(
+        txn, intent_db, batch, manifest, anchor_hash, anchor_height,
+        amount, max_fee_atomic);
+    if (rc) {
+        mdb_txn_abort(txn);
+        return rc;
+    }
+    rc = mdb_txn_commit(txn);
+    if (rc) return rc;
+    rc = mdb_env_sync(env, 1);
+    if (rc) return rc;
+
+    rc = mdb_txn_begin(env, NULL, MDB_RDONLY, &txn);
+    if (rc) return rc;
+    frg_payout_intent_record_t record;
+    rc = frg_payout_intent_read(txn, intent_db, batch, &record);
+    if (!rc &&
+        (record.state != FRG_PAYOUT_INTENT_PREPARED ||
+         record.anchor_height != anchor_height ||
+         record.amount_atomic != amount ||
+         record.max_fee_atomic != max_fee_atomic ||
+         memcmp(record.anchor_hash, anchor_hash, 32) ||
+         memcmp(record.manifest_sha256, manifest, 32)))
+        rc = EPROTO;
+    mdb_txn_abort(txn);
+    if (rc) return rc;
+
+    memcpy(out_batch_id, batch, 32);
+    memcpy(out_manifest_sha256, manifest, 32);
+    *out_total_atomic = amount;
+    return 0;
+}
+
 #endif /* FRG_PAYOUT_HEADER_CROSSCHECK_H */

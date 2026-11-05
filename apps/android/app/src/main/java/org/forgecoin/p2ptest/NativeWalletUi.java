@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** Offline debug UI for the verified JNI wallet lifecycle. No network or spending. */
+/** Native wallet lifecycle and balance sync confined to disposable development chains. */
 final class NativeWalletUi {
     private static final AtomicBoolean BUSY=new AtomicBoolean();
     private NativeWalletUi(){}

@@ -14,4 +14,4 @@ add_library(forge_wallet SHARED ../app/src/main/cpp/wallet_bridge.cpp)
 target_compile_features(forge_wallet PRIVATE cxx_std_14)
 target_include_directories(forge_wallet PRIVATE "${FORGE_SOURCE}/src")
 target_link_libraries(forge_wallet PRIVATE wallet_api)
-# Network/signing JNI entry points remain absent pending acceptance.
+# Stage this engine only into debug jniLibs; release readiness remains blocked.

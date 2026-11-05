@@ -62,8 +62,16 @@ This is development evidence. Mainnet release authorization remains false.
 - Android Stratum acceptance passed with one independently verified
   accepted share and two rejected shares; no pool credits or payouts.
   Later identity-gated rechecks encountered ADB transport/fixture timeouts.
-- An isolated native send/confirm/cancel test is provided. Do not treat its
-  initial timeout as acceptance or enable a production send control.
+- Native send preparation, cancellation and acknowledgment are wired for
+  isolated instrumentation. The send test timed out during disposable wallet
+  setup on emulator-5554; it never verified a broadcast. The follow-up uses
+  one open wallet at a time and compiled successfully, but emulator-5570
+  failed to install the APK with `cmd: Failure calling service package:
+  Broken pipe (32)`. Sending remains disabled in the GUI.
+- The release build compiled and its APK contents contained only the RandomX
+  and runtime-probe support libraries. It excluded the wallet and XMRig
+  binaries. The release readiness check returned `BLOCKED` as intended.
+  A final signed APK ZIP has not been produced.
 - No physical ARM64 handset was connected. Physical lifecycle/thermal
   testing, independent security review, and production signing/release
   validation remain separate gates. No mainnet activation occurred.

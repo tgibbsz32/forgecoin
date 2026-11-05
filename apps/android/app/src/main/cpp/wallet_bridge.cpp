@@ -77,7 +77,10 @@ Java_org_forgecoin_p2ptest_NativeFrgWallet_create(JNIEnv* e,jclass,jstring path,
     std::lock_guard<std::mutex> lock(guard);
     try {
         auto p=text(e,path); unusedPath(p); Secret pw(e,password);
-        return retain(manager()->createWallet(p,pw.bytes,"English",Monero::MAINNET));
+        auto* w=manager()->createWallet(p,pw.bytes,"English",Monero::MAINNET);
+        // An offline-created wallet has no trusted creation height.
+        if(w && w->status()==Monero::Wallet::Status_Ok)w->setRefreshFromBlockHeight(0);
+        return retain(w);
     } catch(...) { fail(e,"Native FRG wallet creation failed; check private storage/password"); return 0; }
 }
 extern "C" JNIEXPORT jlong JNICALL

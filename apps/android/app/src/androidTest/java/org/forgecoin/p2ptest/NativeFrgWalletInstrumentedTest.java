@@ -61,12 +61,15 @@ public class NativeFrgWalletInstrumentedTest {
         byte[] password="disposable-send-test-password".getBytes(StandardCharsets.UTF_8);
         long sender=0,receiver=0;
         try {
-            stage("Creating disposable sender and recipient");
-            sender=createAtGenesis(dir,"sender",password);
-            receiver=createAtGenesis(dir,"receiver",password);
-            stage("Disposable keys created");
-            String senderAddress=NativeFrgWallet.address(sender);
+            stage("Creating and closing the disposable recipient");
+            String receiverPath=new File(dir,"receiver").getAbsolutePath();
+            receiver=NativeFrgWallet.create(receiverPath,password);
             String recipient=NativeFrgWallet.address(receiver);
+            NativeFrgWallet.close(receiver);receiver=0;
+            stage("Creating the disposable sender");
+            sender=NativeFrgWallet.create(new File(dir,"sender").getAbsolutePath(),password);
+            String senderAddress=NativeFrgWallet.address(sender);
+            stage("Disposable keys created");
             // Enough mature, same-chain ring members for the native wallet.
             for(int i=0;i<8;i++) {
                 mine(port,senderAddress,10);
@@ -84,7 +87,9 @@ public class NativeFrgWalletInstrumentedTest {
             catch(IllegalStateException expected){}
             NativeFrgWallet.prepareQaSend(sender,port,recipient,100000000);
             assertTrue(NativeFrgWallet.confirmQaSend(sender,port).matches("[a-f0-9]{64}"));
+            NativeFrgWallet.close(sender);sender=0;
             mine(port,senderAddress,1);
+            receiver=NativeFrgWallet.open(receiverPath,password);
             assertEquals("100000000",NativeFrgWallet.refreshQaNode(receiver,port).split(":")[0]);
         } finally {
             if(sender!=0)NativeFrgWallet.close(sender);
@@ -101,14 +106,6 @@ public class NativeFrgWalletInstrumentedTest {
         android.os.Bundle data=new android.os.Bundle();
         data.putString("stream",message+"\n");
         InstrumentationRegistry.getInstrumentation().sendStatus(2,data);
-    }
-
-    private static long createAtGenesis(File dir,String name,byte[] password) {
-        long temporary=NativeFrgWallet.create(new File(dir,name+"-generated").getAbsolutePath(),password);
-        String phrase;
-        try{phrase=NativeFrgWallet.seed(temporary);}
-        finally{NativeFrgWallet.close(temporary);}
-        return NativeFrgWallet.restore(new File(dir,name).getAbsolutePath(),password,phrase,0);
     }
 
     private static void mine(int port,String address,int blocks) throws Exception {

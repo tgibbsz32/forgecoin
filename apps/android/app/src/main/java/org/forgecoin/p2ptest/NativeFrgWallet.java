@@ -4,7 +4,7 @@ package org.forgecoin.p2ptest;
  * JNI boundary for this repository's native wallet_api. No Java key derivation,
  * remote wallet RPC or substituting a different chain's engine.
  * Call on a worker thread; password byte arrays must be cleared by callers.
- * Network operations remain unavailable until the acceptance gates pass.
+ * Test network calls require a verified disposable loopback node.
  */
 public final class NativeFrgWallet {
     private static final boolean LOADED;

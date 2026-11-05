@@ -199,6 +199,7 @@ int main(void)
         {a, UINT64_C(100000000)}, {b, UINT64_C(200000000)}
     };
     const uint8_t anchor_hash[32] = {9};
+    MDB_txn *txn = NULL;
     uint8_t batch_id[32] = {0}, manifest[32] = {0};
     uint8_t expected_id[32] = {0}, expected_manifest[32] = {0};
     uint64_t amount = 0, expected_amount = 0;
@@ -208,6 +209,24 @@ int main(void)
         digest, anchor_hash, 180, recipients, 2, 12000,
         expected_id, expected_manifest, &expected_amount));
 
+    /* Invalid alias and chain identity must refuse BEFORE journal writes. */
+    VERIFY(frg_payout_batch_reserve_from_credited_lmdb(
+        env, blocks, intents, FRG_PAYOUT_FROZEN_CHAIN_ID,
+        anchor_hash, 180, recipients, 2, 12000,
+        batch_id, batch_id, &amount) == EINVAL);
+    uint8_t alien_chain[16];
+    memcpy(alien_chain, FRG_PAYOUT_FROZEN_CHAIN_ID, 16);
+    alien_chain[0] ^= 1;
+    VERIFY(frg_payout_batch_reserve_from_credited_lmdb(
+        env, blocks, intents, alien_chain,
+        anchor_hash, 180, recipients, 2, 12000,
+        batch_id, manifest, &amount) == EINVAL);
+    OK(mdb_txn_begin(env, NULL, MDB_RDONLY, &txn));
+    bool initial_hold = true;
+    OK(frg_payout_intent_held(txn, intents, &initial_hold));
+    VERIFY(!initial_hold);
+    mdb_txn_abort(txn);
+
     OK(frg_payout_batch_reserve_from_credited_lmdb(
         env, blocks, intents, FRG_PAYOUT_FROZEN_CHAIN_ID,
         anchor_hash, 180, recipients, 2, 12000,
@@ -216,7 +235,6 @@ int main(void)
     VERIFY(memcmp(batch_id, expected_id, 32) == 0);
     VERIFY(memcmp(manifest, expected_manifest, 32) == 0);
 
-    MDB_txn *txn = NULL;
     OK(mdb_txn_begin(env, NULL, MDB_RDONLY, &txn));
     frg_payout_intent_record_t record;
     OK(frg_payout_intent_read(txn, intents, batch_id, &record));

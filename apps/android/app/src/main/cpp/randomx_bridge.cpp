@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <randomx.h>
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <cstring>
@@ -13,6 +14,9 @@ namespace {
 std::mutex mutex;
 struct CacheDeleter { void operator()(randomx_cache* p) const { if(p) randomx_release_cache(p); } };
 struct VMDeleter { void operator()(randomx_vm* p) const { if(p) randomx_destroy_vm(p); } };
+std::vector<uint8_t> activeKey;
+std::unique_ptr<randomx_cache,CacheDeleter> activeCache;
+std::unique_ptr<randomx_vm,VMDeleter> activeVM;
 }
 extern "C" JNIEXPORT jbyteArray JNICALL
 Java_org_forgecoin_p2ptest_NativeRandomX_hashLight(JNIEnv* env, jclass,
@@ -25,13 +29,22 @@ Java_org_forgecoin_p2ptest_NativeRandomX_hashLight(JNIEnv* env, jclass,
     env->GetByteArrayRegion(inputArray,0,inputLen,reinterpret_cast<jbyte*>(input.data()));
     if (env->ExceptionCheck()) return nullptr;
     std::lock_guard<std::mutex> lock(mutex);
-    std::unique_ptr<randomx_cache,CacheDeleter> cache(randomx_alloc_cache(RANDOMX_FLAG_DEFAULT));
-    if (!cache) return nullptr;
-    randomx_init_cache(cache.get(),key.data(),key.size());
-    std::unique_ptr<randomx_vm,VMDeleter> vm(randomx_create_vm(RANDOMX_FLAG_DEFAULT,cache.get(),nullptr));
-    if (!vm) return nullptr;
+    // Reuse the light cache/VM for successive hashes with the same seed key.
+    // A future bounded worker can use this primitive without rebuilding RandomX each nonce.
+    if (!activeVM || activeKey != key) {
+        activeVM.reset();
+        activeCache.reset();
+        std::fill(activeKey.begin(), activeKey.end(), 0);
+        activeKey.clear();
+        activeCache.reset(randomx_alloc_cache(RANDOMX_FLAG_DEFAULT));
+        if (!activeCache) return nullptr;
+        randomx_init_cache(activeCache.get(), key.data(), key.size());
+        activeVM.reset(randomx_create_vm(RANDOMX_FLAG_DEFAULT, activeCache.get(), nullptr));
+        if (!activeVM) { activeCache.reset(); return nullptr; }
+        activeKey = key;
+    }
     std::array<uint8_t,RANDOMX_HASH_SIZE> digest{};
-    randomx_calculate_hash(vm.get(),input.data(),input.size(),digest.data());
+    randomx_calculate_hash(activeVM.get(),input.data(),input.size(),digest.data());
     jbyteArray output=env->NewByteArray(static_cast<jsize>(digest.size()));
     if (output) env->SetByteArrayRegion(output,0,static_cast<jsize>(digest.size()),
                                         reinterpret_cast<const jbyte*>(digest.data()));

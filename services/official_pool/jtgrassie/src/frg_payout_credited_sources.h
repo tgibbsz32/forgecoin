@@ -101,7 +101,9 @@ frg_payout_credited_sources_digest(
         if (key_height != block.height ||
             block.status > FRG_HISTORY_ORPHANED ||
             !frg_source_hash_bytes(block.hash, hash) ||
-            !frg_source_hash_bytes(block.prev_hash, parent)) {
+            !frg_source_hash_bytes(block.prev_hash, parent) ||
+            !frg_payout_bytes_nonzero(hash, 32) ||
+            !frg_payout_bytes_nonzero(parent, 32)) {
             rc = EPROTO;
             break;
         }

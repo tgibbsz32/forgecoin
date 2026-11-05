@@ -165,6 +165,7 @@ frg_payout_batch_reserve_from_credited_lmdb(
 {
     if (!env || !chain_uuid || !anchor_hash || !recipients ||
         !out_batch_id || !out_manifest_sha256 || !out_total_atomic ||
+        out_batch_id == out_manifest_sha256 ||
         memcmp(chain_uuid, FRG_PAYOUT_FROZEN_CHAIN_ID, 16) != 0 ||
         !frg_payout_bytes_nonzero(anchor_hash, 32))
         return EINVAL;

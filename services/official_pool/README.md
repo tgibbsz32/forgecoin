@@ -346,3 +346,49 @@ native manifest and intent-journal tests. The GitHub payout-intent workflow
 also compiles and executes this integration fixture. No ZIP/APK was created,
 no production host or wallet was accessed, and the frozen consensus prelaunch
 lock remains in place.
+
+
+## November 4 — source commitment derived from native credited LMDB history
+
+The research-only native pool now includes
+`frg_payout_credited_sources.h`. Its read-only scanner computes a
+domain-separated SHA-256 commitment from actual **unlocked and matured**
+saved pool block records, rather than trusting a caller-provided opaque
+source digest. It uses the frozen chain UUID, the block height, binary
+hash/parent hashes, difficulty, reward and a source count, encoded in
+stable order. A later anchor height does not create a different source
+identity for an unchanged set of credited blocks. Duplicate unlocked
+heights, invalid records, height mismatch, an unlocked genesis record,
+immature sources, zero reward/work, integer overflow, unsorted source
+heights and an empty source set fail closed. Locked and orphaned records
+are scanned and structurally checked, but do not create payout credits.
+
+The separate **offline**
+`frg_payout_batch_reserve_from_credited_lmdb` operation scans blocks
+and prepares the canonical intent **inside one serialized LMDB write
+transaction**. A concurrent pool writer cannot alter those block rows
+between computing the source digest and committing that intent; existing
+prepared/ambiguous candidates still block all further batches. It
+requires normal synchronous LMDB durability, then flushes and checks
+the committed intent. The existing direct-digest reservation API remains
+available only as research/test infrastructure; neither variant is wired
+to any wallet sender.
+
+**Native verification:** 101 successful C assertions using temporary
+real LMDB, including maturity boundary, deterministic identity across
+tip changes/restart, unrelated locked blocks, mutated source reward,
+malformed status, same-height duplicate credits and held intent/replay.
+The native pool also compiled all C/C++/web objects in SourceOnly mode,
+and 46 Python pool source/safety checks passed in the isolated Windows
+QA worktree. The dedicated payout CI compiles and runs this C fixture.
+
+**These results do not authorize a payment.** A local pool `unlocked`
+flag is NOT proof that a block is canonical, that its miner PPLNS
+amount is correct, that outputs are unspent/available, or that a payout
+satisfies wallet fees, native address checks and finality. An independently
+validated chain anchor/header audit, verified balances and a fully
+crash-safe signed-transaction reconciliation and atomic debit remain
+mandatory. The legacy wallet sender is still compile-time blocked,
+public Stratum and payouts remain disabled, and the merged consensus
+continues to reject mainnet mining beyond genesis. No public server,
+real wallet, ZIP or APK was used.

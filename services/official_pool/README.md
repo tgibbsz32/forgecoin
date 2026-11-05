@@ -392,3 +392,51 @@ mandatory. The legacy wallet sender is still compile-time blocked,
 public Stratum and payouts remain disabled, and the merged consensus
 continues to reject mainnet mining beyond genesis. No public server,
 real wallet, ZIP or APK was used.
+
+
+## November 4 — two-observer canonical header consistency gate (test-only)
+
+The dormant native payout research path now compiles
+`frg_payout_header_crosscheck.h`. It checks the **entire set of unlocked
+pool-LMDB source credits** against two separately supplied snapshots
+containing the exact native block headers and a common chain-tip header.
+The scanner requires all credited heights, matching hash, parent hash,
+reward, difficulty and height against BOTH snapshots, an identical
+non-orphaned anchor with matching frozen-tip hash and height, complete
+witness arrays, structurally valid stored LMDB rows, and 60-block reward
+maturity. Malformed, missing, conflicting or immature evidence prevents
+an intent from being prepared.
+
+The **offline** `frg_payout_batch_reserve_crosschecked` research function
+performs the full dual-snapshot comparison and durable immutable payout
+intent preparation under the SAME LMDB write transaction, avoiding a
+local source-credit TOCTOU window. The sender is still compiled out.
+LMDB reopen/retry holds an already prepared batch indefinitely until
+a separately reviewed settlement engine exists. No payout may be
+signed, broadcast, credited as final, automatically retried or debited
+based on this check.
+
+**Critical scope limitation:** the module does not connect to, authenticate,
+or independently operate two nodes. Two serialized JSON objects could
+have been fabricated by one process. A claimed header hash does not
+prove RandomX proof-of-work, accumulated chain difficulty, finality,
+genesis identity or peer agreement; one can also construct matching
+noncanonical headers. Therefore this code is a **provisional
+cross-check**, not independent canonicality proof or authorization to
+send real FRG. Actual production adoption requires secure dual-node
+collection, network/genesis verification, complete range and PoW work
+validation, a reorg window/anchor policy, a proven PPLNS credit and
+available-balance audit, native recipient address checks, fee cap,
+transaction signing/recovery and an idempotent atomic settlement path.
+
+**Executed QA:** 130 C assertions with real temporary LMDB and synthetic
+native-header JSON, covering missing or conflicting witnesses, changed
+hash/height/reward/difficulty, incorrect/orphaned anchor, maturity,
+corrupted local block history, unchanged outputs on errors, and
+reservation persistence across restart. Fifty Python source-safety
+tests passed and the native pool compiled all C/C++/web UI objects
+without linking or starting a mining service. The dedicated payout
+workflow runs the same C test. The prelaunch consensus lock, public
+Stratum disablement and wallet payout compile-time refusal remain
+in force; no Oracle service, real wallet, mined coins, ZIP or APK
+were involved.

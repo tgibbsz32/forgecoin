@@ -17,7 +17,7 @@ jobs:
       - name: Install build-only LMDB headers/library
         run: |
           sudo apt-get update -qq
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends build-essential liblmdb-dev libssl-dev
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends build-essential liblmdb-dev libssl-dev libjson-c-dev
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
@@ -36,3 +36,10 @@ jobs:
         run: |
           gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 -o /tmp/frg-payout-reservation-test services/official_pool/tests/test_payout_batch_reservation_lmdb.c -llmdb -lcrypto
           /tmp/frg-payout-reservation-test
+      - name: Derive credited source commitment directly from LMDB under a serial reservation lock
+        run: |
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
+            -o /tmp/frg-credited-source-commitment-test \
+            services/official_pool/tests/test_payout_credited_sources_lmdb.c \
+            -llmdb -lcrypto -ljson-c
+          /tmp/frg-credited-source-commitment-test

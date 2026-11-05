@@ -8,7 +8,7 @@ This is a verification record, not authorization to publish a public miner/walle
 - Asset: `xmrig-6.26.0-windows-x64.zip`
 - Official and independently re-downloaded SHA-256: `bba8097cb37d9b458a1cb1137876b27cde6740d17fe4ccbc086ba07d87d9e147`
 - Previously downloaded local archive SHA-256: `99fe357f055577123c395b323d585b4e8a326210b75fc73a47b88cc919e524` — rejected.
-- Verified archive remains separate in the Windows Downloads folder. No unreviewed miner binary is included in current release candidate.
+- Verified archive extracted separately in Windows Downloads. The bundled `SHA256SUMS` manifest and independently calculated hashes agree: `xmrig.exe` = `6fa80698d7268f6e88aa88c06fb27ee99e1bcee747c2e76911e6206a5b1aeeb3`; `WinRing0x64.sys` = `11bd2c9f9e2397c9a16e0990e4ed2cf0679498fe0fd418a3dfdac60b5c160ee5`. These checks establish upstream file integrity, not driver trust or runtime safety. No miner binary is included in the current private release candidate.
 - Before redistribution: inspect executable hash, upstream licensing/source obligations, included WinRing0 driver, Defender findings, and clean-machine behavior. Do not suppress antivirus protections to ship.
 
 ## Genesis output

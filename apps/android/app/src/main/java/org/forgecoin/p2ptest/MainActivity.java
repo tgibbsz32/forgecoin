@@ -19,15 +19,22 @@ public class MainActivity extends Activity {
     private static final int CYAN=Color.rgb(61,224,208), BLUE=Color.rgb(87,152,255);
     private static final int WHITE=Color.rgb(241,247,252), MUTED=Color.rgb(160,175,190);
     private final Handler handler=new Handler(Looper.getMainLooper());
-    private TextView status,logs,deviceSafetyStatus,randomXTestResult;
+    private TextView status,logs,deviceSafetyStatus,randomXTestResult,miningStatus;
     private Button randomXTestButton;
     private final AtomicBoolean randomXTestRunning = new AtomicBoolean(false);
     private final Runnable refresh=new Runnable(){public void run(){
         if(status!=null)status.setText(NodeService.status);
         if(logs!=null)logs.setText(NodeService.logText());
         if(deviceSafetyStatus!=null)deviceSafetyStatus.setText(MiningDeviceStatus.summary(MainActivity.this));
+        if(miningStatus!=null) {
+            MiningStatistics stats=MiningService.statistics();
+            double rate=stats.hashesPerSecond(SystemClock.elapsedRealtime());
+            String speed=Double.isFinite(rate)?String.format(java.util.Locale.ROOT,"%.1f H/s",rate):"Hashrate unavailable";
+            miningStatus.setText(MiningService.status()+"\n"+speed+"  |  Accepted "+stats.accepted()+"  |  Rejected "+stats.rejected());
+        }
         handler.postDelayed(this,2500);
     }};
+    private int dp(int value){return Math.round(value * getResources().getDisplayMetrics().density);}
     private GradientDrawable panelBackground(){
         GradientDrawable b=new GradientDrawable();b.setColor(PANEL);b.setCornerRadius(22);b.setStroke(1,Color.rgb(40,62,83));return b;
     }
@@ -36,7 +43,7 @@ public class MainActivity extends Activity {
         v.setPadding(0,8,0,8);return v;
     }
     private LinearLayout panel(LinearLayout main){
-        LinearLayout p=new LinearLayout(this);p.setOrientation(1);p.setPadding(24,18,24,22);
+        LinearLayout p=new LinearLayout(this);p.setOrientation(LinearLayout.VERTICAL);p.setPadding(24,18,24,22);
         p.setBackground(panelBackground());
         LinearLayout.LayoutParams margins=new LinearLayout.LayoutParams(-1,-2);margins.setMargins(0,0,0,20);
         main.addView(p,margins);return p;
@@ -44,7 +51,15 @@ public class MainActivity extends Activity {
     private Button button(String text,boolean enabled,LinearLayout parent,Runnable action){
         Button b=new Button(this);b.setText(text);b.setAllCaps(false);
         b.setTextColor(enabled?NAVY:MUTED);
-        b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(enabled?CYAN:Color.rgb(46,59,74)));
+        GradientDrawable fill = enabled
+            ? new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{CYAN,BLUE})
+            : new GradientDrawable();
+        if(!enabled) fill.setColor(Color.rgb(46,59,74));
+        fill.setCornerRadius(9 * getResources().getDisplayMetrics().density);
+        b.setBackground(fill);
+        b.setMinHeight((int)(48 * getResources().getDisplayMetrics().density));
+        LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(-1,-2);
+        bp.setMargins(0,6,0,6); b.setLayoutParams(bp);
         b.setEnabled(enabled);parent.addView(b);
         if(enabled&&action!=null)b.setOnClickListener(v->action.run());
         return b;
@@ -59,20 +74,31 @@ public class MainActivity extends Activity {
         super.onCreate(state);
         getWindow().setStatusBarColor(NAVY);getWindow().setNavigationBarColor(NAVY);
         ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.setBackgroundColor(NAVY);
-        LinearLayout root=new LinearLayout(this);root.setOrientation(1);root.setPadding(22,20,22,40);scroll.addView(root);
-        LinearLayout head=new LinearLayout(this);head.setOrientation(0);head.setGravity(Gravity.CENTER_VERTICAL);
-        ImageView logo=new ImageView(this);logo.setImageResource(org.forgecoin.p2ptest.R.drawable.forgecoin_logo);
-        logo.setScaleType(ImageView.ScaleType.FIT_CENTER);head.addView(logo,new LinearLayout.LayoutParams(88,88));
-        LinearLayout brand=new LinearLayout(this);brand.setOrientation(1);brand.setPadding(14,0,0,0);
+        scroll.setOnApplyWindowInsetsListener((view,insets)->{
+            view.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),
+                insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());
+            return insets;
+        });
+        LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setPadding(dp(16),dp(16),dp(16),dp(24));scroll.addView(root);
+        LinearLayout head=new LinearLayout(this);head.setOrientation(LinearLayout.HORIZONTAL);head.setGravity(Gravity.CENTER_VERTICAL);
+        ImageView logo=new ImageView(this);logo.setImageResource(org.forgecoin.p2ptest.R.drawable.forgecoin_brand_logo);
+        logo.setContentDescription("ForgeCoin official blue logo");
+        logo.setScaleType(ImageView.ScaleType.FIT_CENTER);head.addView(logo,new LinearLayout.LayoutParams(dp(64),dp(64)));
+        LinearLayout brand=new LinearLayout(this);brand.setOrientation(LinearLayout.VERTICAL);brand.setPadding(14,0,0,0);
         brand.addView(label("FORGECOIN",25,WHITE));brand.addView(label("PRIVACY  /  CPU MINING",11,CYAN));
         head.addView(brand);root.addView(head);
         root.addView(label("Android miner & wallet",22,WHITE));
         root.addView(label("New-mainnet candidate — restricted testing. No public mining or wallet operations until the native runtime is validated.",13,MUTED));
         LinearLayout wallet=panel(root);wallet.addView(label("FRG WALLET",17,CYAN));
         wallet.addView(label("Secure wallet creation, seed restoration, balance scanning, send/receive and encrypted local storage are required for release.",13,WHITE));
-        button("Create FRG wallet — unavailable",false,wallet,null);
-        button("Restore FRG wallet — unavailable",false,wallet,null);
-        button("Receive / send FRG — unavailable",false,wallet,null);
+        final TextView nativeWalletStatus=label("Local wallet and balance sync are available on disposable chains in development builds.",12,MUTED);
+        boolean nativeWalletReady=BuildConfig.DEBUG && NativeFrgWallet.available();
+        button("Create native FRG wallet",nativeWalletReady,wallet,()->NativeWalletUi.create(this,nativeWalletStatus));
+        button("Restore native FRG wallet",nativeWalletReady,wallet,()->NativeWalletUi.restore(this,nativeWalletStatus));
+        button("Unlock / receive address / backup",nativeWalletReady,wallet,()->NativeWalletUi.unlock(this,nativeWalletStatus));
+        button("Sync isolated wallet balance",nativeWalletReady,wallet,()->NativeWalletUi.sync(this,nativeWalletStatus));
+        button("Send FRG — validation pending",false,wallet,null);
+        wallet.addView(nativeWalletStatus);
         LinearLayout publicAddressPanel=panel(root);
         publicAddressPanel.addView(label("CHECK A PUBLIC FRG ADDRESS",17,CYAN));
         publicAddressPanel.addView(label("Offline standard, integrated and subaddress checksum verification for the frozen native FRG mainnet. This does not create a wallet or prove the owner controls the address.",12,MUTED));
@@ -97,7 +123,7 @@ public class MainActivity extends Activity {
                     ? "Integrated" : "Subaddress";
                 addressResult.setText("PASS: Native FRG mainnet "+kind
                     +" address. Prefix "+parsed.networkPrefix
-                    +" and Keccak-256 checksum match. Public-format check only; wallet, signing and mining remain unavailable.");
+                    +" and Keccak-256 checksum match. Public-format check only.");
             } catch(IllegalArgumentException exception) {
                 addressResult.setText("REJECTED: invalid address length, Base58, FRG network prefix or checksum.");
             }
@@ -105,27 +131,24 @@ public class MainActivity extends Activity {
         publicAddressPanel.addView(addressResult);
         LinearLayout mine=panel(root);mine.addView(label("RANDOMX MINING",17,CYAN));
         mine.addView(label("Solo and pool mining must use verified ARM64 RandomX executables and the frozen FRG chain identity.",13,WHITE));
-        button("Start solo mining — unavailable",false,mine,null);
-        button("Start pool mining — unavailable",false,mine,null);
+        final boolean miningQaReady=BuildConfig.DEBUG && MiningService.runtimePresent(this);
         mine.addView(label("DEVICE MINING SAFETY (READ ONLY)",15,CYAN));
-        mine.addView(label("Battery, thermal and power-saver information is for diagnostics. This preview never executes mining.",12,MUTED));
+        mine.addView(label("The isolated miner checks battery, heat, available memory and screen state while it runs.",12,MUTED));
         deviceSafetyStatus=label("Reading device status...",12,WHITE);
         deviceSafetyStatus.setContentDescription("Read-only mining device diagnostics");
         mine.addView(deviceSafetyStatus);
-        // Non-secret intensity preference only. This debug screen does NOT
-        // pass it to a miner (no certified native miner exists).
-        mine.addView(label("FUTURE MINING INTENSITY (PREVIEW ONLY)",13,CYAN));
+        mine.addView(label("MINING INTENSITY",13,CYAN));
         final TextView intensityHint=label("",12,WHITE);
         final SeekBar intensity=new SeekBar(this);
         intensity.setMax(100);
         intensity.setMin(1);
         int initial=getPreferences(MODE_PRIVATE).getInt("future-mining-intensity",50);
         intensity.setProgress(Math.max(1,Math.min(100,initial)));
-        intensityHint.setText("Requested intensity: "+intensity.getProgress()+"% — mining disabled");
-        intensity.setContentDescription("Proposed future mining intensity; no CPU work starts");
+        intensityHint.setText("Next session: "+intensity.getProgress()+"%");
+        intensity.setContentDescription("CPU intensity for the next mining session");
         intensity.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
             public void onProgressChanged(SeekBar bar,int value,boolean user){
-                intensityHint.setText("Requested intensity: "+value+"% — mining disabled");
+                intensityHint.setText("Next session: "+value+"%");
                 if(user) getPreferences(MODE_PRIVATE).edit()
                     .putInt("future-mining-intensity",value).apply();
             }
@@ -134,7 +157,15 @@ public class MainActivity extends Activity {
         });
         mine.addView(intensity);
         mine.addView(intensityHint);
-        mine.addView(label("Safety policy: severe heat, battery saver, low battery, unknown sensors or lack of a foreground service prohibit native mining. Current preview runtime is never approved.",12,MUTED));
+        button("Start isolated solo mining",miningQaReady,mine,()->MiningQaUi.ask(this,0,intensity.getProgress()));
+        button("Start isolated pool mining",miningQaReady,mine,()->MiningQaUi.ask(this,2,intensity.getProgress()));
+        button("Stop mining",miningQaReady,mine,()->stopService(new Intent(this,MiningService.class)));
+        if(miningQaReady) {
+            miningStatus=label("Miner stopped",12,WHITE);
+            miningStatus.setContentDescription("Current mining hashrate and accepted or rejected shares");
+            mine.addView(miningStatus);
+        }
+        mine.addView(label("Local development mining only. Stop the miner before changing its endpoint or intensity.",12,MUTED));
         mine.addView(label("VERIFY ARM64 RANDOMX (OFFLINE QA)",15,CYAN));
         mine.addView(label("One fixed known-answer hash; never mines, searches nonces, submits shares or connects to a pool. Temporarily uses substantial memory.",12,MUTED));
         randomXTestButton=button("Verify one RandomX hash",BuildConfig.DEBUG,mine,()->askRandomXSelfTest());
@@ -152,7 +183,8 @@ public class MainActivity extends Activity {
         link("View partner offers", "https://tgibbsz32.github.io/forgecoin/#affiliate-offers",partners);
         LinearLayout node=panel(root);node.addView(label("NODE DIAGNOSTICS",17,CYAN));
         node.addView(label("Legacy ARM64 daemon is not certified for the October 26 mainnet. Remote node startup is disabled.",13,MUTED));
-        node.addView(label(NativeRuntimeProbe.status(),12,MUTED));
+        node.addView(label("ARM64 wallet: "+(NativeFrgWallet.available()?"loaded":"unavailable")
+            +"  |  RandomX: "+(NativeRandomX.available()?"loaded":"unavailable"),12,MUTED));
         status=label("Stopped",13,WHITE);node.addView(status);
         logs=label("",10,MUTED);logs.setTypeface(Typeface.MONOSPACE);node.addView(logs);
         LinearLayout solana=panel(root);solana.addView(label("SOLANA / mFRG — FUTURE RELEASE",17,BLUE));

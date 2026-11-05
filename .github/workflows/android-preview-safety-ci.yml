@@ -48,6 +48,9 @@ jobs:
       - name: Build candidate ARM64 debug-only APK
         working-directory: apps/android
         run: gradle --no-daemon --stacktrace :app:assembleDebug
+      - name: Execute Android JVM unit tests
+        working-directory: apps/android
+        run: gradle --no-daemon --stacktrace :app:testDebugUnitTest
       - name: Inspect APK for forbidden daemon and wallet payloads
         run: |
           python3 tools/verify_android_preview_apk.py --apk apps/android/app/build/outputs/apk/debug/app-debug.apk

@@ -1,0 +1,14 @@
+<resources>
+    <!-- Shared palette: docs/style.css. Official image: docs/images/forgecoin-logo.png. -->
+    <style name="ForgeCoinTheme" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#5798FF</item>
+        <item name="android:windowBackground">#07101B</item>
+        <item name="android:colorBackground">#07101B</item>
+        <item name="android:statusBarColor">#07101B</item>
+        <item name="android:navigationBarColor">#07101B</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:colorControlHighlight">#405798FF</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+</resources>

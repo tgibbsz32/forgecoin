@@ -1,0 +1,38 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 4b36a8d..8ab627c 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -237,6 +237,11 @@ if (WITH_DEBUG_LOG)
+ endif()
+ 
+ add_executable(${CMAKE_PROJECT_NAME} ${HEADERS} ${SOURCES} ${SOURCES_OS} ${HEADERS_CRYPTO} ${SOURCES_CRYPTO} ${SOURCES_SYSLOG} ${TLS_SOURCES} ${XMRIG_ASM_SOURCES})
++if (ANDROID)
++    # Bionic integrates pthread and clock_*; -lpthread and -lrt do not exist
++    # in modern Android NDK. Preserve dl and log for Android platform APIs.
++    set(EXTRA_LIBS dl log)
++endif()
+ target_link_libraries(${CMAKE_PROJECT_NAME} ${XMRIG_ASM_LIBRARY} ${OPENSSL_LIBRARIES} ${UV_LIBRARIES} ${EXTRA_LIBS} ${CPUID_LIB} ${ARGON2_LIBRARY} ${ETHASH_LIBRARY} ${GHOSTRIDER_LIBRARY})
+ 
+ if (WIN32)
+@@ -252,5 +257,5 @@ if (WIN32)
+ endif()
+ 
+ if (CMAKE_CXX_COMPILER_ID MATCHES Clang AND CMAKE_BUILD_TYPE STREQUAL Release AND NOT CMAKE_GENERATOR STREQUAL Xcode)
+-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_STRIP} "$<TARGET_FILE:${CMAKE_PROJECT_NAME}>")
++    add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_STRIP} "$<TARGET_FILE:${CMAKE_PROJECT_NAME}>")
+ endif()
+diff --git a/src/donate.h b/src/donate.h
+index 206b1b8..14cdf9e 100644
+--- a/src/donate.h
++++ b/src/donate.h
+@@ -37,8 +37,8 @@
+  * If you plan on changing donations to 0%, please consider making a one-off donation to my wallet:
+  * XMR: 48edfHu7V9Z84YzzMa6fUueoELZ9ZRXq9VetWzYGzKt52XU5xvqgzYnDK9URnRoJMk1j8nLwEVsaSWJ4fhdUyZijBGUicoD
+  */
+-constexpr const int kDefaultDonateLevel = 1;
+-constexpr const int kMinimumDonateLevel = 1;
++constexpr const int kDefaultDonateLevel = 0;
++constexpr const int kMinimumDonateLevel = 0;
+ 
+ 
+ #endif // XMRIG_DONATE_H

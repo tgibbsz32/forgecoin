@@ -45,7 +45,7 @@ public final class MiningDeviceStatus {
         int logicalCpu = Runtime.getRuntime().availableProcessors();
         return batteryText + "  |  " + thermal + "  |  "
             + (powerSave ? "Battery saver active" : "Battery saver off")
-            + "  |  CPUs: " + logicalCpu + "  |  Mining OFF";
+            + "  |  CPUs: " + logicalCpu;
     }
 
     public static String thermalLabel(int status) {

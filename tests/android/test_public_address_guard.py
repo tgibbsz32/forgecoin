@@ -14,14 +14,21 @@ class PublicAddressGuard(unittest.TestCase):
                       "restore_deterministic_wallet", "transfer_split"):
             self.assertNotIn(token,s)
 
-    def test_real_wallet_controls_still_disabled(self):
+    def test_native_wallet_is_debug_only_and_network_controls_remain_disabled(self):
         ui=(J/"MainActivity.java").read_text(encoding="utf-8")
         self.assertIn('"Validate FRG public address",BuildConfig.DEBUG',ui)
         self.assertIn("FrgPublicAddress.parse(",ui)
         self.assertIn("Public-format check only",ui)
-        self.assertIn('"Create FRG wallet — unavailable",false,wallet,null',ui)
-        self.assertIn('"Restore FRG wallet — unavailable",false,wallet,null',ui)
-        self.assertIn('"Start solo mining — unavailable",false,mine,null',ui)
+        self.assertIn('nativeWalletReady=BuildConfig.DEBUG && NativeFrgWallet.available()',ui)
+        self.assertIn('"Create native FRG wallet",nativeWalletReady,wallet',ui)
+        self.assertIn('"Restore native FRG wallet",nativeWalletReady,wallet',ui)
+        self.assertIn('"Send FRG — validation pending",false,wallet,null',ui)
+        workflow=(J/"NativeWalletUi.java").read_text(encoding="utf-8")
+        self.assertIn('if(!BuildConfig.DEBUG || !NativeFrgWallet.available()',workflow)
+        self.assertIn('FLAG_SECURE',workflow)
+        for token in ("HttpURLConnection", "Socket(", "ProcessBuilder", "commitTransaction", "start_mining"):
+            self.assertNotIn(token,workflow)
+        self.assertIn("miningQaReady=BuildConfig.DEBUG && MiningService.runtimePresent(this)",ui)
 
 if __name__=="__main__":
     unittest.main()

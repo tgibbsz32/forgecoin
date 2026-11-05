@@ -42,6 +42,27 @@ jobs:
             if (Get-ChildItem -Path $root -Recurse -File -Filter $name) { throw "Unexpected native sidecar: $name" }
           }
           Write-Host 'PASS: source-only executable, no daemon, wallet RPC or miner sidecars'
+      - name: Verify private package rejects missing reviewed native binaries
+        shell: pwsh
+        run: |
+          $missing = Join-Path $env:RUNNER_TEMP 'missing-native-binaries'
+          $output = Join-Path $env:RUNNER_TEMP 'should-not-build'
+          try {
+            ./apps/desktop/build.ps1 -PrivatePrelaunch -ForgeBin $missing -OutputRoot $output
+            throw 'SECURITY FAILURE: missing native binaries were accepted'
+          } catch {
+            if ($_.Exception.Message -match 'SECURITY FAILURE') { throw }
+            Write-Host "PASS: private packaging rejected missing native binaries"
+          }
+          if (Test-Path $output) { throw 'Unexpected private package created' }
+      - name: Record source-only executable checksum
+        shell: pwsh
+        run: |
+          $root = Join-Path $env:RUNNER_TEMP 'ForgeCoin-Desktop-SourceQA'
+          $exe = Join-Path $root 'ForgeCoin Desktop.exe'
+          $hash = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "ForgeCoin Desktop.exe SHA256 $hash" | Set-Content -LiteralPath (Join-Path $root 'SHA256SUMS.txt') -Encoding ascii
+          Write-Host "Source-only executable SHA256: $hash"
       - name: Upload private source-only QA artifact
         uses: actions/upload-artifact@v4
         with:

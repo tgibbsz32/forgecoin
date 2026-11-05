@@ -46,6 +46,7 @@ public final class FrgSeedVault {
 
     public static synchronized void save(Context context, char[] seed) throws Exception {
         if (seed == null || seed.length == 0) throw new IllegalArgumentException("Empty seed");
+        validateRecoveryPhrase(seed);
         byte[] plaintext = new String(seed).getBytes(StandardCharsets.UTF_8);
         try {
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
@@ -73,6 +74,20 @@ public final class FrgSeedVault {
         byte[] plaintext = cipher.doFinal(encrypted);
         try { return new String(plaintext, StandardCharsets.UTF_8).toCharArray(); }
         finally { Arrays.fill(plaintext, (byte) 0); }
+    }
+
+    /** Structural check only: the native wallet must validate mnemonic words,
+     * checksum, language and derive keys before accepting a restored wallet. */
+    public static void validateRecoveryPhrase(char[] phrase) {
+        if (phrase == null) throw new IllegalArgumentException("Recovery phrase required");
+        String normalized = new String(phrase).trim();
+        if (normalized.isEmpty()) throw new IllegalArgumentException("Recovery phrase required");
+        String[] words = normalized.split("\\s+");
+        if (words.length != 25)
+            throw new IllegalArgumentException("ForgeCoin recovery phrase must contain 25 words");
+        for (String word : words)
+            if (!word.matches("[\\p{L}]+"))
+                throw new IllegalArgumentException("Recovery phrase contains invalid characters");
     }
 
     public static synchronized boolean exists(Context context) {

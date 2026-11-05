@@ -76,6 +76,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frg_accounting_quarantine.h"
 #include "frg_payout_intent_journal.h"
 #include "frg_payout_batch_reservation.h" /* offline-only, NEVER invokes wallet RPC */
+#include "frg_payout_credited_sources.h" /* LMDB-derived source digest; no wallet RPC */
 #include "frg_stratum_job_bounds.h"
 #include "forkoff.h"
 #include "growbag.h"

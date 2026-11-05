@@ -29,6 +29,30 @@ jobs:
       - name: Desktop regression suite
         shell: pwsh
         run: python -m unittest discover -s tests/desktop -p 'test_*.py' -q
+      - name: Verify official XMRig archive and extracted executable hashes
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $asset = 'xmrig-6.26.0-windows-x64.zip'
+          $url = "https://github.com/xmrig/xmrig/releases/download/v6.26.0/$asset"
+          $archive = Join-Path $env:RUNNER_TEMP $asset
+          Invoke-WebRequest -Uri $url -OutFile $archive
+          python tools/verify_xmrig_release.py $archive
+          $extract = Join-Path $env:RUNNER_TEMP 'xmrig-upstream-verify'
+          Expand-Archive -LiteralPath $archive -DestinationPath $extract
+          $root = Join-Path $extract 'xmrig-6.26.0'
+          $expected = @{
+            'xmrig.exe' = '6fa80698d7268f6e88aa88c06fb27ee99e1bcee747c2e76911e6206a5b1aeeb3'
+            'WinRing0x64.sys' = '11bd2c9f9e2397c9a16e0990e4ed2cf0679498fe0fd418a3dfdac60b5c160ee5'
+          }
+          foreach ($name in $expected.Keys) {
+            $file = Join-Path $root $name
+            if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "Missing upstream component: $name" }
+            $actual = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($actual -cne $expected[$name]) { throw "Upstream component hash mismatch: $name" }
+            Write-Host "PASS: $name SHA256 $actual"
+          }
+          Write-Host 'Verified upstream miner files only; no execution or distribution authorized.'
       - name: Build desktop from source only
         shell: pwsh
         run: |

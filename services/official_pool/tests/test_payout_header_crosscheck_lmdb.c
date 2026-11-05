@@ -215,6 +215,74 @@ int main(void)
            == EAGAIN);
     json_object_put(empty);
 
+    /* Full offline integration: the header cross-check and immutable
+     * intent insertion must use one LMDB write txn and flush to disk.
+     * This still does not prove that either claimed node is independent. */
+    MDB_dbi intents = 0;
+    MDB_txn *txn = NULL;
+    OK(mdb_txn_begin(env, NULL, 0, &txn));
+    OK(frg_payout_intent_open(txn, &intents));
+    OK(mdb_txn_commit(txn));
+
+    char addr[96];
+    addr[0] = '4';
+    memset(addr+1, 'A', 94);
+    addr[95] = 0;
+    frg_payout_recipient_t recipient = {addr, UINT64_C(100000000)};
+    uint8_t batch[32] = {0}, manifest[32] = {0};
+    uint64_t payout_amount = UINT64_MAX;
+
+    /* Conflicting witness cannot reserve, even though underlying local
+     * credits, source fingerprint and payout amount are otherwise valid. */
+    VERIFY(json_object_object_get_ex(two,"credits",&headers));
+    h = json_object_array_get_idx(headers,0);
+    json_object_object_add(h,"reward",json_object_new_int64(100000001));
+    VERIFY(frg_payout_batch_reserve_crosschecked(
+        env,db,intents,FRG_PAYOUT_FROZEN_CHAIN_ID,200,tip_hash,one,two,
+        &recipient,1,1000,batch,manifest,&payout_amount) == EAGAIN);
+    OK(mdb_txn_begin(env, NULL, MDB_RDONLY, &txn));
+    bool held = true;
+    OK(frg_payout_intent_held(txn,intents,&held));
+    VERIFY(!held);
+    mdb_txn_abort(txn);
+    VERIFY(batch[0]==0 && manifest[0]==0 && payout_amount==UINT64_MAX);
+    json_object_put(two);
+    two = snapshot(&tip,&a,&b);
+
+    OK(frg_payout_batch_reserve_crosschecked(
+        env,db,intents,FRG_PAYOUT_FROZEN_CHAIN_ID,200,tip_hash,one,two,
+        &recipient,1,1000,batch,manifest,&payout_amount));
+    VERIFY(payout_amount==100000000);
+    VERIFY(frg_payout_bytes_nonzero(batch,32));
+    VERIFY(frg_payout_bytes_nonzero(manifest,32));
+    OK(mdb_txn_begin(env,NULL,MDB_RDONLY,&txn));
+    frg_payout_intent_record_t record = {0};
+    OK(frg_payout_intent_read(txn,intents,batch,&record));
+    VERIFY(record.state==FRG_PAYOUT_INTENT_PREPARED);
+    VERIFY(record.amount_atomic==100000000);
+    VERIFY(memcmp(record.manifest_sha256,manifest,32)==0);
+    mdb_txn_abort(txn);
+    VERIFY(frg_payout_batch_reserve_crosschecked(
+        env,db,intents,FRG_PAYOUT_FROZEN_CHAIN_ID,200,tip_hash,one,two,
+        &recipient,1,1000,batch,manifest,&payout_amount) == EBUSY);
+
+    /* Close and reopen real LMDB: held intent cannot be forgotten. */
+    mdb_dbi_close(env,intents);
+    mdb_dbi_close(env,db);
+    mdb_env_close(env);
+    env=NULL;
+    open_db(dir,&env,&db);
+    OK(mdb_txn_begin(env,NULL,0,&txn));
+    OK(frg_payout_intent_open(txn,&intents));
+    OK(mdb_txn_commit(txn));
+    VERIFY(frg_payout_batch_reserve_crosschecked(
+        env,db,intents,FRG_PAYOUT_FROZEN_CHAIN_ID,200,tip_hash,one,two,
+        &recipient,1,1000,batch,manifest,&payout_amount) == EBUSY);
+    OK(mdb_txn_begin(env,NULL,MDB_RDONLY,&txn));
+    OK(frg_payout_intent_read(txn,intents,batch,&record));
+    VERIFY(record.state==FRG_PAYOUT_INTENT_PREPARED);
+    mdb_txn_abort(txn);
+
     /* Abandoned credit can never be rescued by two synthetic witnesses:
      * the authoritative local source scan still holds the pipeline.
      */
@@ -227,6 +295,7 @@ int main(void)
 
     json_object_put(one);
     json_object_put(two);
+    mdb_dbi_close(env,intents);
     mdb_dbi_close(env,db);
     mdb_env_close(env);
     char file[512];

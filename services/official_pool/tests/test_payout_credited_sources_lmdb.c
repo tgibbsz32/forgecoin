@@ -184,6 +184,24 @@ int main(void)
            == EPROTO);
     delete_block(env, blocks, &corrupt);
 
+    /* Syntactically valid but all-zero block or parent digests are not
+     * acceptable credits, even if the reward and maturity are plausible. */
+    frg_history_saved_t missing_hash = make_block(
+        90, FRG_HISTORY_UNLOCKED, UINT64_C(100000000), 1090);
+    memset(missing_hash.hash, '0', 64);
+    put_block(env, blocks, &missing_hash);
+    VERIFY(fingerprint(env, blocks, 180, digest2, &count2, &rewards2)
+           == EPROTO);
+    delete_block(env, blocks, &missing_hash);
+
+    frg_history_saved_t missing_parent = make_block(
+        90, FRG_HISTORY_UNLOCKED, UINT64_C(100000000), 1090);
+    memset(missing_parent.prev_hash, '0', 64);
+    put_block(env, blocks, &missing_parent);
+    VERIFY(fingerprint(env, blocks, 180, digest2, &count2, &rewards2)
+           == EPROTO);
+    delete_block(env, blocks, &missing_parent);
+
     /* Source credit amount mutation changes the committed fingerprint. */
     delete_block(env, blocks, &b100);
     b100.reward += 1;

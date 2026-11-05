@@ -43,3 +43,10 @@ jobs:
             services/official_pool/tests/test_payout_credited_sources_lmdb.c \
             -llmdb -lcrypto -ljson-c
           /tmp/frg-credited-source-commitment-test
+      - name: Compare all LMDB credited blocks against two untrusted native header snapshots (NO wallet)
+        run: |
+          gcc -std=c11 -pedantic -Wall -Wextra -Werror -O2 \
+            -o /tmp/frg-header-crosscheck-test \
+            services/official_pool/tests/test_payout_header_crosscheck_lmdb.c \
+            -llmdb -lcrypto -ljson-c
+          /tmp/frg-header-crosscheck-test
